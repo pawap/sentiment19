@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>uhh_lt</groupId>
-    <artifactId>wsd.server</artifactId>
+    <artifactId>ba17-service-backend</artifactId>
     <version>0.0.1-SNAPSHOT</version>
 
     <name>Basic Webserver</name>
@@ -112,7 +112,7 @@
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
-                            <mainClass>tudarmstadt.lt.wsd.server.ApplicationController</mainClass>
+                            <mainClass>uhh_lt.webserver.ApplicationController</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
