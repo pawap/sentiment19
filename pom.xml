@@ -92,7 +92,7 @@
             <artifactId>jobimtext</artifactId>
             <version>0.1.3</version>
             <scope>system</scope>
-            <systemPath>${project.build.directory}/../lib/org.jobimtext-0.1.3.jar</systemPath>
+            <systemPath>${project.basedir}/lib/org.jobimtext-0.1.3.jar</systemPath>
         </dependency>
 
 
