@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<webThesaurusConfiguration>
-	<protocol>http</protocol>
-	<server>ltmaggie.informatik.uni-hamburg.de</server>
-	<port>80</port>
-	<path>/jobimviz/</path>
-	<dataset>germanTrigram</dataset>
-</webThesaurusConfiguration>

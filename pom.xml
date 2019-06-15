@@ -9,8 +9,8 @@
 
     <packaging>war</packaging>
 
-    <name>Basic Webserver</name>
-    <description>Basic bootstrap webserver with REST support</description>
+    <name>Sentiment Analysis 2019</name>
+    <description>Basic bootstrap webserver with REST support and dl4j NLP-Backend</description>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
