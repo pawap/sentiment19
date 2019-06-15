@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en" class=" is-copy-enabled">
+	<head>
+		<meta charset='utf-8'>
+		<!--Bootstrap imports-->
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+		<!--Vue.js import-->
+		<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+		<!--Chart.js import-->
+		<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+		<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+		<!--Twitter import-->
+		<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+		<script>
+			window.addEventListener('load', function(){
+				//Vue.js element
+				const vue = new Vue({
+					el: "#app",
+					data: function(){
+						return{
+							//counter number of offensive tweets
+							offensive: 	axios
+					    	  .get('/sentiment19/stats',{params: {offensive: 1}})
+					    	  .then(response => (this.offensive = (response.data.count))),
+							//counter number of offensive tweets
+							nonOffensive:	axios
+					    	  .get('/sentiment19/															stats',{params: {offensive: 0}})
+					    	  .then(response => (this.nonOffensive = response.data.count)),
+							//bar chart time selection value
+							selectBarTime: '',
+							//bar chart time selection value
+							selectLineTime: '',
+							//time selection values
+							times: [
+								{text: "Letzter Tag", value: "day"}, 
+								{text: "Letzte Woche", value: "week"}, 
+								{text: "Letzter Monat", value: "month"}, 
+							]	
+						}
+					},
+					methods:{
+						//update data and display of charts
+						updateCharts: function(){
+							barChart.data.datasets[0].data = [vue.offensive, vue.nonOffensive, vue.offensive+vue.nonOffensive]
+							barChart.update()
+							lineChart.update()
+						},
+						//handle the counter inputs
+						handleInput: function(){
+							this.filterInput()
+							this.updateCharts()
+						},
+						//filter the counter inputs
+						filterInput: function(){
+							if(this.offensive<0){
+								this.offensive=0
+							}
+							if(this.nonOffensive<0){
+								this.nonOffensive=0
+							}
+						},
+						//Show info for when bar chart should be updated
+						updateBarChartTime: function(){
+							alert("barchart time update")
+						},
+						//Show info for when line chart should be updated
+						updateLineChartTime: function(){
+							alert("linechart time update")
+						}
+					}
+
+				});
+
+				//Used Chart.js as it seemed easier to quickly implement a prototype (compared to D3.js)
+
+				//Bar chart - shows number of offensive/nonOffensive/sum tweets in specified time
+				var ctx = document.getElementById('barChart').getContext('2d');
+				var barChart = new Chart(ctx, {
+				// The type of chart we want to create
+				type: 'bar',
+
+				// The data for our dataset
+				data: {
+					labels: ['Offensive', 'Non-Offensive', 'Gesamt'],
+					datasets: [
+						{
+							label: 'Anzahl Tweets',
+							backgroundColor: 'rgb(0, 0, 255)',
+							borderColor: 'rgb(0,0,0)',
+							borderWidth: '1',
+							data: [vue.offensive, vue.nonOffensive, vue.offensive+vue.nonOffensive]
+
+						}]
+				},
+
+				// Configuration options go here
+				options: {
+					scales: {
+						yAxes: [{
+							ticks:{
+								beginAtZero: true
+							}
+						}]
+					}
+				}
+				});
+
+				//Line chart - comparing offensive/nonOffensive over specified time
+				var ctx2 = document.getElementById('lineChart').getContext('2d');
+				var lineChart = new Chart(ctx2, {
+				// The type of chart we want to create
+				type: 'line',
+
+				// The data for our dataset
+				data: {
+					labels: ['Januar', 'Februar', 'März', 'April'],
+					datasets: [{
+						label: 'Anzahl offensive Tweets',
+						backgroundColor: 'rgb(255, 99, 132)',
+						borderColor: 'rgb(255, 99, 132)',
+						fill: false,
+						data: []
+					},
+					{
+						label: 'Anzahl non-offensive Tweets',
+						backgroundColor: 'rgb(0, 255, 0)',
+						borderColor: 'rgb(0, 255, 0)',
+						fill: false,
+						data: []
+					},
+				]
+				},
+
+				// Configuration options go here
+				options: {
+					elements: {
+						line: {
+							tension: 0 // disables bezier curves
+						}
+					},
+					scales: {
+						yAxes: [{
+							ticks:{
+								beginAtZero: true
+							}
+						}]
+					}
+				}
+				});
+				for (let i = 0; i < lineChart.data.labels.length; i++) {
+					axios
+			    	  .get('/sentiment19/stats',{params: {offensive: 1, startdate:"2019-05-" + (10+i),  enddate:"2019-05-" + (11+i)}})
+			    	  .then(response => (lineChart.data.datasets[0].data[i] = response.data.count));
+					axios
+			    	  .get('/sentiment19/stats',{params: {offensive: 0, startdate:"2019-05-" + (10+i),  enddate:"2019-05-" + (11+i)}})
+			    	  .then(response => (lineChart.data.datasets[1].data[i] = response.data.count));
+				}
+				axios
+					.get('/sentiment19/tweet', {params: {offensive: 1}})
+					.then(response => (document.getElementById("offTweet").innerHTML = response.data.html, twttr.widgets.load()));
+				setTimeout(function(){
+					lineChart.update();
+					console.log('update');
+				},1000);
+			})
+		</script>
+	</head>
+	<!--CSS Styling-->
+	<style>
+		.main{
+			text-align: center;
+		}
+
+		.border-box{
+			border: 1px solid rgb(0, 0, 0);
+			border-radius: 3%;
+
+		}
+
+		.number-text{
+			width: 40px;
+			height: 22px
+		}
+
+		.comment{
+			color: rgb(68, 68, 68);
+			font-style: italic
+		}
+
+		.margin-buffer{
+			margin-top:20px;
+			margin-bottom: 20px;
+		}
+	</style>
+	<body>
+		<div class="container main" id="app">
+			<div class="row">
+				<div class="col-sm-12">
+					<h1>Sentiment Analysis</h1>
+					<h2>BA-Projekt base.camp</h2>
+					<div class="margin-buffer">
+							<span class="comment">//These counters are just for showing purposes. They will be removed, after connection to real data is established</span>
+							<br>
+							Anzahl offensive Tweets:
+							<input v-model.number="offensive" type="number" class="number-text" @input='handleInput()'>
+							<br>
+							Anzahl non-offensive Tweets:
+							<input v-model.number="nonOffensive" type="number" class="number-text" @input='handleInput()'>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-6">
+					<div class="border-box">
+						<p>
+							<span class="comment">//Graph update based on selected time not implemented yet</span>
+							<br>
+							Zeitraum:
+							<select v-model="selectBarTime" @change='updateBarChartTime()'>
+									<option disabled value="">Suche einen Zeitraum aus</option>
+									<option v-for="time in times" v-bind:value="time.value">
+											{{ time.text }}
+									</option>
+							</select>
+						</p>
+						<canvas id="barChart"></canvas>
+						</div>
+				</div>
+				<div class="col-sm-6">
+					<div class="border-box">
+						<p>
+							<span class="comment">//Graph update based on selected time not implemented yet</span>
+							<br>
+							Zeitraum:
+							<select v-model="selectLineTime" @change='updateLineChartTime()'>
+									<option disabled value="">Suche einen Zeitraum aus</option>
+									<option v-for="time in times" v-bind:value="time.value">
+											{{ time.text }}
+									</option>
+							</select>	
+						</p>
+						<canvas id="lineChart"></canvas>
+					</div>
+				</div>
+			</div>
+			<div class="row margin-buffer">
+				<div class="col-sm-6">
+					<div class="border-box">
+							<p>Zufälliger als offensive eingestufter Tweet:</p>		
+							<div id=offTweet></div>
+					</div>
+				</div>
+				<div class="col-sm-6">
+						<div class="border-box">
+								<p>Zufälliger als non-offensive eingestufter Tweet:</p>
+								<div id=nonOffTweet></div>
+						</div>
+					</div>
+			</div>			
+		</div>	
+		<!--Bootstrap imports-->
+		<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+		<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+	</body>
+</html>
