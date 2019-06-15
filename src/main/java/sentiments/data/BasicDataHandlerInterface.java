@@ -1,4 +1,4 @@
-package sentiments;
+package sentiments.data;
 
 import net.sf.json.JSONObject;
 

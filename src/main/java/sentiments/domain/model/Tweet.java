@@ -1,6 +1,4 @@
-package sentiments;
-
-import java.sql.Timestamp;
+package sentiments.domain.model;
 
 import javax.persistence.Entity;
 

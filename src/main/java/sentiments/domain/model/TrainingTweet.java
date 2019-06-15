@@ -1,4 +1,4 @@
-package sentiments;
+package sentiments.domain.model;
 
 import javax.persistence.Entity;
 

@@ -1,4 +1,4 @@
-package sentiments;
+package sentiments.ml;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;

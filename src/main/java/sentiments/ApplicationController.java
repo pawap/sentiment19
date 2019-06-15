@@ -1,7 +1,5 @@
 package sentiments;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
@@ -10,8 +8,6 @@ import net.sf.json.JSONObject;
 
 import java.io.*;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
@@ -25,9 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.CustomDateEditor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
@@ -36,6 +30,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
+import sentiments.data.BasicDataImporter;
+import sentiments.domain.repository.TweetRepository;
+import sentiments.ml.W2VTweetClassifier;
 
 /**
  * @author Paw, 6runge
@@ -53,13 +50,13 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
 	Environment env;
 	
 	@Autowired
-	BasicDataImporter basicDataImporter;
+    BasicDataImporter basicDataImporter;
 	
 	@Autowired
-	W2VTweetClassifier tweetClassifier;
+    W2VTweetClassifier tweetClassifier;
 	
-	@Autowired 
-	TweetRepository tweetRepository;
+	@Autowired
+    TweetRepository tweetRepository;
 
 
 	@RequestMapping("/tweet")

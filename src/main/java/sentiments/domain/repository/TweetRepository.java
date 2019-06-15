@@ -1,10 +1,11 @@
-package sentiments;
+package sentiments.domain.repository;
 
 import java.sql.Timestamp;
 
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
+import sentiments.domain.model.Tweet;
 
 /**
  * @author Paw

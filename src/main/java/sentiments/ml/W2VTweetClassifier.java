@@ -1,4 +1,4 @@
-package sentiments;
+package sentiments.ml;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,6 +30,7 @@ import org.nd4j.linalg.learning.config.Adam;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import sentiments.domain.repository.TrainingTweetRepository;
 
 /**
  * @author Paw
@@ -39,7 +40,7 @@ import org.springframework.stereotype.Service;
 public class W2VTweetClassifier {
 	
 	@Autowired
-	TrainingTweetRepository tweetRepository;
+    TrainingTweetRepository tweetRepository;
 	
 	private MultiLayerNetwork net;
 	

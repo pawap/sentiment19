@@ -1,4 +1,4 @@
-package sentiments;
+package sentiments.data;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -31,6 +31,9 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.joestelmach.natty.DateGroup;
 import com.joestelmach.natty.Parser;
+import sentiments.domain.model.AbstractTweet;
+import sentiments.domain.model.TrainingTweet;
+import sentiments.domain.model.Tweet;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;

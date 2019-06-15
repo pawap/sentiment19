@@ -1,4 +1,4 @@
-package sentiments;
+package sentiments.ml;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,6 +17,9 @@ import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.indexing.INDArrayIndex;
 import org.nd4j.linalg.indexing.NDArrayIndex;
+import sentiments.domain.model.Tweet;
+import sentiments.domain.repository.TrainingTweetRepository;
+import sentiments.domain.repository.TweetRepository;
 
 /**
  * @author Paw

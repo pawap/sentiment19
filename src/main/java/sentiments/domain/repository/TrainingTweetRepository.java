@@ -1,7 +1,8 @@
-package sentiments;
+package sentiments.domain.repository;
 
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import sentiments.domain.model.Tweet;
 
 public interface TrainingTweetRepository extends TweetRepository {
 	
