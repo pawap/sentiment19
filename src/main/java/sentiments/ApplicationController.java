@@ -61,11 +61,7 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
 
 	@RequestMapping("/tweet")
     public ResponseEntity<String> tweet(@RequestParam(value = "offensive", defaultValue = "1") boolean offensive) {
-
-
-
         String base_url = "https://publish.twitter.com/oembed?url=https://twitter.com/user/status/";
-
         String url = base_url + "911789314169823232" + "&align=center";
         StringBuffer response = new StringBuffer();
         JsonObject obj = null;
