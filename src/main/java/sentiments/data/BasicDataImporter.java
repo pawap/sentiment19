@@ -34,6 +34,8 @@ import com.joestelmach.natty.Parser;
 import sentiments.domain.model.AbstractTweet;
 import sentiments.domain.model.TrainingTweet;
 import sentiments.domain.model.Tweet;
+import sentiments.domain.preprocessor.ImportTweetPreProcessor;
+import sentiments.domain.preprocessor.TweetPreProcessor;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -62,7 +64,7 @@ public class BasicDataImporter {
 		this.dateTimeFormatter = DateTimeFormatter.ofPattern("E MMM dd HH:mm:ss Z yyyy", Locale.UK);
 	}
 
-	public void importFromJson(String jsonPath, TweetProvider tweetProvider) {
+	public void importFromJson(String jsonPath, TweetProvider tweetProvider, TweetPreProcessor processor) {
 		try {
 			InputStream stream = new FileInputStream(jsonPath);
 			JsonReader reader = new JsonReader(new InputStreamReader(stream, "UTF-8"));
@@ -82,6 +84,7 @@ public class BasicDataImporter {
 					this.mapJsonToTweet(object, tweet);
 					if (tweet != null && tweet.getText() != null) {
 						i++;
+						processor.preProcess(tweet);
 						entityManager.persist(tweet);
 					}
 					System.out.println(i);
@@ -181,11 +184,11 @@ public class BasicDataImporter {
 
 	public void importExampleJson() {
 		String jsonPath = this.env.getProperty("localTweetJson");
-		importFromJson(jsonPath, () -> new Tweet());
+		importFromJson(jsonPath, Tweet::new, new ImportTweetPreProcessor());
 	}
 
 	public void importTsvTestAndTrain() {
-		importFromTsv(this.env.getProperty("localTweetTsv.train"), () -> new TrainingTweet());
+		importFromTsv(this.env.getProperty("localTweetTsv.train"), TrainingTweet::new);
 		importFromTsv(this.env.getProperty("localTweetTsv.test"), () -> {
 			TrainingTweet tweet = new TrainingTweet();
 			tweet.setTest(true);
