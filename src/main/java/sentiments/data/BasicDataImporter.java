@@ -155,9 +155,13 @@ public class BasicDataImporter {
 	}
 
 	private void mapJsonToTweet(JsonObject object, AbstractTweet tweet) {
-		if (object.has("text")) {
-			tweet.setText(object.get("text").getAsString());
+		String text = null;
+		if (object.has("full_text")) {
+			text = object.get("full_text").getAsString();
+		} else if (object.has("text")){
+			text = object.get("text").getAsString();
 		}
+		tweet.setText(text);
 		if (object.has("created_at")) {
 			LocalDateTime dateTime;
 			try {
