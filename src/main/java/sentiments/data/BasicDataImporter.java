@@ -13,6 +13,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 
@@ -20,6 +21,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
+import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Service;
 
 import com.google.gson.Gson;
@@ -31,13 +33,15 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.joestelmach.natty.DateGroup;
 import com.joestelmach.natty.Parser;
+import org.springframework.transaction.annotation.Transactional;
 import sentiments.domain.model.AbstractTweet;
 import sentiments.domain.model.TrainingTweet;
 import sentiments.domain.model.Tweet;
+import sentiments.domain.repository.TweetRepository;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.transaction.Transactional;
+
 
 /**
  * @author Paw
@@ -52,8 +56,8 @@ public class BasicDataImporter {
 	@Autowired
 	Environment env;
 
-	@PersistenceContext
-	EntityManager entityManager;
+	@Autowired
+	TweetRepository tweetRepository;
 
 	DateTimeFormatter dateTimeFormatter;
 
@@ -62,27 +66,28 @@ public class BasicDataImporter {
 		this.dateTimeFormatter = DateTimeFormatter.ofPattern("E MMM dd HH:mm:ss Z yyyy", Locale.UK);
 	}
 
-	public void importFromJson(String jsonPath, TweetProvider tweetProvider) {
+	public void importFromJson(String jsonPath, TweetProvider<Tweet> tweetProvider, MongoRepository repo) {
 		try {
 			InputStream stream = new FileInputStream(jsonPath);
 			JsonReader reader = new JsonReader(new InputStreamReader(stream, "UTF-8"));
 			Gson gson = new GsonBuilder().create();
 			reader.setLenient(true);
-
+			List<Tweet> tweets = tweetProvider.getNewTweetList();
 			int i = 0;
 			while (reader.hasNext()) {
 				// Read data into object model
+
 				try {
 					if (reader.peek() == JsonToken.END_DOCUMENT) {
 						break;
 					}
 					JsonElement element = gson.fromJson(reader, JsonElement.class);
 					JsonObject object = element.getAsJsonObject();
-					AbstractTweet tweet = tweetProvider.createTweet();
+					Tweet tweet = tweetProvider.createTweet();
 					this.mapJsonToTweet(object, tweet);
 					if (tweet != null && tweet.getText() != null) {
 						i++;
-						entityManager.persist(tweet);
+						tweets.add(tweet);
 					}
 					System.out.println(i);
 				} catch (IllegalStateException | JsonSyntaxException e) {
@@ -90,12 +95,12 @@ public class BasicDataImporter {
 				}
 				// persist tweets in batch
 				if (i % BATCH_SIZE == 0) {
-					entityManager.flush();
-					entityManager.clear();
+					tweetRepository.saveAll(tweets);
+					tweets.clear();
 				}
 			}
-			entityManager.flush();
-			entityManager.clear();
+			tweetRepository.saveAll(tweets);
+			tweets.clear();
 			reader.close();
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
@@ -121,12 +126,12 @@ public class BasicDataImporter {
 				this.mapTsvToTweet(record, tweet);
         		if (tweet != null && tweet.getText() != null) {
         			i++;
-					entityManager.persist(tweet);
+					//entityManager.persist(tweet);
         		}
 				System.out.println(i);
 				if (i % BATCH_SIZE == 0) {
-            		entityManager.flush();
-					entityManager.clear();
+            		//entityManager.flush();
+					//entityManager.clear();
             	}
 			}
 		} catch (FileNotFoundException e) {
@@ -137,8 +142,8 @@ public class BasicDataImporter {
 			e.printStackTrace();
 		}
     	// persist tweets in batch (256 per insert)
-		entityManager.flush();
-		entityManager.clear();
+//		entityManager.flush();
+//		entityManager.clear();
 	}
 
 	private void mapTsvToTweet(CSVRecord record, AbstractTweet tweet) {
@@ -181,15 +186,30 @@ public class BasicDataImporter {
 
 	public void importExampleJson() {
 		String jsonPath = this.env.getProperty("localTweetJson");
-		importFromJson(jsonPath, () -> new Tweet());
+		importFromJson(jsonPath, new TweetProvider<Tweet>() {
+			@Override
+			public Tweet createTweet() {
+				return new Tweet();
+			}
+		}, tweetRepository);
 	}
 
 	public void importTsvTestAndTrain() {
-		importFromTsv(this.env.getProperty("localTweetTsv.train"), () -> new TrainingTweet());
-		importFromTsv(this.env.getProperty("localTweetTsv.test"), () -> {
-			TrainingTweet tweet = new TrainingTweet();
-			tweet.setTest(true);
-			return tweet;
+		importFromTsv(this.env.getProperty("localTweetTsv.train"), new TweetProvider<TrainingTweet>() {
+			@Override
+			public TrainingTweet createTweet() {
+				return null;
+			}
+		});
+		importFromTsv(this.env.getProperty("localTweetTsv.test"),new TweetProvider<TrainingTweet>()
+		{
+			@Override
+			public TrainingTweet createTweet() {
+				TrainingTweet tweet = new TrainingTweet();
+				tweet.setTest(true);
+				return tweet;
+			}
+
 		});
 	}
 
