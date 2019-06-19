@@ -16,6 +16,7 @@ public class AbstractTweet {
 	private Integer uid;
 	@Lob
 	private String text;
+	private String language;
 	private Timestamp crdate;
 	private Timestamp tmstamp;
 	private boolean offensive;
@@ -37,6 +38,14 @@ public class AbstractTweet {
 
 	public void setText(String text) {
 		this.text = text;
+	}
+
+	public String getLanguage() {
+		return language;
+	}
+
+	public void setLanguage(String language) {
+		this.language = language;
 	}
 
 	public Timestamp getCrdate() {
