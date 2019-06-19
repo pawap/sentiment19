@@ -1,4 +1,4 @@
-# ba-service-backend
+# Sentiment19
 
 This project contains a web service based on the Spring Boot framework.
 It features RESTful endpoints.
