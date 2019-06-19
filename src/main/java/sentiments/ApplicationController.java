@@ -5,18 +5,9 @@ import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-
-import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.Date;
-import java.sql.Timestamp;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-
 import org.apache.commons.io.FileUtils;
-
+import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
+import org.deeplearning4j.models.word2vec.Word2Vec;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.CustomDateEditor;
 import org.springframework.boot.SpringApplication;
@@ -29,10 +20,27 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import sentiments.data.BasicDataImporter;
 import sentiments.domain.repository.TweetRepository;
 import sentiments.ml.W2VTweetClassifier;
+import sentiments.ml.WordVectorBuilder;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Collection;
+import java.util.Date;
 
 /**
  * @author Paw, 6runge
@@ -169,7 +177,75 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
         responseHeaders.set("Access-Control-Allow-Origin", "*");
        
         return new ResponseEntity<String>("finished", responseHeaders,HttpStatus.CREATED);
-    }    
+    }
+
+    @RequestMapping("/backend/ml/w2vtraining")
+    public ResponseEntity<String> w2vtraining() {
+        WordVectorBuilder w2vb = new WordVectorBuilder(tweetRepository);
+        try {
+            w2vb.train();
+            System.out.println("finished training");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("Access-Control-Allow-Origin", "*");
+
+        return new ResponseEntity<String>("finished training", responseHeaders,HttpStatus.CREATED);
+    }
+
+    @RequestMapping("/backend/ml/w2vtest")
+    public ResponseEntity<String> w2vtest() {
+
+        Word2Vec word2VecModel = WordVectorSerializer.readWord2VecModel(new File(WordVectorBuilder.getModelFilePath()));
+
+        String examples = "Some words with their closest neighbours: \n";
+
+        Collection<String> list = word2VecModel.wordsNearest("woman" , 10);
+        examples += " woman: " + list + ",  ";
+
+        list = word2VecModel.wordsNearest("man" , 10);
+        examples += " man: " + list + ",  ";
+
+        list = word2VecModel.wordsNearest("girl" , 10);
+        examples += " girl: " + list + ",  ";
+
+        list = word2VecModel.wordsNearest("boy" , 10);
+        examples += " boy: " + list + ",  ";
+
+        list = word2VecModel.wordsNearest("day" , 10);
+        examples += " day: " + list + ",  ";
+
+        list = word2VecModel.wordsNearest("night" , 10);
+        examples += " night: " + list + ",  ";
+
+        list = word2VecModel.wordsNearest("shit" , 10);
+        examples += " shit: " + list + ",  ";
+
+        list = word2VecModel.wordsNearest("motherfucker" , 10);
+        examples += " motherfucker: " + list + ",  ";
+
+        list = word2VecModel.wordsNearest("cat" , 10);
+        examples += " cat: " + list + ",  ";
+
+        list = word2VecModel.wordsNearest("merkel" , 10);
+        examples += " merkel: " + list + ",  ";
+
+        list = word2VecModel.wordsNearest("trump" , 10);
+        examples += " trump: " + list + ",  ";
+
+        list = word2VecModel.wordsNearest("germany", 10);
+        examples += " germany: " + list + ",  ";
+
+        list = word2VecModel.wordsNearest("usa", 10);
+        examples += " usa: " + list + " ";
+
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("Access-Control-Allow-Origin", "*");
+
+        return new ResponseEntity<String>(examples, responseHeaders,HttpStatus.CREATED);
+    }
     
     private String generateJSONResponse(String input) {
         JSONObject out = new JSONObject();
