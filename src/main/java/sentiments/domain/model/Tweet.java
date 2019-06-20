@@ -1,6 +1,5 @@
 package sentiments.domain.model;
 
-import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import java.util.Set;
 
@@ -14,7 +13,6 @@ public class Tweet extends AbstractTweet {
 
     private String twitterId;
 
-    @ElementCollection
     private Set<String> hashtags;
 
     public String getTwitterId() {
