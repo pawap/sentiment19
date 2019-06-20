@@ -11,4 +11,6 @@ public interface TweetPreProcessor {
      * @param tweet Tweet
      */
     public void preProcess(AbstractTweet tweet);
+
+    void destroy();
 }

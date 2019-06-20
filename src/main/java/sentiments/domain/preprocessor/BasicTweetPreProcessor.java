@@ -12,4 +12,9 @@ public class BasicTweetPreProcessor implements TweetPreProcessor {
         
         tweet.setText(newText);
     }
+
+    @Override
+    public void destroy() {
+
+    }
 }

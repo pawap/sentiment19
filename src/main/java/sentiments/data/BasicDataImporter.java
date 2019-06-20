@@ -73,6 +73,9 @@ public class BasicDataImporter {
 			reader.setLenient(true);
 			List<Tweet> tweets = tweetProvider.getNewTweetList();
 			int i = 0;
+			JsonElement element;
+			JsonObject object;
+			Tweet tweet;
 			while (reader.hasNext()) {
 				// Read data into object model
 
@@ -80,21 +83,22 @@ public class BasicDataImporter {
 					if (reader.peek() == JsonToken.END_DOCUMENT) {
 						break;
 					}
-					JsonElement element = gson.fromJson(reader, JsonElement.class);
-					JsonObject object = element.getAsJsonObject();
-					Tweet tweet = tweetProvider.createTweet();
+					element = gson.fromJson(reader, JsonElement.class);
+					object = element.getAsJsonObject();
+					tweet = tweetProvider.createTweet();
 					this.mapJsonToTweet(object, tweet);
 					if (tweet != null && tweet.getText() != null) {
 						i++;
 						processor.preProcess(tweet);
 						tweets.add(tweet);
 					}
-					System.out.println(i);
+
 				} catch (IllegalStateException | JsonSyntaxException e) {
 					reader.skipValue();
 				}
 				// persist tweets in batch
 				if (i % BATCH_SIZE == 0) {
+					System.out.println(i);
 					tweetRepository.saveAll(tweets);
 					tweets.clear();
 				}
@@ -102,6 +106,8 @@ public class BasicDataImporter {
 			tweetRepository.saveAll(tweets);
 			tweets.clear();
 			reader.close();
+			processor.destroy();
+			System.gc();
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

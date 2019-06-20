@@ -16,12 +16,13 @@ import com.github.pemistahl.lingua.api.Language;
 
 public class ImportTweetPreProcessor implements TweetPreProcessor {
 
-    final private LanguageDetector detector = LanguageDetectorBuilder.fromAllBuiltInSpokenLanguages().build();
+    private LanguageDetector detector = LanguageDetectorBuilder.fromAllBuiltInSpokenLanguages().build();
+    final private Pattern pattern = Pattern.compile("#[\\w_-]+[:]?");
 
     @Override
     public void preProcess(AbstractTweet tweet) {
         String text = tweet.getText();
-        Set<String> hashtags = Pattern.compile("#[\\w_-]+[:]?")
+        Set<String> hashtags = pattern
                 .matcher(text)
                 .results()
                 .map(MatchResult::group)
@@ -29,5 +30,10 @@ public class ImportTweetPreProcessor implements TweetPreProcessor {
         ((Tweet) tweet).setHashtags(hashtags);
         Language detectedLanguage = detector.detectLanguageOf(text.replaceAll("(((RT )?@[\\w_-]+[:]?)|((https?:\\/\\/)[\\w\\d.-\\/]*))",""));
         tweet.setLanguage(detectedLanguage.getIsoCode());
+    }
+
+    @Override
+    public void destroy() {
+        detector = null;
     }
 }
