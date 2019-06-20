@@ -9,7 +9,14 @@ import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import com.github.pemistahl.lingua.api.LanguageDetectorBuilder;
+import com.github.pemistahl.lingua.api.LanguageDetector;
+import com.github.pemistahl.lingua.api.Language;
+
+
 public class ImportTweetPreProcessor implements TweetPreProcessor {
+
+    final private LanguageDetector detector = LanguageDetectorBuilder.fromAllBuiltInSpokenLanguages().build();
 
     @Override
     public void preProcess(AbstractTweet tweet) {
@@ -20,6 +27,7 @@ public class ImportTweetPreProcessor implements TweetPreProcessor {
                 .map(MatchResult::group)
                 .collect(Collectors.toSet());
         ((Tweet) tweet).setHashtags(hashtags);
-
+        Language detectedLanguage = detector.detectLanguageOf(text.replaceAll("(((RT )?@[\\w_-]+[:]?)|((https?:\\/\\/)[\\w\\d.-\\/]*))",""));
+        tweet.setLanguage(detectedLanguage.getIsoCode());
     }
 }
