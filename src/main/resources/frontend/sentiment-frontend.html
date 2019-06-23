@@ -54,7 +54,7 @@
 		#fixedbutton {
 			position: fixed;
 			bottom: 0px;
-			right: 0px; 
+			right: 0px;
 		}
 	</style>
 	<body>
@@ -66,13 +66,13 @@
 					<hr>
 					<div class="margin-buffer">
 							<span class="counter offensive">Anzahl offensive Tweets: {{offensive}}</span>
-							
+
 							<!--
 								<input v-model.number="offensive" type="number" class="number-text" @input='handleInput()'>
 							-->
 							<br>
 							<span class="counter nonOffensive">Anzahl non-offensive Tweets: {{nonOffensive}}</span>
-							
+
 							<!--
 								<input v-model.number="nonOffensive" type="number" class="number-text" @input='handleInput()'>
 							-->
@@ -98,10 +98,10 @@
 					<div class="content p-2">
 						<h4>Verlauf offensive & non-offensive Tweets</h4>
 						<v-date-picker @input="updateLineChart()" popover-align="center" :max-date='new Date()' mode='range' v-model="selectedDate">
-						</v-date-picker>	
+						</v-date-picker>
 						<div>
 							<canvas id="lineChart"></canvas>
-						</div>		
+						</div>
 					</div>
 				</div>
 			</div>
@@ -109,18 +109,28 @@
 			<div class="row my-3">
 				<div class="col-sm-6">
 					<div class="content p-2">
-							<h4>Zufälliger als offensive eingestufter Tweet:</h4>		
+							<h4>Zufälliger als offensive eingestufter Tweet:</h4>
 							<div id=offTweet></div>
+							<div class="border-box">
+								<script type="text/javascript">
+								document.write("<img src = \"" + Math.floor( 1 + Math.random() * 5 ) + ".gif\"  />");
+								</script>
+							</div>
 					</div>
 				</div>
 				<div class="col-sm-6">
 						<div class="content p-2">
 							<h4>Zufälliger als non-offensive eingestufter Tweet:</h4>
 							<div id=nonOffTweet></div>
+							<div class="border-box">
+								<script type="text/javascript">
+								document.write("<img src = \"" + 6 * Math.floor( 1 + Math.random() * 5 ) + ".gif\"  />");
+								</script>
+							</div>
 						</div>
 					</div>
-			</div>			
-		</div>	
+			</div>
+		</div>
 		<!--Bootstrap imports-->
 		<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
