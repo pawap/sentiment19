@@ -1,30 +1,47 @@
 package sentiments.data;
 
-import com.google.gson.*;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
-import com.joestelmach.natty.DateGroup;
-import com.joestelmach.natty.Parser;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.UnsupportedEncodingException;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Service;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
+import com.joestelmach.natty.DateGroup;
+import com.joestelmach.natty.Parser;
 import org.springframework.transaction.annotation.Transactional;
 import sentiments.domain.model.AbstractTweet;
 import sentiments.domain.model.TrainingTweet;
 import sentiments.domain.model.Tweet;
 import sentiments.domain.repository.TweetRepository;
 
-import java.io.*;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.List;
-import java.util.Locale;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+
 
 /**
  * @author Paw
