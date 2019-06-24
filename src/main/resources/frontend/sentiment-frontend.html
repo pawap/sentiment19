@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class=" is-copy-enabled">
+<html lang="en">
 	<head>
 		<meta charset='utf-8'>
 		<!--Bootstrap settings/import-->
@@ -35,10 +35,7 @@
 		.content{
 			border-left: 2px solid grey;
 		}
-		.counter{
-			font-size: 20px;
-			font-weight: bold;
-		}
+		
 		.number-text{
 			width: 40px;
 			height: 22px
@@ -51,11 +48,6 @@
 		.nonOffensive{
 			color: rgb(0,255,0)
 		}
-		#fixedbutton {
-			position: fixed;
-			bottom: 0px;
-			right: 0px; 
-		}
 	</style>
 	<body>
 		<div class="container-fluid main" id="app">
@@ -64,40 +56,36 @@
 					<h1>Sentiment Analysis</h1>
 					<h2>BA-Projekt base.camp</h2>
 					<hr>
-					<div class="margin-buffer">
-							<span class="counter offensive">Anzahl offensive Tweets: {{offensive}}</span>
-							
-							<!--
-								<input v-model.number="offensive" type="number" class="number-text" @input='handleInput()'>
-							-->
-							<br>
-							<span class="counter nonOffensive">Anzahl non-offensive Tweets: {{nonOffensive}}</span>
-							
-							<!--
-								<input v-model.number="nonOffensive" type="number" class="number-text" @input='handleInput()'>
-							-->
+					<div>
+						<h3 class="offensive">Anzahl offensive Tweets: {{offensive}}</h3>
+						<h3 class="counter nonOffensive">Anzahl non-offensive Tweets: {{nonOffensive}}</h3>
 					</div>
 				</div>
 			</div>
 			<div class="row my-3">
 				<div class="col-sm-6">
 					<div class="content p-2">
-							<h4>Anzahl offensive vs. non-offensive Tweets</h4>
-							<select v-model="selectPieTime" @change='updatePieChart()'>
-									<option value="">Gesamter Zeitraum</option>
-									<option v-for="time in times" v-bind:value="time.value">
-											{{ time.text }}
-									</option>
-							</select>
+						<h4>Anzahl offensive vs. non-offensive Tweets</h4>
+						<select v-model="selectPieTime" @change='updatePieChart()'>
+								<option value="">Gesamter Zeitraum</option>
+								<option v-for="time in times" v-bind:value="time.value">
+										{{ time.text }}
+								</option>
+						</select>
 						<div>
 							<canvas id="pieChart"></canvas>
 						</div>
-						</div>
+					</div>
 				</div>
 				<div class="col-sm-6">
 					<div class="content p-2">
 						<h4>Verlauf offensive & non-offensive Tweets</h4>
-						<v-date-picker @input="updateLineChart()" popover-align="center" :max-date='new Date()' mode='range' v-model="selectedDate">
+						<v-date-picker
+						@input="updateLineChart()"
+						popover-align="center"
+						:max-date='new Date()'
+						mode='range'
+						v-model="selectedDate">
 						</v-date-picker>	
 						<div>
 							<canvas id="lineChart"></canvas>
@@ -109,16 +97,16 @@
 			<div class="row my-3">
 				<div class="col-sm-6">
 					<div class="content p-2">
-							<h4>Zufälliger als offensive eingestufter Tweet:</h4>		
-							<div id=offTweet></div>
+						<h4>Zufälliger als offensive eingestufter Tweet:</h4>		
+						<div id=offTweet></div>
 					</div>
 				</div>
 				<div class="col-sm-6">
-						<div class="content p-2">
-							<h4>Zufälliger als non-offensive eingestufter Tweet:</h4>
-							<div id=nonOffTweet></div>
-						</div>
+					<div class="content p-2">
+						<h4>Zufälliger als non-offensive eingestufter Tweet:</h4>
+						<div id=nonOffTweet></div>
 					</div>
+				</div>
 			</div>			
 		</div>	
 		<!--Bootstrap imports-->
