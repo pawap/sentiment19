@@ -11,9 +11,7 @@ window.addEventListener('load', function(){
                 nonOffensive: 0,
                 //pie chart time selection value
                 selectPieTime: '',
-                pieOff: 0,
-                pieNonOff: 0,
-                //time selection values
+                //Pie chart time selection values
                 times: [
                     {text: "Letzter Tag", value: "day"}, 
                     {text: "Letzte Woche", value: "week"}, 
@@ -28,7 +26,9 @@ window.addEventListener('load', function(){
         },
         methods:{
 
-            //Update Counters
+            /**
+             * Updates the main offensive and nonOffensive tweet amount counters (and initiates Pie Chart update)
+             */
             updateCounters: function(){
 
                 axios.all([
@@ -139,14 +139,14 @@ window.addEventListener('load', function(){
             backgroundColor: 'rgb(255, 99, 132)',
             borderColor: 'rgb(255, 99, 132)',
             fill: false,
-            data: [3, 7, 10, 10]
+            data: [1,2,3,4]
         },
         {
             label: 'non-offensive',
             backgroundColor: 'rgb(0, 255, 0)',
             borderColor: 'rgb(0, 255, 0)',
             fill: false,
-            data: [2, 5, 8, 10]
+            data: [5,6,7,8]
         },
     ]
     },
@@ -168,7 +168,9 @@ window.addEventListener('load', function(){
     }
     });
 
-    //initialise Tweets, Line/Pie Chart and Counters
+    /**
+     * Initialise Tweet display, Tweet amount counters and the pie and line charts
+     */
     function init(){
         displayTweet()
         vue.updateCounters()
@@ -189,7 +191,14 @@ function formatDate(date){
     return date.getDate() + "." + (date.getMonth()+1)  + "." + date.getFullYear().toString().slice(-2)
 }
 
-//Gets range of dates  between start and end date with key (for example 'day') steps 
+/**
+ * Returns range of dates, between specified start and end date, with a given step length (key)
+ * @param {*} start Start date for the date range
+ * @param {*} end End date for the date range
+ * @param {*} key Increment size to be used for each step
+ * @param {*} arr Resulting array - does not need to be provided on function call
+ * @returns (Already formmatted) date range
+ */
 function getRangeOfDates(start, end, key, arr = [start.startOf(key)]) {
   
     if(start.isAfter(end)) throw new Error('start must precede end')
@@ -202,17 +211,16 @@ function getRangeOfDates(start, end, key, arr = [start.startOf(key)]) {
     
 }
 
- //Get the tweets to be displayed
- //To-Do: Request tweet html from backend
+/**
+ * Requests html code for offensive/nonoffensive Tweets and displays them as examples
+ */
  function displayTweet(){
 
-    //example for tweet ID of a possibly non offensive/offensive tweet
-    offTweetId = 1130427754971881472
-    nonOffTweetId = 507185938620219395
-
     axios.all([
-        axios.get('https://cors-anywhere.herokuapp.com/https://publish.twitter.com/oembed?url=https%3A%2F%2Ftwitter.com%2Fx%2Fstatus%2F1130427754971881472&align=center'),
-        axios.get('https://cors-anywhere.herokuapp.com/https://publish.twitter.com/oembed?url=https%3A%2F%2Ftwitter.com%2Fx%2Fstatus%2F507185938620219395&align=center')
+        axios.get('http://basecamp-demos.informatik.uni-hamburg.de:8080/sentiment19/tweet',
+        {params: {offensive: 1}}),
+        axios.get('http://basecamp-demos.informatik.uni-hamburg.de:8080/sentiment19/tweet',
+        {params: {offensive: 0}})
       ])
       .then(axios.spread((offTweet, nonOffTweet) => {
         document.getElementById("offTweet").innerHTML = offTweet.data.html
