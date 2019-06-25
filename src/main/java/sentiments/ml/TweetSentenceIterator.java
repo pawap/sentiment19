@@ -8,7 +8,8 @@ import sentiments.domain.repository.TweetRepository;
 import java.util.Iterator;
 
 /**
- * Implementation of the dl4j sentenceIterator interface. used to iterate over the texts of all available tweets.
+ * Implementation of the dl4j sentenceIterator interface. used to iterate over the texts of all available tweets
+ * in agiven {@link TweetRepository}.
  *
  * @author 6runge
  */
@@ -17,7 +18,7 @@ public class TweetSentenceIterator implements SentenceIterator {
     private TweetRepository tweetRepository;
     private Iterator<Tweet> tweets;
 
-    /*
+    /**
      * Constructor
      * @param sentencePreProcessor The PreProcessor used on all the tweets.
      * @param tweetRepository the repository containing the tweets to iterate over
@@ -28,11 +29,15 @@ public class TweetSentenceIterator implements SentenceIterator {
         this.tweets = tweetRepository.findAll().iterator();
     }
 
+    /**
+     * Constructor
+     * @param tweetRepository the repository containing the tweets to iterate over
+     */
     public TweetSentenceIterator(TweetRepository tweetRepository) {
         this(new SentencePreProcessor() {
             @Override
             public String preProcess(String sentence) {
-                return sentence.replaceAll("[^a-zA-Z ]|^(https?|ftp)://.*$", "").toLowerCase();
+                return sentence.replaceAll("[^a-zA-Z ]", "").toLowerCase();
             }
         }, tweetRepository);
     }

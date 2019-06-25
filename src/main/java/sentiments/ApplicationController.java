@@ -239,7 +239,10 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
         examples += " germany: " + list + ",  ";
 
         list = word2VecModel.wordsNearest("usa", 10);
-        examples += " usa: " + list + " ";
+        examples += " usa: " + list + ",  ";
+
+        list = word2VecModel.wordsNearest("nobody", 10);
+        examples += " nobody: " + list + " ";
 
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");

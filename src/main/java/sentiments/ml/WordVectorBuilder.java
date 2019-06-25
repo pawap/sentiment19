@@ -12,21 +12,38 @@ import sentiments.domain.repository.TweetRepository;
 
 import java.io.IOException;
 
+/**
+ * Builds Wordvectors out of the Tweets in a given {@link TweetRepository}.
+ *
+ * @author 6runge
+ */
 public class WordVectorBuilder {
 
     private TweetRepository tweetRepo;
 
+    /**
+     * Returns the path where the word vectors are persisted.
+     * @return the file path of the model file
+     */
     public static String getModelFilePath() {
         return modelFilePath;
     }
 
     private static String modelFilePath = "resources/word2vec.bin";
 
+    /**
+     * Constructor
+     * @param tweetRepository the repository where the tweets to be learned from are stored.
+     */
     public WordVectorBuilder(TweetRepository tweetRepository){
         this.tweetRepo = tweetRepository;
     }
 
 
+    /**
+     * Builds wordvectors and persists them at a location accessible via {@link #getModelFilePath()}.
+     * @throws IOException
+     */
     public  void train() throws IOException {
         SentenceIterator sentenceIterator = new TweetSentenceIterator(tweetRepo);
         TokenizerFactory tokenizerFactory = new DefaultTokenizerFactory();
