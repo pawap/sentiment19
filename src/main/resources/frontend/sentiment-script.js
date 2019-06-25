@@ -11,9 +11,7 @@ window.addEventListener('load', function(){
                 nonOffensive: 0,
                 //pie chart time selection value
                 selectPieTime: '',
-                pieOff: 0,
-                pieNonOff: 0,
-                //time selection values
+                //Pie chart time selection values
                 times: [
                     {text: "Letzter Tag", value: "day"}, 
                     {text: "Letzte Woche", value: "week"}, 
@@ -28,7 +26,9 @@ window.addEventListener('load', function(){
         },
         methods:{
 
-            //Update Counters
+            /**
+             * Updates the main offensive and nonOffensive tweet amount counters (and initiates Pie Chart update)
+             */
             updateCounters: function(){
 
                 axios.all([
@@ -42,50 +42,39 @@ window.addEventListener('load', function(){
                   }));
                 
             },
-            //Update Pie Chart based on selected time frame
-            //To-Do: Request Dataset
+            /**
+             * Updates pie chart, based on selected time frame
+             */
             updatePieChart: function(){
 
+                //local function to format given date to match the required format for backend request
                 function stringDate(d){
                     return d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate()
                 }
 
                 let data
+                let startDate = stringDate(getDate(0))
+                let endDate
                 
+                //if selected time frame is not further specified, counts from entire period are used (value the same as the counters)
                 if(this.selectPieTime === ''){
                     data = [this.offensive, this.nonOffensive]
                     pieChart.data.datasets[0].data = data
                     pieChart.update()
-                }else if(this.selectPieTime === 'day'){
+                //Request data for chosen time frame from backend
+                } else {
+                    if(this.selectPieTime === 'day'){
+                        endDate = stringDate(getDate(-1))
+                    }else if(this.selectPieTime === 'week'){
+                        endDate = stringDate(getDate(-7))
+                    }else if(this.selectPieTime === 'month'){
+                        endDate = stringDate(getDate(-30))
+                    }
                     axios.all([
                         axios.get('http://basecamp-demos.informatik.uni-hamburg.de:8080/sentiment19/stats',
-                        {params: {offensive: 1, startdate: stringDate(getDate(0)),  enddate: stringDate(getDate(-1))}}),
+                        {params: {offensive: 1, startdate: startDate,  enddate: endDate}}),
                         axios.get('http://basecamp-demos.informatik.uni-hamburg.de:8080/sentiment19/stats',
-                        {params: {offensive: 0, startdate: stringDate(getDate(0)),  enddate: stringDate(getDate(-1))}})
-                      ])
-                      .then(axios.spread((off, nonOff) => {
-                        data =  [off.data.count, nonOff.data.count]
-                        pieChart.data.datasets[0].data = data
-                        pieChart.update()
-                    }));
-                }else if(this.selectPieTime === 'week'){
-                    axios.all([
-                        axios.get('http://basecamp-demos.informatik.uni-hamburg.de:8080/sentiment19/stats',
-                        {params: {offensive: 1, startdate: stringDate(getDate(0)),  enddate: stringDate(getDate(-7))}}),
-                        axios.get('http://basecamp-demos.informatik.uni-hamburg.de:8080/sentiment19/stats',
-                        {params: {offensive: 0, startdate: stringDate(getDate(0)),  enddate: stringDate(getDate(-7))}})
-                      ])
-                      .then(axios.spread((off, nonOff) => {
-                        data =  [off.data.count, nonOff.data.count]
-                        pieChart.data.datasets[0].data = data
-                        pieChart.update()
-                    }));
-                }else if(this.selectPieTime === 'month'){
-                    axios.all([
-                        axios.get('http://basecamp-demos.informatik.uni-hamburg.de:8080/sentiment19/stats',
-                        {params: {offensive: 1, startdate: stringDate(getDate(0)),  enddate: stringDate(getDate(-30))}}),
-                        axios.get('http://basecamp-demos.informatik.uni-hamburg.de:8080/sentiment19/stats',
-                        {params: {offensive: 0, startdate: stringDate(getDate(0)),  enddate: stringDate(getDate(-30))}})
+                        {params: {offensive: 0, startdate: startDate,  enddate: endDate}})
                       ])
                       .then(axios.spread((off, nonOff) => {
                         data =  [off.data.count, nonOff.data.count]
@@ -150,14 +139,14 @@ window.addEventListener('load', function(){
             backgroundColor: 'rgb(255, 99, 132)',
             borderColor: 'rgb(255, 99, 132)',
             fill: false,
-            data: [3, 7, 10, 10]
+            data: [1,2,3,4]
         },
         {
             label: 'non-offensive',
             backgroundColor: 'rgb(0, 255, 0)',
             borderColor: 'rgb(0, 255, 0)',
             fill: false,
-            data: [2, 5, 8, 10]
+            data: [5,6,7,8]
         },
     ]
     },
@@ -179,7 +168,9 @@ window.addEventListener('load', function(){
     }
     });
 
-    //initialise Tweets, Line/Pie Chart and Counters
+    /**
+     * Initialise Tweet display, Tweet amount counters and the pie and line charts
+     */
     function init(){
         displayTweet()
         vue.updateCounters()
@@ -200,7 +191,14 @@ function formatDate(date){
     return date.getDate() + "." + (date.getMonth()+1)  + "." + date.getFullYear().toString().slice(-2)
 }
 
-//Gets range of dates  between start and end date with key (for example 'day') steps 
+/**
+ * Returns range of dates, between specified start and end date, with a given step length (key)
+ * @param {*} start Start date for the date range
+ * @param {*} end End date for the date range
+ * @param {*} key Increment size to be used for each step
+ * @param {*} arr Resulting array - does not need to be provided on function call
+ * @returns (Already formmatted) date range
+ */
 function getRangeOfDates(start, end, key, arr = [start.startOf(key)]) {
   
     if(start.isAfter(end)) throw new Error('start must precede end')
@@ -213,51 +211,22 @@ function getRangeOfDates(start, end, key, arr = [start.startOf(key)]) {
     
 }
 
- //Get the tweets to be displayed
+/**
+ * Requests html code for offensive/nonoffensive Tweets and displays them as examples
+ */
  function displayTweet(){
 
-    //example for tweet ID of a possibly non offensive tweet
-    nonOffTweetId = 507185938620219395
-
-    //To-Do: Request html data from the backend, which retrieves the data from the Twitter-Api
-    axios.get('https://cors-anywhere.herokuapp.com/https://publish.twitter.com/oembed?url=https%3A%2F%2Ftwitter.com%2Fx%2Fstatus%2F507185938620219395&align=center'
-    )
-        .then(function (response) {
-        // handle success
-
-        //set the corresponding div content to received html
-        document.getElementById("nonOffTweet").innerHTML = response.data.html
+    axios.all([
+        axios.get('http://basecamp-demos.informatik.uni-hamburg.de:8080/sentiment19/tweet',
+        {params: {offensive: 1}}),
+        axios.get('http://basecamp-demos.informatik.uni-hamburg.de:8080/sentiment19/tweet',
+        {params: {offensive: 0}})
+      ])
+      .then(axios.spread((offTweet, nonOffTweet) => {
+        document.getElementById("offTweet").innerHTML = offTweet.data.html
+        document.getElementById("nonOffTweet").innerHTML = nonOffTweet.data.html
         twttr.widgets.load()
-
-    })
-    .catch(function (error) {
-        // handle error
-        console.log(error)
-    })
-    .finally(function () {
-        // always executed
-    })
-
-    //example for tweet ID of a possibly offensive tweet
-    offTweetId = 1130427754971881472
-
-    axios.get('https://cors-anywhere.herokuapp.com/https://publish.twitter.com/oembed?url=https%3A%2F%2Ftwitter.com%2Fx%2Fstatus%2F1130427754971881472&align=center'
-    )
-        .then(function (response) {
-        // handle success
-
-        document.getElementById("offTweet").innerHTML = response.data.html
-        twttr.widgets.load()
-
-    })
-    .catch(function (error) {
-        // handle error
-        console.log(error)
-    })
-    .finally(function () {
-        // always executed
-    })
-    
+    }));
 }
 
 //get number of tweets for each day between start and end date for specified label, currently just returns dummy data
