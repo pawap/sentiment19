@@ -122,7 +122,7 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
 			@RequestParam(value = "startdate", defaultValue = "1990-01-01") @DateTimeFormat(pattern = "yyyy-MM-dd") Date startdate,
 			@RequestParam(value = "enddate", defaultValue = "today") @DateTimeFormat(pattern = "yyyy-MM-dd") Date enddate) {
 
-    	int count = tweetRepository.countByOffensiveAndDate(offensive, new Timestamp(startdate.getTime()), new Timestamp(enddate.getTime()));
+    	int count = tweetRepository.countfindAllByDateBetween(new Timestamp(startdate.getTime()), new Timestamp(enddate.getTime()));
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");
         String response;
