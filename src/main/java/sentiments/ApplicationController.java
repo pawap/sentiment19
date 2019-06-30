@@ -151,7 +151,7 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
         String response = "";
         try {
             File file = ResourceUtils.getFile(
-                    "classpath:html-tester/Sentiments-Frontend.html");
+                    "classpath:frontend/sentiment-frontend.html");
             response = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
         } catch (FileNotFoundException e) {
             e.printStackTrace();

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset='utf-8'>
+		<!--Bootstrap settings/import-->
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+		<!--Vue.js import-->
+		<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+		<!--VCalender import-->
+		<link rel='stylesheet' href='https://unpkg.com/v-calendar/lib/v-calendar.min.css'>
+		<script src='https://unpkg.com/v-calendar'></script>
+		<!--Moment.js import-->
+		<script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js'></script>
+		<!--Chart.js import-->
+		<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+		<!--Axios import-->
+		<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+		<!--Twitter import-->
+		<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+		<!--Own Script-->
+		<script src="sentiment-script.js"></script>
+	</head>
+	<!--CSS Styling-->
+	<style>
+		.main{
+			text-align: center;
+		}
+
+		select{
+			padding: 1px 0px;
+			min-width: 150px;
+		}
+
+		.content{
+			border-left: 2px solid grey;
+		}
+		
+		.offensive{
+			color: rgb(255, 99, 132)
+		}
+
+		.nonOffensive{
+			color: rgb(0,255,0)
+		}
+	</style>
+	<body>
+		<div class="container-fluid main" id="app">
+			<div class="row">
+				<div class="col-sm-12">
+					<h1>Sentiment Analysis</h1>
+					<h2>BA-Projekt base.camp</h2>
+					<hr>
+					<div>
+						<h3 class="offensive">Anzahl offensive Tweets: {{offensive}}</h3>
+						<h3 class="nonOffensive">Anzahl non-offensive Tweets: {{nonOffensive}}</h3>
+					</div>
+				</div>
+			</div>
+			<div class="row my-3">
+				<div class="col-sm-6">
+					<div class="content p-2">
+						<h4>Anzahl offensive vs. non-offensive Tweets</h4>
+						<select v-model="selectPieTime" @change='updatePieChart()'>
+								<option value="">Gesamter Zeitraum</option>
+								<option v-for="time in times" v-bind:value="time.value">
+										{{ time.text }}
+								</option>
+						</select>
+						<div>
+							<canvas id="pieChart"></canvas>
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<div class="content p-2">
+						<h4>Verlauf offensive & non-offensive Tweets</h4>
+						<v-date-picker
+						@input="updateLineChart()"
+						popover-align="center"
+						:max-date='new Date()'
+						mode='range'
+						v-model="selectedDate">
+						</v-date-picker>	
+						<div>
+							<canvas id="lineChart"></canvas>
+						</div>		
+					</div>
+				</div>
+			</div>
+			<hr>
+			<div class="row my-3">
+				<div class="col-sm-6">
+					<div class="content p-2">
+						<h4>Zufälliger als offensive eingestufter Tweet:</h4>		
+						<div id=offTweet></div>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<div class="content p-2">
+						<h4>Zufälliger als non-offensive eingestufter Tweet:</h4>
+						<div id=nonOffTweet></div>
+					</div>
+				</div>
+			</div>			
+		</div>	
+		<!--Bootstrap imports-->
+		<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+		<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+	</body>
+</html>

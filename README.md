@@ -1,4 +1,4 @@
-# ba-service-backend
+# Sentiment19
 
 This project contains a web service based on the Spring Boot framework.
 It features RESTful endpoints.
@@ -28,7 +28,6 @@ It's best to use Maven, though, it'll take care automatically)
 - check with "curl localhost:8080/sentiments?tweet=IBM&format=json"
 - for textual output: "curl localhost:8080/sentiments?tweet=IBM&format=text"
 
-### Check using html-tester
+### Check using frontend
 - URL: "localhost:8081/html"
-
 
