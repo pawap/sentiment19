@@ -14,6 +14,7 @@ import java.util.Date;
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 
@@ -125,11 +126,25 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
     	int count = tweetRepository.countByOffensiveAndDate(offensive, new Timestamp(startdate.getTime()), new Timestamp(enddate.getTime()));
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");
-        String response;
         JSONObject out = new JSONObject();
         out.put("count", count);
         return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.CREATED);
-    }    
+    }
+
+    @RequestMapping("/timeline")
+    public ResponseEntity<String> timeline(@RequestParam(value = "offensive", defaultValue = "1") boolean offensive,
+                                        @RequestParam(value = "startdate", defaultValue = "1990-01-01") @DateTimeFormat(pattern = "yyyy-MM-dd") Date startdate,
+                                        @RequestParam(value = "enddate", defaultValue = "today") @DateTimeFormat(pattern = "yyyy-MM-dd") Date enddate) {
+
+        List<Integer> count = tweetRepository.countByOffensiveAndDayInInterval(offensive, new Timestamp(startdate.getTime()), new Timestamp(enddate.getTime()));
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("Access-Control-Allow-Origin", "*");
+        JSONObject out = new JSONObject();
+        JSONArray timeline = new JSONArray();
+        timeline.addAll(count);
+        out.put("timeline", timeline);
+        return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.CREATED);
+    }
 
     @RequestMapping("/")
 	public ResponseEntity<String> html() {
