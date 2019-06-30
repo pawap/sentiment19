@@ -32,8 +32,8 @@ window.addEventListener('load', function(){
             updateCounters: function(){
 
                 axios.all([
-                    axios.get('http://basecamp-demos.informatik.uni-hamburg.de:8080/sentiment19/stats',{params: {offensive: 1}}),
-                    axios.get('http://basecamp-demos.informatik.uni-hamburg.de:8080/sentiment19/stats',{params: {offensive: 0}})
+                    axios.get('/sentiment19/stats',{params: {offensive: 1}}),
+                    axios.get('/sentiment19/stats',{params: {offensive: 0}})
                   ])
                   .then(axios.spread((off, nonOff) => {
                     this.offensive = off.data.count
@@ -71,9 +71,9 @@ window.addEventListener('load', function(){
                         endDate = stringDate(getDate(-30))
                     }
                     axios.all([
-                        axios.get('http://basecamp-demos.informatik.uni-hamburg.de:8080/sentiment19/stats',
+                        axios.get('/sentiment19/stats',
                         {params: {offensive: 1, startdate: startDate,  enddate: endDate}}),
-                        axios.get('http://basecamp-demos.informatik.uni-hamburg.de:8080/sentiment19/stats',
+                        axios.get('/sentiment19/stats',
                         {params: {offensive: 0, startdate: startDate,  enddate: endDate}})
                       ])
                       .then(axios.spread((off, nonOff) => {
@@ -87,13 +87,20 @@ window.addEventListener('load', function(){
             //Update the line chart labels based on the selected start-/enddate
             //To-Do: Change the dataset aswell -> has to be requested from backend
             updateLineChart: function(){
-                dateRange = getRangeOfDates(moment(this.selectedDate.start), moment(this.selectedDate.end), 'day')
-                lineChart.data.labels=dateRange
-                offData = getDataRange("off", dateRange[0], dateRange[dateRange.length-1], dateRange.length)
-                nonOffData = getDataRange("nonOff", dateRange[0], dateRange[dateRange.length-1], dateRange.length)
-                lineChart.data.datasets[0].data = offData
-                lineChart.data.datasets[1].data = nonOffData
-                lineChart.update()
+                axios.all([
+                    axios.get('/sentiment19/timeline',
+                        {params: {offensive: 1, startdate: this.selectedDate.start, enddate: this.selectedDate.end}}),
+                    axios.get('/sentiment19/timeline',
+                        {params: {offensive: 0, startdate: this.selectedDate.start, enddate: this.selectedDate.end}})
+                ])
+                    .then(axios.spread((off, nonOff) => {
+                        dateRange = getRangeOfDates(moment(this.selectedDate.start), moment(this.selectedDate.end), 'day')
+                        lineChart.data.labels = dateRange
+                        lineChart.data.datasets[0].data = off.data.timeline
+                        lineChart.data.datasets[1].data = nonOff.data.timeline
+                        lineChart.update()
+                    }));
+
             },
         }
     })
@@ -217,9 +224,9 @@ function getRangeOfDates(start, end, key, arr = [start.startOf(key)]) {
  function displayTweet(){
 
     axios.all([
-        axios.get('http://basecamp-demos.informatik.uni-hamburg.de:8080/sentiment19/tweet',
+        axios.get('/sentiment19/tweet',
         {params: {offensive: 1}}),
-        axios.get('http://basecamp-demos.informatik.uni-hamburg.de:8080/sentiment19/tweet',
+        axios.get('/sentiment19/tweet',
         {params: {offensive: 0}})
       ])
       .then(axios.spread((offTweet, nonOffTweet) => {
@@ -227,22 +234,6 @@ function getRangeOfDates(start, end, key, arr = [start.startOf(key)]) {
         document.getElementById("nonOffTweet").innerHTML = nonOffTweet.data.html
         twttr.widgets.load()
     }));
-}
-
-//get number of tweets for each day between start and end date for specified label, currently just returns dummy data
-//To-Do: get real data from Backend
-function getDataRange(label, start, end, l){
-    if(label === "off"){
-        //To-Do: Axios.get() request number of offensive tweets for each day from start to end 
-
-        //placeholder return
-        return Array.from({length: l}, () => Math.floor(Math.random() * 25));
-    }else if(label === "nonOff"){
-        //To-Do: Axios.get() request number of non-offensive tweets for each day from start to end 
-
-        //placeholder return
-        return Array.from({length: l}, () => Math.floor(Math.random() * 25));
-    }
 }
 
 /**

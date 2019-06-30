@@ -3,4 +3,5 @@ spring.jpa.hibernate.ddl-auto=update
 spring.jpa.properties.hibernate.jdbc.batch_size=1024
 spring.data.mongodb.host=localhost
 spring.data.mongodb.port=27017
+server.servlet.context-path=/sentiment19
 localTweetJson = resources/tweets.json

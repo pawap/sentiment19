@@ -19,7 +19,7 @@
 		<!--Twitter import-->
 		<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 		<!--Own Script-->
-		<script src="sentiment-script.js"></script>
+		<script src="/sentiment19/js/sentiment-script.js"></script>
 	</head>
 	<!--CSS Styling-->
 	<style>
@@ -80,7 +80,8 @@
 						popover-align="center"
 						:max-date='new Date()'
 						mode='range'
-						v-model="selectedDate">
+						v-model="selectedDate"
+						day-format="YYYY-MM-DD">
 						</v-date-picker>	
 						<div>
 							<canvas id="lineChart"></canvas>
