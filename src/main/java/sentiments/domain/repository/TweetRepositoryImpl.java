@@ -50,9 +50,6 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
 
         for (DayCount i: mongoTemplate.aggregate(agg, Tweet.class, DayCount.class)) {
             LocalDate currentDate = LocalDate.parse(i.day, f);
-            System.out.println(currentDate);
-            System.out.println("Current:" + current);
-
             while (current.compareTo(currentDate) < 0) {
                 result.add(0);
                 current = current.plusDays(1);
