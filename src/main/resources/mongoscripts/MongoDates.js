@@ -1,5 +1,5 @@
 var conn = new Mongo();
-var db   = conn.getDB('testdb');
+var db   = conn.getDB(dbName);
 
 var i = 1;
 var incrementDates = function() {

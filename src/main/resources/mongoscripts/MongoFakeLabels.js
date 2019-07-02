@@ -1,5 +1,5 @@
-var conn = new Mongo();
-var db   = conn.getDB('testdb');
+var conn = new Mongo(); 
+var db   = conn.getDB(dbName);
 
 var fakeLabels = function() {
     db.tweet.find({ crdate : { $exists : true }}).forEach(function(doc) {

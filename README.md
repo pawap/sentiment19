@@ -36,10 +36,10 @@ password: ```ppp```
 
 ### Mongo-Fake-Data
 You can tweek the imported data for testing purposes:
-Go to the ```src/main/resources/mongoscripts``` directory and run the following commands:
+Go to the ```src/main/resources/mongoscripts``` directory and run the following commands (replacing <DBNAME> with the name of your local DB):
 ````
-mongo MongoDates.js
-mongo MongoFakeLabels.js
+mongo MongoDates.js --eval 'var dbName="<DBNAME>";'
+mongo mongo MongoFakeLabels.js --eval 'var dbName="<DBNAME>";'
 ````
 (alternatively just run thoses scripts with mongo from anywhere. Warning may not work out of the box with Authorization on the DB)
 - first one assigns new, nicely distributed dates to all tweets
