@@ -63,29 +63,36 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
 	@RequestMapping("/tweet")
     public ResponseEntity<String> tweet(@RequestParam(value = "offensive", defaultValue = "1") boolean offensive) {
         String base_url = "https://publish.twitter.com/oembed?url=https://twitter.com/user/status/";
-        String url = base_url + "911789314169823232" + "&align=center";
+        String twitterId;
         StringBuffer response = new StringBuffer();
         JsonObject obj = null;
 
         int responseCode = 0;
-        try {
-            URL urlObj = new URL(url);
-            HttpURLConnection con = (HttpURLConnection) urlObj.openConnection();
+        int i = 0;
+        while (responseCode != 200 && i < 100) {
+            i++;
+            try {
+                twitterId = tweetRepository.getRandomTwitterId(offensive);
+                if (twitterId == null) break;
+                String url = base_url + twitterId + "&align=center";
+                URL urlObj = new URL(url);
+                HttpURLConnection con = (HttpURLConnection) urlObj.openConnection();
 
-            // optional default is GET
-            con.setRequestMethod("GET");
+                // optional default is GET
+                con.setRequestMethod("GET");
 
-            //add request header
-            responseCode = con.getResponseCode();
-            System.out.println("\nSending 'GET' request to URL : " + url);
-            System.out.println("Response Code : " + responseCode);
+                //add request header
+                responseCode = con.getResponseCode();
+                System.out.println("\nSending 'GET' request to URL : " + url);
+                System.out.println("Response Code : " + responseCode);
 
-            JsonReader reader = new JsonReader(new InputStreamReader(con.getInputStream()));
-            obj = new JsonParser().parse(reader).getAsJsonObject();
-            reader.close();
+                JsonReader reader = new JsonReader(new InputStreamReader(con.getInputStream()));
+                obj = new JsonParser().parse(reader).getAsJsonObject();
+                reader.close();
 
-        } catch (IOException e) {
-            e.printStackTrace();
+            } catch (IOException e) {
+
+            }
         }
         String str = null;
         if (obj != null) {
@@ -93,6 +100,7 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
         } else {
             str = "<h3>Couldn't fetch tweet</h3>";
         }
+
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");
         JSONObject out = new JSONObject();

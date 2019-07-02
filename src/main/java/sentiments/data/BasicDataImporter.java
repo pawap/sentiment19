@@ -159,7 +159,7 @@ public class BasicDataImporter {
 		}
 	}
 
-	private void mapJsonToTweet(JsonObject object, AbstractTweet tweet) {
+	private void mapJsonToTweet(JsonObject object, Tweet tweet) {
 		String text = null;
 		if (object.has("full_text")) {
 			text = object.get("full_text").getAsString();
@@ -167,6 +167,10 @@ public class BasicDataImporter {
 			text = object.get("text").getAsString();
 		}
 		tweet.setText(text);
+		if (object.has("id_str")) {
+			tweet.setTwitterId(object.get("id_str").getAsString());
+		}
+
 		if (object.has("created_at")) {
 			LocalDateTime dateTime;
 			try {

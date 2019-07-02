@@ -4,6 +4,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.AggregationResults;
+import org.springframework.data.mongodb.core.aggregation.SampleOperation;
 import org.springframework.data.mongodb.core.query.Criteria;
 import sentiments.domain.model.DayCount;
 import sentiments.domain.model.Tweet;
@@ -48,9 +50,6 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
 
         for (DayCount i: mongoTemplate.aggregate(agg, Tweet.class, DayCount.class)) {
             LocalDate currentDate = LocalDate.parse(i.day, f);
-            System.out.println(currentDate);
-            System.out.println("Current:" + current);
-
             while (current.compareTo(currentDate) < 0) {
                 result.add(0);
                 current = current.plusDays(1);
@@ -63,6 +62,18 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
             current = current.plusDays(1);
         }
 
+        return result;
+    }
+
+    @Override
+    public String getRandomTwitterId(boolean offensive) {
+        SampleOperation sampleStage = Aggregation.sample(1);
+        Aggregation aggregation = Aggregation.newAggregation(Aggregation.match(Criteria.where("offensive").is(offensive)),
+                sampleStage,
+                Aggregation.project("twitterId").andExclude("_id"));
+        AggregationResults<Tweet> output = mongoTemplate.aggregate(aggregation, Tweet.class, Tweet.class);
+        List<Tweet> mappedOutput = output.getMappedResults();
+        String result = (mappedOutput.size() > 0)? mappedOutput.get(0).getTwitterId(): null;
         return result;
     }
 }
