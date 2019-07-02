@@ -22,7 +22,7 @@ public interface TweetRepository extends MongoRepository<Tweet, Integer>, TweetR
 	@Query(value = "{ 'offensive' : ?0 }", count = true)
 	public int countByOffensive(@Param("offensive") Boolean offensive);
 	
-	@Query(value = "{ 'offensive' : ?0, 'crdate':{ $gte: ?0, $lte: ?1} }", count = true)
+	@Query(value = "{ 'offensive' : ?0, 'crdate': { $gte: ?1, $lte: ?2} }", count = true)
 	public int countByOffensiveAndDate(@Param("offensive") Boolean offensive, Timestamp startdate, Timestamp enddate);
 
 }

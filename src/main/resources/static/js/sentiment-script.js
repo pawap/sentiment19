@@ -15,7 +15,8 @@ window.addEventListener('load', function(){
                 times: [
                     {text: "Letzter Tag", value: "day"}, 
                     {text: "Letzte Woche", value: "week"}, 
-                    {text: "Letzter Monat", value: "month"}, 
+                    {text: "Letzter Monat", value: "month"},
+                    {text: "Gewählter Zeitraum", value: "range"},
                 ],
                 //datepicker selection, initialized with one week
                 selectedDate: {
@@ -53,9 +54,9 @@ window.addEventListener('load', function(){
                 }
 
                 let data
-                let startDate = stringDate(getDate(0))
-                let endDate
-                
+                let startDate = new Date()
+                let endDate = new Date();
+
                 //if selected time frame is not further specified, counts from entire period are used (value the same as the counters)
                 if(this.selectPieTime === ''){
                     data = [this.offensive, this.nonOffensive]
@@ -64,11 +65,17 @@ window.addEventListener('load', function(){
                 //Request data for chosen time frame from backend
                 } else {
                     if(this.selectPieTime === 'day'){
-                        endDate = stringDate(getDate(-1))
+                        startDate = getDate(-1)
                     }else if(this.selectPieTime === 'week'){
-                        endDate = stringDate(getDate(-7))
+                        startDate = getDate(-7)
                     }else if(this.selectPieTime === 'month'){
-                        endDate = stringDate(getDate(-30))
+                        startDate = getDate(-30)
+                    }else if(this.selectPieTime === 'range'){
+                        endDate = this.selectedDate.end
+                        startDate = this.selectedDate.start;
+                    }else {
+                        startDate = null;
+                        endDate = null;
                     }
                     axios.all([
                         axios.get('/sentiment19/stats',
@@ -99,6 +106,9 @@ window.addEventListener('load', function(){
                         lineChart.data.datasets[0].data = off.data.timeline
                         lineChart.data.datasets[1].data = nonOff.data.timeline
                         lineChart.update()
+                        if (this.selectPieTime == 'range') {
+                            vue.updatePieChart();
+                        }
                     }));
 
             },
@@ -181,6 +191,7 @@ window.addEventListener('load', function(){
     function init(){
         displayTweet()
         vue.updateCounters()
+        vue.updatePieChart()
         vue.updateLineChart()
     }
     
