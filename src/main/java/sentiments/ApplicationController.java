@@ -14,6 +14,7 @@ import java.util.Date;
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 
@@ -62,29 +63,36 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
 	@RequestMapping("/tweet")
     public ResponseEntity<String> tweet(@RequestParam(value = "offensive", defaultValue = "1") boolean offensive) {
         String base_url = "https://publish.twitter.com/oembed?url=https://twitter.com/user/status/";
-        String url = base_url + "911789314169823232" + "&align=center";
+        String twitterId;
         StringBuffer response = new StringBuffer();
         JsonObject obj = null;
 
         int responseCode = 0;
-        try {
-            URL urlObj = new URL(url);
-            HttpURLConnection con = (HttpURLConnection) urlObj.openConnection();
+        int i = 0;
+        while (responseCode != 200 && i < 100) {
+            i++;
+            try {
+                twitterId = tweetRepository.getRandomTwitterId(offensive);
+                if (twitterId == null) break;
+                String url = base_url + twitterId + "&align=center";
+                URL urlObj = new URL(url);
+                HttpURLConnection con = (HttpURLConnection) urlObj.openConnection();
 
-            // optional default is GET
-            con.setRequestMethod("GET");
+                // optional default is GET
+                con.setRequestMethod("GET");
 
-            //add request header
-            responseCode = con.getResponseCode();
-            System.out.println("\nSending 'GET' request to URL : " + url);
-            System.out.println("Response Code : " + responseCode);
+                //add request header
+                responseCode = con.getResponseCode();
+                System.out.println("\nSending 'GET' request to URL : " + url);
+                System.out.println("Response Code : " + responseCode);
 
-            JsonReader reader = new JsonReader(new InputStreamReader(con.getInputStream()));
-            obj = new JsonParser().parse(reader).getAsJsonObject();
-            reader.close();
+                JsonReader reader = new JsonReader(new InputStreamReader(con.getInputStream()));
+                obj = new JsonParser().parse(reader).getAsJsonObject();
+                reader.close();
 
-        } catch (IOException e) {
-            e.printStackTrace();
+            } catch (IOException e) {
+
+            }
         }
         String str = null;
         if (obj != null) {
@@ -92,6 +100,7 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
         } else {
             str = "<h3>Couldn't fetch tweet</h3>";
         }
+
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");
         JSONObject out = new JSONObject();
@@ -125,11 +134,59 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
     	int count = tweetRepository.countByOffensiveAndDate(offensive, new Timestamp(startdate.getTime()), new Timestamp(enddate.getTime()));
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");
-        String response;
         JSONObject out = new JSONObject();
         out.put("count", count);
         return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.CREATED);
-    }    
+    }
+
+    @RequestMapping("/count")
+    public ResponseEntity<String> count() {
+
+        int count = tweetRepository.countfindAllTweets();
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("Access-Control-Allow-Origin", "*");
+        JSONObject out = new JSONObject();
+        out.put("count", count);
+        return new ResponseEntity<String>(out.toString(), responseHeaders, HttpStatus.CREATED);
+    }
+
+    @RequestMapping("/byDateBetween")
+    public ResponseEntity<String> byDateBetween(@RequestParam(value = "startdate", defaultValue = "1990-01-01") @DateTimeFormat(pattern = "yyyy-MM-dd") Date startdate,
+                                                @RequestParam(value = "enddate", defaultValue = "today") @DateTimeFormat(pattern = "yyyy-MM-dd") Date enddate) {
+
+        int count = tweetRepository.countfindAllByDateBetween(new Timestamp(startdate.getTime()), new Timestamp(enddate.getTime()));
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("Access-Control-Allow-Origin", "*");
+        JSONObject out = new JSONObject();
+        out.put("count", count);
+        return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.CREATED);
+    }
+
+    @RequestMapping("/countOffensive")
+    public ResponseEntity<String> cOffensive(@RequestParam(value = "offensive", defaultValue = "1") boolean offensive) {
+
+        int count = tweetRepository.countByOffensive(offensive);
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("Access-Control-Allow-Origin", "*");
+        JSONObject out = new JSONObject();
+        out.put("count", count);
+        return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.CREATED);
+    }
+
+    @RequestMapping("/timeline")
+    public ResponseEntity<String> timeline(@RequestParam(value = "offensive", defaultValue = "1") boolean offensive,
+                                        @RequestParam(value = "startdate", defaultValue = "1990-01-01") @DateTimeFormat(pattern = "yyyy-MM-dd") Date startdate,
+                                        @RequestParam(value = "enddate", defaultValue = "today") @DateTimeFormat(pattern = "yyyy-MM-dd") Date enddate) {
+
+        List<Integer> count = tweetRepository.countByOffensiveAndDayInInterval(offensive, new Timestamp(startdate.getTime()), new Timestamp(enddate.getTime()));
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("Access-Control-Allow-Origin", "*");
+        JSONObject out = new JSONObject();
+        JSONArray timeline = new JSONArray();
+        timeline.addAll(count);
+        out.put("timeline", timeline);
+        return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.CREATED);
+    }
 
     @RequestMapping("/")
 	public ResponseEntity<String> html() {

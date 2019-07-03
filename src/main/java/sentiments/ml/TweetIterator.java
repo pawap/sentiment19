@@ -37,15 +37,14 @@ public class TweetIterator implements DataSetIterator{
     private Iterator<Tweet> nonoffensiveTweets;
     private final TokenizerFactory tokenizerFactory;
 	private int totalExamples;
-	private TweetRepository tweetRepository;
-	private boolean train;
+	private TrainingTweetRepository tweetRepository;
+	private boolean test;
 
     /**
-     * @param dataDirectory the directory of the IMDB review data set
      * @param wordVectors WordVectors object
      * @param batchSize Size of each minibatch for training
      * @param truncateLength If reviews exceed
-     * @param train If true: return the training data. If false: return the testing data.
+     * @param test If true: return the testing data. If false: return the training data.
      */
     public TweetIterator(TrainingTweetRepository tweetRepository, WordVectors wordVectors, int batchSize, int truncateLength, boolean test) {
         this.batchSize = batchSize;
@@ -54,7 +53,7 @@ public class TweetIterator implements DataSetIterator{
         this.reset();
         this.wordVectors = wordVectors;
         this.truncateLength = truncateLength;
-        this.train = train;
+        this.test = test;
         tokenizerFactory = new DefaultTokenizerFactory();
         tokenizerFactory.setTokenPreProcessor(new CommonPreprocessor());
         System.out.println("totalExamples: " + totalExamples);
@@ -171,8 +170,8 @@ public class TweetIterator implements DataSetIterator{
     @Override
     public void reset() {
         cursor = 0;
-        this.offensiveTweets = tweetRepository.findAllByOffensive(true).iterator();
-       	this.nonoffensiveTweets = tweetRepository.findAllByOffensive(false).iterator();
+        this.offensiveTweets = tweetRepository.findAllByTestAndOffensive(test,true).iterator();
+       	this.nonoffensiveTweets = tweetRepository.findAllByTestAndOffensive(test, false).iterator();
         this.totalExamples = (int) tweetRepository.count();
     }
 

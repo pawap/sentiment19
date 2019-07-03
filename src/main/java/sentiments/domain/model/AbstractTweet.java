@@ -1,23 +1,18 @@
 package sentiments.domain.model;
 
-import java.sql.Timestamp;
-
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Lob;
-import javax.persistence.MappedSuperclass;
+import javax.persistence.*;
+import java.util.Date;
 
 @MappedSuperclass
 public class AbstractTweet {
 
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE)
 	@Id
 	private Integer uid;
 	@Lob
 	private String text;
-	private Timestamp crdate;
-	private Timestamp tmstamp;
+	private Date crdate;
+	private Date tmstamp;
 	private boolean offensive;
 
 	public AbstractTweet() {
@@ -39,19 +34,19 @@ public class AbstractTweet {
 		this.text = text;
 	}
 
-	public Timestamp getCrdate() {
+	public Date getCrdate() {
 		return crdate;
 	}
 
-	public void setCrdate(Timestamp crdate) {
+	public void setCrdate(Date crdate) {
 		this.crdate = crdate;
 	}
 
-	public Timestamp getTmstamp() {
+	public Date getTmstamp() {
 		return tmstamp;
 	}
 
-	public void setTmstamp(Timestamp tmstamp) {
+	public void setTmstamp(Date tmstamp) {
 		this.tmstamp = tmstamp;
 	}
 
