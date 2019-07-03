@@ -1,10 +1,11 @@
 package sentiments.domain.repository;
 
-import java.sql.Timestamp;
+import sentiments.domain.model.TweetQuery;
+
 import java.util.List;
 
 public interface TweetRepositoryCustom {
-    List<Integer> countByOffensiveAndDayInInterval(Boolean offensive, Timestamp startdate, Timestamp enddate);
+    List<Integer> countByOffensiveAndDayInInterval(TweetQuery tweetQuery);
 
-    String getRandomTwitterId(boolean offensive);
+    String getRandomTwitterId(TweetQuery tweetQuery);
 }
