@@ -139,6 +139,40 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
         return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.CREATED);
     }
 
+    @RequestMapping("/count")
+    public ResponseEntity<String> count() {
+
+        int count = tweetRepository.countfindAllTweets();
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("Access-Control-Allow-Origin", "*");
+        JSONObject out = new JSONObject();
+        out.put("count", count);
+        return new ResponseEntity<String>(out.toString(), responseHeaders, HttpStatus.CREATED);
+    }
+
+    @RequestMapping("/byDateBetween")
+    public ResponseEntity<String> byDateBetween(@RequestParam(value = "startdate", defaultValue = "1990-01-01") @DateTimeFormat(pattern = "yyyy-MM-dd") Date startdate,
+                                                @RequestParam(value = "enddate", defaultValue = "today") @DateTimeFormat(pattern = "yyyy-MM-dd") Date enddate) {
+
+        int count = tweetRepository.countfindAllByDateBetween(new Timestamp(startdate.getTime()), new Timestamp(enddate.getTime()));
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("Access-Control-Allow-Origin", "*");
+        JSONObject out = new JSONObject();
+        out.put("count", count);
+        return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.CREATED);
+    }
+
+    @RequestMapping("/countOffensive")
+    public ResponseEntity<String> cOffensive(@RequestParam(value = "offensive", defaultValue = "1") boolean offensive) {
+
+        int count = tweetRepository.countByOffensive(offensive);
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("Access-Control-Allow-Origin", "*");
+        JSONObject out = new JSONObject();
+        out.put("count", count);
+        return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.CREATED);
+    }
+
     @RequestMapping("/timeline")
     public ResponseEntity<String> timeline(@RequestParam(value = "offensive", defaultValue = "1") boolean offensive,
                                         @RequestParam(value = "startdate", defaultValue = "1990-01-01") @DateTimeFormat(pattern = "yyyy-MM-dd") Date startdate,

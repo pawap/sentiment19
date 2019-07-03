@@ -6,7 +6,7 @@ It features RESTful endpoints.
 
 ### local setup
 
-- configure and run mongo-server (no Authorization for now, please)
+- configure and run mongo-server (no Authorization for now, please) tutorial can be found under https://medium.com/@LondonAppBrewery/how-to-download-install-mongodb-on-windows-4ee4b3493514
 - copy ```/src/main/resources/application.properties.local``` to ```/src/main/resources/application.properties```
 - configure your db-Connection-Settings in the new file. Never commit this file! It should be ignored by git, anyhow.
 - if you encounter any problems: ask someone. If you don't, you will probably fail. 
@@ -33,15 +33,16 @@ password: ```ppp```
 - put an unpacked text file (UTF-8 !!!) containing one json object per line into the directory configured in application.json
 - call the endpoint "sentiment19/backend/import" (browser or cli)
 - your local db should be filled with a bunch of tweets
+- you can test it by either running the server and open the URL: "localhost:8080/sentiment19/count" or by open the mongo shell and use the command "use sentiment_db" -> db.tweet.find().count()
 
 ### Mongo-Fake-Data
-You can tweek the imported data for testing purposes:
+You can tweak the imported data for testing purposes:
 Go to the ```src/main/resources/mongoscripts``` directory and run the following commands (replacing <DBNAME> with the name of your local DB):
 ````
 mongo MongoDates.js --eval 'var dbName="<DBNAME>";'
 mongo mongo MongoFakeLabels.js --eval 'var dbName="<DBNAME>";'
 ````
-(alternatively just run thoses scripts with mongo from anywhere. Warning may not work out of the box with Authorization on the DB)
+(alternatively just run those scripts with mongo from anywhere. Warning may not work out of the box with Authorization on the DB)
 - first one assigns new, nicely distributed dates to all tweets
 - second one labels 1/3 of all tweets as offensive
 
