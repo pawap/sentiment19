@@ -21,6 +21,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * @author paw, 6runge
+ */
 public class TweetRepositoryImpl implements TweetRepositoryCustom {
 
     private final MongoTemplate mongoTemplate;
@@ -71,6 +74,7 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
     public String getRandomTwitterId(TweetQuery tweetQuery) {
         SampleOperation sampleStage = Aggregation.sample(1);
         List<AggregationOperation> list = getWhereOperations(tweetQuery);
+        list.add(Aggregation.match(Criteria.where("twitterId").exists(true)));
         list.add(sampleStage);
         list.add(Aggregation.project("twitterId").andExclude("_id"));
         Aggregation aggregation = Aggregation.newAggregation(list);
@@ -88,14 +92,14 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
         list.add(Aggregation.match(Criteria.where("offensive").is(tweetQuery.isOffensive())));
         //timeframe
         Criteria c = Criteria.where("crdate");
-        LocalDateTime start = LocalDateTime.ofInstant(tweetQuery.getStart().toInstant(), ZoneId.of("UTC")).withHour(0).withMinute(0).withSecond(0);
-        LocalDateTime end = LocalDateTime.ofInstant(tweetQuery.getEnd().toInstant(), ZoneId.of("UTC")).withHour(23).withMinute(59).withSecond(59);
         boolean addTimeQuery = false;
         if (tweetQuery.getStart() != null) {
+            LocalDateTime start = LocalDateTime.ofInstant(tweetQuery.getStart().toInstant(), ZoneId.of("UTC")).withHour(0).withMinute(0).withSecond(0);
             c = c.gte(start.toInstant(ZoneOffset.UTC));
             addTimeQuery = true;
         }
         if (tweetQuery.getEnd() != null) {
+            LocalDateTime end = LocalDateTime.ofInstant(tweetQuery.getEnd().toInstant(), ZoneId.of("UTC")).withHour(23).withMinute(59).withSecond(59);
             c = c.lte(end.toInstant(ZoneOffset.UTC));
             addTimeQuery = true;
         }

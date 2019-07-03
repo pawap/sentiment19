@@ -5,6 +5,9 @@ import sentiments.domain.model.TweetQuery;
 import java.sql.Timestamp;
 import java.util.List;
 
+/**
+ * @author paw, 6runge
+ */
 public class TweetQueryBuilder {
 
     private TweetQuery tweetQuery;
