@@ -139,7 +139,7 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
         return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.CREATED);
     }
 
-    @RequestMapping("/count")
+    @RequestMapping(value = "/count", method = RequestMethod.GET)
     public ResponseEntity<String> count() {
 
         int count = tweetRepository.countfindAllTweets();
