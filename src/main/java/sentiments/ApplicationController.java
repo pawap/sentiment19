@@ -126,7 +126,7 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
         return new ResponseEntity<String>(response, responseHeaders,HttpStatus.CREATED);
     }
     
-    @RequestMapping("/stats")
+    @RequestMapping(value = "/stats", method = RequestMethod.GET)
 	public ResponseEntity<String> stats(@RequestParam(value = "offensive", defaultValue = "1") boolean offensive,
 			@RequestParam(value = "startdate", defaultValue = "1990-01-01") @DateTimeFormat(pattern = "yyyy-MM-dd") Date startdate,
 			@RequestParam(value = "enddate", defaultValue = "today") @DateTimeFormat(pattern = "yyyy-MM-dd") Date enddate) {
@@ -150,7 +150,7 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
         return new ResponseEntity<String>(out.toString(), responseHeaders, HttpStatus.CREATED);
     }
 
-    @RequestMapping("/byDateBetween")
+    @RequestMapping(value = "/byDateBetween", method = RequestMethod.GET)
     public ResponseEntity<String> byDateBetween(@RequestParam(value = "startdate", defaultValue = "1990-01-01") @DateTimeFormat(pattern = "yyyy-MM-dd") Date startdate,
                                                 @RequestParam(value = "enddate", defaultValue = "today") @DateTimeFormat(pattern = "yyyy-MM-dd") Date enddate) {
 
@@ -162,7 +162,7 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
         return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.CREATED);
     }
 
-    @RequestMapping("/countOffensive")
+    @RequestMapping(value = "/countOffensive", method = RequestMethod.GET)
     public ResponseEntity<String> cOffensive(@RequestParam(value = "offensive", defaultValue = "1") boolean offensive) {
 
         int count = tweetRepository.countByOffensive(offensive);

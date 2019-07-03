@@ -28,9 +28,8 @@ public class SwaggerConfig extends WebMvcConfigurationSupport {
     @Bean
     public Docket api() {
         return new Docket(DocumentationType.SWAGGER_2).select()
-                //.apis(Predicates.not(RequestHandlerSelectors.basePackage("org.springframework.boot")))
-                .apis(RequestHandlerSelectors.basePackage("sentiments.ApplicationController"))
-                .paths(PathSelectors.any())
+                .apis(Predicates.not(RequestHandlerSelectors.basePackage("org.springframework.boot"))) //sucht im gesamten Projekt nach Endpunkten
+                .paths(PathSelectors.any())                                                            //sucht nach jeder Art von Pfaden
                 .build()
                 .apiInfo(apiInfo())
                 .useDefaultResponseMessages(false)
