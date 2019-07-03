@@ -3,6 +3,10 @@ package sentiments;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import net.sf.json.JSON;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
@@ -35,6 +39,8 @@ import sentiments.data.BasicDataImporter;
 import sentiments.domain.repository.TweetRepository;
 import sentiments.ml.W2VTweetClassifier;
 
+import javax.ws.rs.Path;
+
 /**
  * @author Paw, 6runge
  * 
@@ -45,6 +51,8 @@ import sentiments.ml.W2VTweetClassifier;
 @RestController
 @EnableAutoConfiguration
 @ComponentScan
+@Path("/sentiment19")
+@Api(value = "sentiment19", description = "Der Application Controller, in dem sämtliche notwendigen Endpunkte definiert sind.")
 public class ApplicationController implements SentimentAnalysisWebInterface{
 
 	@Autowired
@@ -136,10 +144,11 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
         responseHeaders.set("Access-Control-Allow-Origin", "*");
         JSONObject out = new JSONObject();
         out.put("count", count);
-        return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.CREATED);
+        return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/count", method = RequestMethod.GET)
+    @RequestMapping(value = "/countTweets", method = RequestMethod.GET)
+    @ApiOperation(value = "Gibt die Anzahl der vorhandenen Tweets in der Datenbank wieder", tags = "Counter")
     public ResponseEntity<String> count() {
 
         int count = tweetRepository.countfindAllTweets();
@@ -147,22 +156,24 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
         responseHeaders.set("Access-Control-Allow-Origin", "*");
         JSONObject out = new JSONObject();
         out.put("count", count);
-        return new ResponseEntity<String>(out.toString(), responseHeaders, HttpStatus.CREATED);
+        return new ResponseEntity<String>(out.toString(), responseHeaders, HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/byDateBetween", method = RequestMethod.GET)
-    public ResponseEntity<String> byDateBetween(@RequestParam(value = "startdate", defaultValue = "1990-01-01") @DateTimeFormat(pattern = "yyyy-MM-dd") Date startdate,
-                                                @RequestParam(value = "enddate", defaultValue = "today") @DateTimeFormat(pattern = "yyyy-MM-dd") Date enddate) {
+    @RequestMapping(value = "/countByDateBetween", method = RequestMethod.GET)
+    @ApiOperation(value = "Gibt die Anzahl der vorhandenen Tweets wieder, welche in dem gegebene Zeitraum in die Datenbank geschrieben wurde", tags = "Counter")
+    public ResponseEntity<String> byDateBetween(@ApiParam(value = "Das Startdatum des Zeitraums in der Form yyyy-mm-dd", required = true) @RequestParam(value = "startdate", defaultValue = "1990-01-01") @DateTimeFormat(pattern = "yyyy-MM-dd") Date startdate,
+                                                @ApiParam(value = "Das Enddatum des Zeitraums in der Form yyyy-mm-dd", required = true) @RequestParam(value = "enddate", defaultValue = "today") @DateTimeFormat(pattern = "yyyy-MM-dd") Date enddate) {
 
         int count = tweetRepository.countfindAllByDateBetween(new Timestamp(startdate.getTime()), new Timestamp(enddate.getTime()));
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");
         JSONObject out = new JSONObject();
         out.put("count", count);
-        return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.CREATED);
+        return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.OK);
     }
 
     @RequestMapping(value = "/countOffensive", method = RequestMethod.GET)
+    @ApiOperation(value = "Gibt die Anzahl der vorhandenen Tweets wieder, welche als (nicht-) offensiv markiert wurden", tags = "Counter")
     public ResponseEntity<String> cOffensive(@RequestParam(value = "offensive", defaultValue = "1") boolean offensive) {
 
         int count = tweetRepository.countByOffensive(offensive);
@@ -170,12 +181,12 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
         responseHeaders.set("Access-Control-Allow-Origin", "*");
         JSONObject out = new JSONObject();
         out.put("count", count);
-        return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.CREATED);
+        return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.OK);
     }
 
-    @RequestMapping("/timeline")
+    @RequestMapping(value = "/timeline", method = RequestMethod.GET)
     public ResponseEntity<String> timeline(@RequestParam(value = "offensive", defaultValue = "1") boolean offensive,
-                                        @RequestParam(value = "startdate", defaultValue = "1990-01-01") @DateTimeFormat(pattern = "yyyy-MM-dd") Date startdate,
+                                        @RequestParam(value = "startdate", defaultValue = "2017-01-01") @DateTimeFormat(pattern = "yyyy-MM-dd") Date startdate,
                                         @RequestParam(value = "enddate", defaultValue = "today") @DateTimeFormat(pattern = "yyyy-MM-dd") Date enddate) {
 
         List<Integer> count = tweetRepository.countByOffensiveAndDayInInterval(offensive, new Timestamp(startdate.getTime()), new Timestamp(enddate.getTime()));
@@ -185,10 +196,10 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
         JSONArray timeline = new JSONArray();
         timeline.addAll(count);
         out.put("timeline", timeline);
-        return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.CREATED);
+        return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.OK);
     }
 
-    @RequestMapping("/")
+    @RequestMapping(value = "/", method = RequestMethod.GET)
 	public ResponseEntity<String> html() {
         String response = "";
         try {
@@ -204,10 +215,10 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");
        
-        return new ResponseEntity<String>(response, responseHeaders,HttpStatus.CREATED);
+        return new ResponseEntity<String>(response, responseHeaders,HttpStatus.OK);
     }
     
-    @RequestMapping("/backend/import")
+    @RequestMapping(value = "/backend/import", method = RequestMethod.PUT)
 	public ResponseEntity<String> tweetimport() {
     	
     	this.basicDataImporter.importExampleJson();
@@ -218,7 +229,7 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
         return new ResponseEntity<String>("finished", responseHeaders,HttpStatus.CREATED);
     }
     
-    @RequestMapping("/backend/import/testandtrain")
+    @RequestMapping(value = "/backend/import/testandtrain", method = RequestMethod.PUT)
 	public ResponseEntity<String> testAndTrainimport() {
     	
     	this.basicDataImporter.importTsvTestAndTrain();
@@ -265,7 +276,7 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
         JSONObject response = new JSONObject();
         response.put("offensive", Math.random() * 100);
 		
-        return new ResponseEntity<String>(response.toString(), HttpStatus.CREATED);
+        return new ResponseEntity<String>(response.toString(), HttpStatus.OK);
 	}
 
 	@InitBinder
