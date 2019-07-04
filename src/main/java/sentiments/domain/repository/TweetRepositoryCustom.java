@@ -11,4 +11,6 @@ public interface TweetRepositoryCustom {
     List<Integer> countByOffensiveAndDayInInterval(TweetQuery tweetQuery);
 
     String getRandomTwitterId(TweetQuery tweetQuery);
+
+    int countByOffensiveAndDate(TweetQuery tweetQuery);
 }

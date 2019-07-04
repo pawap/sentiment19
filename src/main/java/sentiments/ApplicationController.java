@@ -5,6 +5,18 @@ import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
+import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.LinkedList;
+import java.util.List;
+
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.CustomDateEditor;
@@ -18,11 +30,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.InitBinder;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import sentiments.data.BasicDataImporter;
+import sentiments.domain.model.TweetQuery;
 import sentiments.domain.repository.TweetRepository;
 import sentiments.domain.service.TweetQueryBuilder;
 import sentiments.ml.W2VTweetClassifier;
@@ -132,12 +142,10 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
         return new ResponseEntity<String>(response, responseHeaders,HttpStatus.CREATED);
     }
     
-    @RequestMapping("/stats")
-	public ResponseEntity<String> stats(@RequestParam(value = "offensive", defaultValue = "1") boolean offensive,
-			@RequestParam(value = "startdate", defaultValue = "1990-01-01") @DateTimeFormat(pattern = "yyyy-MM-dd") Date startdate,
-			@RequestParam(value = "enddate", defaultValue = "today") @DateTimeFormat(pattern = "yyyy-MM-dd") Date enddate) {
+    @RequestMapping(value = "/stats",  method = RequestMethod.POST, consumes = "application/json")
+	public ResponseEntity<String> stats(@RequestBody TweetQuery tq) {
 
-    	int count = tweetRepository.countByOffensiveAndDate(offensive, new Timestamp(startdate.getTime()), new Timestamp(enddate.getTime()));
+    	int count = tweetRepository.countByOffensiveAndDate(tq);
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");
         JSONObject out = new JSONObject();
@@ -184,8 +192,12 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
                                         @RequestParam(value = "startdate", defaultValue = "1990-01-01") @DateTimeFormat(pattern = "yyyy-MM-dd") Date startdate,
                                         @RequestParam(value = "enddate", defaultValue = "today") @DateTimeFormat(pattern = "yyyy-MM-dd") Date enddate) {
 
-	    TweetQueryBuilder queryBuilder = new TweetQueryBuilder().setOffensive(offensive).setStart(new Timestamp(startdate.getTime())).setEnd(new Timestamp(enddate.getTime()));
-        List<Integer> count = tweetRepository.countByOffensiveAndDayInInterval(queryBuilder.build());
+	    TweetQueryBuilder queryBuilder = new TweetQueryBuilder();
+	    queryBuilder.setOffensive(offensive)
+                .setStart(new Timestamp(startdate.getTime()))
+                .setEnd(new Timestamp(enddate.getTime()));
+
+	    List<Integer> count = tweetRepository.countByOffensiveAndDayInInterval(queryBuilder.build());
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");
         JSONObject out = new JSONObject();

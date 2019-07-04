@@ -57,12 +57,25 @@
 					</div>
 				</div>
 			</div>
+			<div class="row">
+				<div class="col-sm-6">
+					<h3>Hashtags</h3>
+					<div class="input-group" v-for="(hashtag, key) in hashtags">
+						<input class="form-control" v-model="hashtag.value">
+						<button class="btn-small" @click="$delete(hashtags, key)">X</button>
+					</div>
+					<button class="btn-default" @click="addHashtag">
+						addHashtag
+					</button>
+				</div>
+			</div>
+
 			<div class="row my-3">
 				<div class="col-sm-6">
 					<div class="content p-2">
 						<h4>Anzahl offensive vs. non-offensive Tweets</h4>
 						<select v-model="selectPieTime" @change='updatePieChart()'>
-								<option value="">Gesamter Zeitraum</option>
+								<option value="all">Gesamter Zeitraum</option>
 								<option v-for="time in times" v-bind:value="time.value">
 										{{ time.text }}
 								</option>

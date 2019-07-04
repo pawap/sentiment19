@@ -8,6 +8,7 @@ import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
 import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.data.mongodb.core.aggregation.SampleOperation;
 import org.springframework.data.mongodb.core.query.Criteria;
+import sentiments.domain.model.Count;
 import sentiments.domain.model.DayCount;
 import sentiments.domain.model.Tweet;
 import sentiments.domain.model.TweetQuery;
@@ -84,7 +85,22 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
         return result;
     }
 
+    @Override
+    public int countByOffensiveAndDate(TweetQuery tweetQuery){
+
+        List<AggregationOperation> list = getWhereOperations(tweetQuery);
+        list.add(Aggregation.group().count().as("count"));
+        list.add(Aggregation.project("count").andExclude("_id"));
+        Aggregation aggregation = Aggregation.newAggregation(list);
+        AggregationResults<Count> output = mongoTemplate.aggregate(aggregation, Tweet.class, Count.class);
+        System.out.println();
+        List<Count> mappedOutput = output.getMappedResults();
+        int result = (mappedOutput.size() > 0) ? mappedOutput.get(0).count : 0;
+        return result;
+    }
+
     private List<AggregationOperation> getWhereOperations(TweetQuery tweetQuery) {
+        //TODO Should be static or private final, then return copy?
         List<AggregationOperation> list = new LinkedList<>();
 
         //offensive?
@@ -107,7 +123,7 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
             list.add(Aggregation.match(c));
         }
         //hashtags
-        if (tweetQuery.getHashtags() != null) {
+        if (tweetQuery.getHashtags() != null && !tweetQuery.getHashtags().isEmpty()) {
             list.add(Aggregation.match(Criteria.where("hashtags").all(tweetQuery.getHashtags())));
         }
 

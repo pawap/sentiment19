@@ -10,7 +10,7 @@ window.addEventListener('load', function(){
                 //counter number of offensive tweets
                 nonOffensive: 0,
                 //pie chart time selection value
-                selectPieTime: '',
+                selectPieTime: 'all',
                 //Pie chart time selection values
                 times: [
                     {text: "Letzter Tag", value: "day"}, 
@@ -22,19 +22,23 @@ window.addEventListener('load', function(){
                 selectedDate: {
                     start:  getDate(-7),
                     end:  getDate(0)
-                }, 
+                },
+                hashtags: []
             }
         },
         methods:{
 
+            addHashtag: function () {
+                this.hashtags.push({value: ''});
+            },
             /**
              * Updates the main offensive and nonOffensive tweet amount counters (and initiates Pie Chart update)
              */
             updateCounters: function(){
 
                 axios.all([
-                    axios.get('/sentiment19/stats',{params: {offensive: 1}}),
-                    axios.get('/sentiment19/stats',{params: {offensive: 0}})
+                    axios.post('/sentiment19/stats',{offensive: 1}),
+                    axios.post('/sentiment19/stats',{offensive: 0})
                   ])
                   .then(axios.spread((off, nonOff) => {
                     this.offensive = off.data.count
@@ -73,15 +77,20 @@ window.addEventListener('load', function(){
                     }else if(this.selectPieTime === 'range'){
                         endDate = this.selectedDate.end
                         startDate = this.selectedDate.start;
-                    }else {
+                        console.log('there')
+                    } else {
+                        console.log('here')
                         startDate = null;
                         endDate = null;
                     }
                     axios.all([
-                        axios.get('/sentiment19/stats',
-                        {params: {offensive: 1, startdate: startDate,  enddate: endDate}}),
-                        axios.get('/sentiment19/stats',
-                        {params: {offensive: 0, startdate: startDate,  enddate: endDate}})
+                        axios.post('/sentiment19/stats',{offensive: 1, start: startDate,  end: endDate, hashtags: this.hashtags.map(function (o) {
+                                    return o.value
+                                })}),
+                        axios.post('/sentiment19/stats',
+                        {offensive: 0, start: startDate,  end: endDate, hashtags: this.hashtags.map(function (o) {
+                                    return o.value
+                                })})
                       ])
                       .then(axios.spread((off, nonOff) => {
                         data =  [off.data.count, nonOff.data.count]
