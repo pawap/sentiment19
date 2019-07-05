@@ -162,6 +162,13 @@
             <version>0.4.0</version>
         </dependency>
 
+        <!-- Spell Checlk Library languagetool-->
+        <dependency>
+            <groupId>org.languagetool</groupId>
+            <artifactId>language-all</artifactId>
+            <version>4.5</version>
+        </dependency>
+
     </dependencies>
 
     <build>
