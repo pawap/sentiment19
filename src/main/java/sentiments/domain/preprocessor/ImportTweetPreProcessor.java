@@ -19,6 +19,8 @@ public class ImportTweetPreProcessor implements TweetPreProcessor {
     private LanguageDetector detector = LanguageDetectorBuilder.fromAllBuiltInSpokenLanguages().build();
     final private Pattern pattern = Pattern.compile("#[\\w_-]+[:]?");
 
+    StanfordLemmatizer sfl = new StanfordLemmatizer();
+
     @Override
     public void preProcess(AbstractTweet tweet) {
         String text = tweet.getText();
@@ -30,6 +32,13 @@ public class ImportTweetPreProcessor implements TweetPreProcessor {
         ((Tweet) tweet).setHashtags(hashtags);
         Language detectedLanguage = detector.detectLanguageOf(text.replaceAll("(((RT )?@[\\w_-]+[:]?)|((https?:\\/\\/)[\\w\\d.-\\/]*))",""));
         tweet.setLanguage(detectedLanguage.getIsoCode());
+
+        //test of the functionality
+        if(tweet.getLanguage()== "en") {
+            System.out.println(text);
+            System.out.println(sfl.lemmatize(text));
+
+        }
     }
 
     @Override
