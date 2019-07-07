@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * @author paw, 6runge
  */
-public class TweetQuery {
+public class TweetFilter {
 
     private boolean offensive;
     private Timestamp start, end;

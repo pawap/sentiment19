@@ -1,6 +1,6 @@
 package sentiments.domain.repository;
 
-import sentiments.domain.model.TweetQuery;
+import sentiments.domain.model.TweetFilter;
 
 import java.util.List;
 
@@ -8,7 +8,7 @@ import java.util.List;
  * @author paw, 6runge
  */
 public interface TweetRepositoryCustom {
-    List<Integer> countByOffensiveAndDayInInterval(TweetQuery tweetQuery);
+    List<Integer> countByOffensiveAndDayInInterval(TweetFilter tweetFilter);
 
-    String getRandomTwitterId(TweetQuery tweetQuery);
+    String getRandomTwitterId(TweetFilter tweetFilter);
 }

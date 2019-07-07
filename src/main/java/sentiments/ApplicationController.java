@@ -23,8 +23,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import sentiments.data.BasicDataImporter;
+import sentiments.domain.model.TweetFilter;
 import sentiments.domain.repository.TweetRepository;
-import sentiments.domain.service.TweetQueryBuilder;
+import sentiments.domain.service.TweetFilterBuilder;
 import sentiments.ml.W2VTweetClassifier;
 
 import java.io.File;
@@ -77,8 +78,8 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
         while (responseCode != 200 && i < 100) {
             i++;
             try {
-                TweetQueryBuilder tqb = new TweetQueryBuilder();
-                twitterId = tweetRepository.getRandomTwitterId(tqb.setOffensive(offensive).build());
+                TweetFilterBuilder tfb = new TweetFilterBuilder();
+                twitterId = tweetRepository.getRandomTwitterId(tfb.setOffensive(offensive).build());
                 if (twitterId == null) break;
                 String url = base_url + twitterId + "&align=center";
                 URL urlObj = new URL(url);
@@ -184,8 +185,12 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
                                         @RequestParam(value = "startdate", defaultValue = "1990-01-01") @DateTimeFormat(pattern = "yyyy-MM-dd") Date startdate,
                                         @RequestParam(value = "enddate", defaultValue = "today") @DateTimeFormat(pattern = "yyyy-MM-dd") Date enddate) {
 
-	    TweetQueryBuilder queryBuilder = new TweetQueryBuilder().setOffensive(offensive).setStart(new Timestamp(startdate.getTime())).setEnd(new Timestamp(enddate.getTime()));
-        List<Integer> count = tweetRepository.countByOffensiveAndDayInInterval(queryBuilder.build());
+	    TweetFilterBuilder filterBuilder = new TweetFilterBuilder();
+	    filterBuilder.setOffensive(offensive)
+                .setStart(new Timestamp(startdate.getTime()))
+                .setEnd(new Timestamp(enddate.getTime()));
+
+	    List<Integer> count = tweetRepository.countByOffensiveAndDayInInterval(filterBuilder.build());
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");
         JSONObject out = new JSONObject();

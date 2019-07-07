@@ -34,8 +34,8 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
     }
 
     @Override
-    public List<Integer> countByOffensiveAndDayInInterval(TweetQuery tweetQuery) {
-        List<AggregationOperation> list = getWhereOperations(tweetQuery);
+    public List<Integer> countByOffensiveAndDayInInterval(TweetFilter tweetFilter) {
+        List<AggregationOperation> list = getWhereOperations(tweetFilter);
         list.add(Aggregation.project()
                 .andExpression("year(crdate)").as("year")
                 .andExpression("month(crdate)").as("month")
@@ -51,7 +51,7 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
 
         List<Integer> result = new LinkedList<>();
         DateTimeFormatter f = DateTimeFormatter.ofPattern("yyyy-M-d", Locale.US);
-        LocalDate current = tweetQuery.getStart().toLocalDateTime().toLocalDate();
+        LocalDate current = tweetFilter.getStart().toLocalDateTime().toLocalDate();
 
         for (DayCount i : mongoTemplate.aggregate(agg, Tweet.class, DayCount.class)) {
             LocalDate currentDate = LocalDate.parse(i.day, f);
@@ -62,7 +62,7 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
             current = current.plusDays(1);
             result.add(i.count);
         }
-        while (current.compareTo(tweetQuery.getEnd().toLocalDateTime().toLocalDate()) < 0) {
+        while (current.compareTo(tweetFilter.getEnd().toLocalDateTime().toLocalDate()) < 0) {
             result.add(0);
             current = current.plusDays(1);
         }
@@ -71,9 +71,9 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
     }
 
     @Override
-    public String getRandomTwitterId(TweetQuery tweetQuery) {
+    public String getRandomTwitterId(TweetFilter tweetFilter) {
         SampleOperation sampleStage = Aggregation.sample(1);
-        List<AggregationOperation> list = getWhereOperations(tweetQuery);
+        List<AggregationOperation> list = getWhereOperations(tweetFilter);
         list.add(Aggregation.match(Criteria.where("twitterId").exists(true)));
         list.add(sampleStage);
         list.add(Aggregation.project("twitterId").andExclude("_id"));
@@ -84,22 +84,22 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
         return result;
     }
 
-    private List<AggregationOperation> getWhereOperations(TweetQuery tweetQuery) {
+    private List<AggregationOperation> getWhereOperations(TweetFilter tweetFilter) {
         List<AggregationOperation> list = new LinkedList<>();
 
         //offensive?
         //TODO what if null?
-        list.add(Aggregation.match(Criteria.where("offensive").is(tweetQuery.isOffensive())));
+        list.add(Aggregation.match(Criteria.where("offensive").is(tweetFilter.isOffensive())));
         //timeframe
         Criteria c = Criteria.where("crdate");
         boolean addTimeQuery = false;
-        if (tweetQuery.getStart() != null) {
-            LocalDateTime start = LocalDateTime.ofInstant(tweetQuery.getStart().toInstant(), ZoneId.of("UTC")).withHour(0).withMinute(0).withSecond(0);
+        if (tweetFilter.getStart() != null) {
+            LocalDateTime start = LocalDateTime.ofInstant(tweetFilter.getStart().toInstant(), ZoneId.of("UTC")).withHour(0).withMinute(0).withSecond(0);
             c = c.gte(start.toInstant(ZoneOffset.UTC));
             addTimeQuery = true;
         }
-        if (tweetQuery.getEnd() != null) {
-            LocalDateTime end = LocalDateTime.ofInstant(tweetQuery.getEnd().toInstant(), ZoneId.of("UTC")).withHour(23).withMinute(59).withSecond(59);
+        if (tweetFilter.getEnd() != null) {
+            LocalDateTime end = LocalDateTime.ofInstant(tweetFilter.getEnd().toInstant(), ZoneId.of("UTC")).withHour(23).withMinute(59).withSecond(59);
             c = c.lte(end.toInstant(ZoneOffset.UTC));
             addTimeQuery = true;
         }
@@ -107,13 +107,13 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
             list.add(Aggregation.match(c));
         }
         //hashtags
-        if (tweetQuery.getHashtags() != null) {
-            list.add(Aggregation.match(Criteria.where("hashtags").all(tweetQuery.getHashtags())));
+        if (tweetFilter.getHashtags() != null && !tweetFilter.getHashtags().isEmpty()) {
+            list.add(Aggregation.match(Criteria.where("hashtags").all(tweetFilter.getHashtags())));
         }
 
-        //hashtags
-        if (tweetQuery.getLanguages() != null) {
-            list.add(Aggregation.match(Criteria.where("language").in(tweetQuery.getLanguages())));
+        //languages
+        if (tweetFilter.getLanguages() != null) {
+            list.add(Aggregation.match(Criteria.where("language").in(tweetFilter.getLanguages())));
         }
 
         return list;
