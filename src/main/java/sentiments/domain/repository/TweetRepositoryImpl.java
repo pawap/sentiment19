@@ -8,9 +8,7 @@ import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
 import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.data.mongodb.core.aggregation.SampleOperation;
 import org.springframework.data.mongodb.core.query.Criteria;
-import sentiments.domain.model.DayCount;
-import sentiments.domain.model.Tweet;
-import sentiments.domain.model.TweetQuery;
+import sentiments.domain.model.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -82,6 +80,38 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
         List<Tweet> mappedOutput = output.getMappedResults();
         String result = (mappedOutput.size() > 0) ? mappedOutput.get(0).getTwitterId() : null;
         return result;
+    }
+
+    @Override
+    public int countByOffensiveAndDate(TweetFilter tweetFilter){
+
+        List<AggregationOperation> list = getWhereOperations(tweetFilter);
+        list.add(Aggregation.group().count().as("count"));
+        list.add(Aggregation.project("count").andExclude("_id"));
+        Aggregation aggregation = Aggregation.newAggregation(list);
+
+        AggregationResults<Count> output = mongoTemplate.aggregate(aggregation, Tweet.class, Count.class);
+        List<Count> mappedOutput = output.getMappedResults();
+        int result = (mappedOutput.size() > 0) ? mappedOutput.get(0).count : 0;
+        return result;
+    }
+
+    @Override
+    public List<HashtagCount> getMostPopularHashtags(TweetFilter tweetFilter, int limit) {
+
+        List<AggregationOperation> list = getWhereOperations(tweetFilter);
+
+        list.add(Aggregation.unwind("hashtags"));
+        list.add(Aggregation.group(Aggregation.fields().and("hashtags")).count().as("count"));
+        list.add(Aggregation.sort(Sort.Direction.DESC, "count"));
+        list.add(Aggregation.project("count").andExpression("_id").as( "hashtag"));
+        list.add(Aggregation.limit(limit));
+
+        Aggregation aggregation = Aggregation.newAggregation(list);
+        AggregationResults<HashtagCount> output = mongoTemplate.aggregate(aggregation, Tweet.class, HashtagCount.class);
+
+        return output.getMappedResults();
+
     }
 
     private List<AggregationOperation> getWhereOperations(TweetFilter tweetFilter) {
