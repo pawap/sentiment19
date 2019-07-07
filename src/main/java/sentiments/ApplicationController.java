@@ -30,6 +30,7 @@ import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import sentiments.data.BasicDataImporter;
+import sentiments.domain.model.HashtagCount;
 import sentiments.domain.model.TweetFilter;
 import sentiments.domain.repository.TweetRepository;
 import sentiments.domain.service.TweetFilterBuilder;
@@ -39,6 +40,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.stream.Collectors;
 
 /**
  * @author Paw, 6runge
@@ -132,16 +134,29 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
         return new ResponseEntity<String>(response, responseHeaders,HttpStatus.CREATED);
     }
     
-    @RequestMapping("/stats")
-	public ResponseEntity<String> stats(@RequestParam(value = "offensive", defaultValue = "1") boolean offensive,
-			@RequestParam(value = "startdate", defaultValue = "1990-01-01") @DateTimeFormat(pattern = "yyyy-MM-dd") Date startdate,
-			@RequestParam(value = "enddate", defaultValue = "today") @DateTimeFormat(pattern = "yyyy-MM-dd") Date enddate) {
+    @RequestMapping(value = "/stats",  method = RequestMethod.POST, consumes = "application/json")
+	public ResponseEntity<String> stats(@RequestBody TweetFilter tq) {
 
-    	int count = tweetRepository.countByOffensiveAndDate(offensive, new Timestamp(startdate.getTime()), new Timestamp(enddate.getTime()));
+    	int count = tweetRepository.countByOffensiveAndDate(tq);
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");
         JSONObject out = new JSONObject();
         out.put("count", count);
+        return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.CREATED);
+    }
+
+    @RequestMapping(value = "/popularhashtags",  method = RequestMethod.POST, consumes = "application/json")
+    public ResponseEntity<String> popularhashtags(@RequestBody TweetFilter tq, @RequestParam( value = "limit", defaultValue = "5") int limit ) {
+
+        List<HashtagCount> tags = tweetRepository.getMostPopularHashtags(tq, limit);
+        int total = tweetRepository.countByOffensiveAndDate(tq);
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("Access-Control-Allow-Origin", "*");
+        JSONArray hashtags = new JSONArray();
+        hashtags.addAll(tags.stream().map(HashtagCount::toJSONObject).collect(Collectors.toList()));
+        JSONObject out = new JSONObject();
+        out.put("hashtags", hashtags );
+        out.put("total", total );
         return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.CREATED);
     }
 

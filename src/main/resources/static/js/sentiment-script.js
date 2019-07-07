@@ -1,5 +1,4 @@
 window.addEventListener('load', function(){
-
     //Vue.js element
     const vue = new Vue({
         el: "#app",
@@ -10,7 +9,7 @@ window.addEventListener('load', function(){
                 //counter number of offensive tweets
                 nonOffensive: 0,
                 //pie chart time selection value
-                selectPieTime: '',
+                selectPieTime: 'all',
                 //Pie chart time selection values
                 times: [
                     {text: "Letzter Tag", value: "day"}, 
@@ -22,19 +21,45 @@ window.addEventListener('load', function(){
                 selectedDate: {
                     start:  getDate(-7),
                     end:  getDate(0)
-                }, 
+                },
+                hashtags: [],
+
+                popularHashtags: [],
+
             }
         },
         methods:{
 
+            addHashtag: function () {
+                let tag =  $('#newhashtag').val();
+                if (tag.substr(0,1) !== "#") tag = '#' + tag;
+                this.hashtags.push({value: tag});
+                $('#newhashtag').val('');
+                },
+
+            updateHashtags: function () {
+                axios.post('/sentiment19/popularhashtags?limit=8',{})
+                    .then(response => this.popularHashtags = response.data.hashtags.map(function (tag, index) {
+                        return {value: tag.hashtag, key: index, popular: 1, hidden: 0, count: tag.count,
+                            percent: (tag.count / response.data.total * 100).toFixed(2) + '%'
+                        };
+                    }))
+
+                this.popularHashtags.forEach(function (e) {
+                    if (this.hashtags.filter(tag => (tag.value === e.value)).length > 0) {
+                        e.hidden = 1;
+                    }
+                })
+
+            },
             /**
              * Updates the main offensive and nonOffensive tweet amount counters (and initiates Pie Chart update)
              */
             updateCounters: function(){
 
                 axios.all([
-                    axios.get('/sentiment19/stats',{params: {offensive: 1}}),
-                    axios.get('/sentiment19/stats',{params: {offensive: 0}})
+                    axios.post('/sentiment19/stats',{offensive: 1}),
+                    axios.post('/sentiment19/stats',{offensive: 0})
                   ])
                   .then(axios.spread((off, nonOff) => {
                     this.offensive = off.data.count
@@ -73,15 +98,20 @@ window.addEventListener('load', function(){
                     }else if(this.selectPieTime === 'range'){
                         endDate = this.selectedDate.end
                         startDate = this.selectedDate.start;
-                    }else {
+                        console.log('there')
+                    } else {
+                        console.log('here')
                         startDate = null;
                         endDate = null;
                     }
                     axios.all([
-                        axios.get('/sentiment19/stats',
-                        {params: {offensive: 1, startdate: startDate,  enddate: endDate}}),
-                        axios.get('/sentiment19/stats',
-                        {params: {offensive: 0, startdate: startDate,  enddate: endDate}})
+                        axios.post('/sentiment19/stats',{offensive: 1, start: startDate,  end: endDate, hashtags: this.hashtags.map(function (o) {
+                                    return o.value
+                                })}),
+                        axios.post('/sentiment19/stats',
+                        {offensive: 0, start: startDate,  end: endDate, hashtags: this.hashtags.map(function (o) {
+                                    return o.value
+                                })})
                       ])
                       .then(axios.spread((off, nonOff) => {
                         data =  [off.data.count, nonOff.data.count]
@@ -112,6 +142,12 @@ window.addEventListener('load', function(){
                     }));
 
             },
+        },
+        updated: function () {
+            $(function(){
+                $('[data-toggle="tooltip"]').tooltip({ trigger: "hover", html:true});
+                $('.tooltip').remove();
+            })
         }
     })
 
@@ -193,6 +229,13 @@ window.addEventListener('load', function(){
         vue.updateCounters()
         vue.updatePieChart()
         vue.updateLineChart()
+        vue.updateHashtags()
+
+    $(document).on('load', function () {
+        $(function(){
+            $('[data-toggle="tooltip"]').tooltip();
+        })
+    })
     }
     
    //run init function
