@@ -1,10 +1,19 @@
 package sentiments.domain.repository;
 
-import java.sql.Timestamp;
+import sentiments.domain.model.HashtagCount;
+import sentiments.domain.model.TweetFilter;
+
 import java.util.List;
 
+/**
+ * @author paw, 6runge
+ */
 public interface TweetRepositoryCustom {
-    List<Integer> countByOffensiveAndDayInInterval(Boolean offensive, Timestamp startdate, Timestamp enddate);
+    List<Integer> countByOffensiveAndDayInInterval(TweetFilter tweetFilter);
 
-    String getRandomTwitterId(boolean offensive);
+    String getRandomTwitterId(TweetFilter tweetFilter);
+
+    int countByOffensiveAndDate(TweetFilter tweetFilter);
+
+    List<HashtagCount> getMostPopularHashtags(TweetFilter tweetFilter, int limit);
 }

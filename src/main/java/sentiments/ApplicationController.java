@@ -6,7 +6,6 @@ import com.google.gson.stream.JsonReader;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
-import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -17,7 +16,6 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.CustomDateEditor;
 import org.springframework.boot.SpringApplication;
@@ -32,8 +30,17 @@ import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import sentiments.data.BasicDataImporter;
+import sentiments.domain.model.HashtagCount;
+import sentiments.domain.model.TweetFilter;
 import sentiments.domain.repository.TweetRepository;
+import sentiments.domain.service.TweetFilterBuilder;
 import sentiments.ml.W2VTweetClassifier;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.stream.Collectors;
 
 /**
  * @author Paw, 6runge
@@ -72,7 +79,8 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
         while (responseCode != 200 && i < 100) {
             i++;
             try {
-                twitterId = tweetRepository.getRandomTwitterId(offensive);
+                TweetFilterBuilder tfb = new TweetFilterBuilder();
+                twitterId = tweetRepository.getRandomTwitterId(tfb.setOffensive(offensive).build());
                 if (twitterId == null) break;
                 String url = base_url + twitterId + "&align=center";
                 URL urlObj = new URL(url);
@@ -126,16 +134,29 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
         return new ResponseEntity<String>(response, responseHeaders,HttpStatus.CREATED);
     }
     
-    @RequestMapping("/stats")
-	public ResponseEntity<String> stats(@RequestParam(value = "offensive", defaultValue = "1") boolean offensive,
-			@RequestParam(value = "startdate", defaultValue = "1990-01-01") @DateTimeFormat(pattern = "yyyy-MM-dd") Date startdate,
-			@RequestParam(value = "enddate", defaultValue = "today") @DateTimeFormat(pattern = "yyyy-MM-dd") Date enddate) {
+    @RequestMapping(value = "/stats",  method = RequestMethod.POST, consumes = "application/json")
+	public ResponseEntity<String> stats(@RequestBody TweetFilter tq) {
 
-    	int count = tweetRepository.countByOffensiveAndDate(offensive, new Timestamp(startdate.getTime()), new Timestamp(enddate.getTime()));
+    	int count = tweetRepository.countByOffensiveAndDate(tq);
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");
         JSONObject out = new JSONObject();
         out.put("count", count);
+        return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.CREATED);
+    }
+
+    @RequestMapping(value = "/popularhashtags",  method = RequestMethod.POST, consumes = "application/json")
+    public ResponseEntity<String> popularhashtags(@RequestBody TweetFilter tq, @RequestParam( value = "limit", defaultValue = "5") int limit ) {
+
+        List<HashtagCount> tags = tweetRepository.getMostPopularHashtags(tq, limit);
+        int total = tweetRepository.countByOffensiveAndDate(tq);
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("Access-Control-Allow-Origin", "*");
+        JSONArray hashtags = new JSONArray();
+        hashtags.addAll(tags.stream().map(HashtagCount::toJSONObject).collect(Collectors.toList()));
+        JSONObject out = new JSONObject();
+        out.put("hashtags", hashtags );
+        out.put("total", total );
         return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.CREATED);
     }
 
@@ -178,7 +199,12 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
                                         @RequestParam(value = "startdate", defaultValue = "1990-01-01") @DateTimeFormat(pattern = "yyyy-MM-dd") Date startdate,
                                         @RequestParam(value = "enddate", defaultValue = "today") @DateTimeFormat(pattern = "yyyy-MM-dd") Date enddate) {
 
-        List<Integer> count = tweetRepository.countByOffensiveAndDayInInterval(offensive, new Timestamp(startdate.getTime()), new Timestamp(enddate.getTime()));
+	    TweetFilterBuilder filterBuilder = new TweetFilterBuilder();
+	    filterBuilder.setOffensive(offensive)
+                .setStart(new Timestamp(startdate.getTime()))
+                .setEnd(new Timestamp(enddate.getTime()));
+
+	    List<Integer> count = tweetRepository.countByOffensiveAndDayInInterval(filterBuilder.build());
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");
         JSONObject out = new JSONObject();

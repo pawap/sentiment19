@@ -13,7 +13,6 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 
@@ -37,10 +36,10 @@ import org.springframework.transaction.annotation.Transactional;
 import sentiments.domain.model.AbstractTweet;
 import sentiments.domain.model.TrainingTweet;
 import sentiments.domain.model.Tweet;
+import sentiments.domain.preprocessor.ImportTweetPreProcessor;
+import sentiments.domain.preprocessor.TweetPreProcessor;
 import sentiments.domain.repository.TweetRepository;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 
 
 /**
@@ -66,7 +65,7 @@ public class BasicDataImporter {
 		this.dateTimeFormatter = DateTimeFormatter.ofPattern("E MMM dd HH:mm:ss Z yyyy", Locale.UK);
 	}
 
-	public void importFromJson(String jsonPath, TweetProvider<Tweet> tweetProvider, MongoRepository repo) {
+	public void importFromJson(String jsonPath, TweetProvider<Tweet> tweetProvider, TweetPreProcessor processor, MongoRepository repo) {
 		try {
 			InputStream stream = new FileInputStream(jsonPath);
 			JsonReader reader = new JsonReader(new InputStreamReader(stream, "UTF-8"));
@@ -74,6 +73,9 @@ public class BasicDataImporter {
 			reader.setLenient(true);
 			List<Tweet> tweets = tweetProvider.getNewTweetList();
 			int i = 0;
+			JsonElement element;
+			JsonObject object;
+			Tweet tweet;
 			while (reader.hasNext()) {
 				// Read data into object model
 
@@ -81,20 +83,22 @@ public class BasicDataImporter {
 					if (reader.peek() == JsonToken.END_DOCUMENT) {
 						break;
 					}
-					JsonElement element = gson.fromJson(reader, JsonElement.class);
-					JsonObject object = element.getAsJsonObject();
-					Tweet tweet = tweetProvider.createTweet();
+					element = gson.fromJson(reader, JsonElement.class);
+					object = element.getAsJsonObject();
+					tweet = tweetProvider.createTweet();
 					this.mapJsonToTweet(object, tweet);
 					if (tweet != null && tweet.getText() != null) {
 						i++;
+						processor.preProcess(tweet);
 						tweets.add(tweet);
 					}
-					System.out.println(i);
+
 				} catch (IllegalStateException | JsonSyntaxException e) {
 					reader.skipValue();
 				}
 				// persist tweets in batch
 				if (i % BATCH_SIZE == 0) {
+					System.out.println(i);
 					tweetRepository.saveAll(tweets);
 					tweets.clear();
 				}
@@ -102,6 +106,8 @@ public class BasicDataImporter {
 			tweetRepository.saveAll(tweets);
 			tweets.clear();
 			reader.close();
+			processor.destroy();
+			System.gc();
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -116,7 +122,7 @@ public class BasicDataImporter {
 
 	public void importFromTsv(String tsvPath, TweetProvider tweetProvider) {
 		Reader in;
-        int i = 0;
+		int i = 0;
 		try {
 			FileInputStream fstream = new FileInputStream(tsvPath);
 			in = new BufferedReader(new InputStreamReader(fstream));
@@ -124,15 +130,15 @@ public class BasicDataImporter {
 			for (CSVRecord record : records) {
 				AbstractTweet tweet = tweetProvider.createTweet();
 				this.mapTsvToTweet(record, tweet);
-        		if (tweet != null && tweet.getText() != null) {
-        			i++;
+				if (tweet != null && tweet.getText() != null) {
+					i++;
 					//entityManager.persist(tweet);
-        		}
+				}
 				System.out.println(i);
 				if (i % BATCH_SIZE == 0) {
-            		//entityManager.flush();
+					//entityManager.flush();
 					//entityManager.clear();
-            	}
+				}
 			}
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
@@ -141,7 +147,7 @@ public class BasicDataImporter {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-    	// persist tweets in batch (256 per insert)
+		// persist tweets in batch (256 per insert)
 //		entityManager.flush();
 //		entityManager.clear();
 	}
@@ -149,13 +155,13 @@ public class BasicDataImporter {
 	private void mapTsvToTweet(CSVRecord record, AbstractTweet tweet) {
 		tweet.setText(record.get("tweet"));
 		switch (record.get("subtask_a")) {
-		case "OFF":
-			tweet.setOffensive(true);
-			break;
-		case "NOT":
-			tweet.setOffensive(false);
-			break;
-		default:
+			case "OFF":
+				tweet.setOffensive(true);
+				break;
+			case "NOT":
+				tweet.setOffensive(false);
+				break;
+			default:
 		}
 	}
 
@@ -191,11 +197,12 @@ public class BasicDataImporter {
 	public void importExampleJson() {
 		String jsonPath = this.env.getProperty("localTweetJson");
 		importFromJson(jsonPath, new TweetProvider<Tweet>() {
-			@Override
-			public Tweet createTweet() {
-				return new Tweet();
-			}
-		}, tweetRepository);
+					@Override
+					public Tweet createTweet() {
+						return new Tweet();
+					}
+				}, new ImportTweetPreProcessor()
+				, tweetRepository);
 	}
 
 	public void importTsvTestAndTrain() {
@@ -216,5 +223,5 @@ public class BasicDataImporter {
 
 		});
 	}
-
 }
+
