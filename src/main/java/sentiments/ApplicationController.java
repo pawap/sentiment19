@@ -31,6 +31,7 @@ import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import sentiments.data.BasicDataImporter;
 import sentiments.domain.model.HashtagCount;
+import sentiments.domain.model.Timeline;
 import sentiments.domain.model.TweetFilter;
 import sentiments.domain.repository.TweetRepository;
 import sentiments.domain.service.TweetFilterBuilder;
@@ -67,11 +68,10 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
     TweetRepository tweetRepository;
 
 
-	@RequestMapping("/tweet")
-    public ResponseEntity<String> tweet(@RequestParam(value = "offensive", defaultValue = "1") boolean offensive) {
+	@RequestMapping(value = "/tweet",  method = RequestMethod.POST, consumes = "application/json")
+    public ResponseEntity<String> tweet(@RequestBody TweetFilter tf) {
         String base_url = "https://publish.twitter.com/oembed?url=https://twitter.com/user/status/";
         String twitterId;
-        StringBuffer response = new StringBuffer();
         JsonObject obj = null;
 
         int responseCode = 0;
@@ -79,8 +79,7 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
         while (responseCode != 200 && i < 100) {
             i++;
             try {
-                TweetFilterBuilder tfb = new TweetFilterBuilder();
-                twitterId = tweetRepository.getRandomTwitterId(tfb.setOffensive(offensive).build());
+                twitterId = tweetRepository.getRandomTwitterId(tf);
                 if (twitterId == null) break;
                 String url = base_url + twitterId + "&align=center";
                 URL urlObj = new URL(url);
@@ -135,9 +134,9 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
     }
     
     @RequestMapping(value = "/stats",  method = RequestMethod.POST, consumes = "application/json")
-	public ResponseEntity<String> stats(@RequestBody TweetFilter tq) {
+	public ResponseEntity<String> stats(@RequestBody TweetFilter tf) {
 
-    	int count = tweetRepository.countByOffensiveAndDate(tq);
+    	int count = tweetRepository.countByOffensiveAndDate(tf);
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");
         JSONObject out = new JSONObject();
@@ -146,10 +145,10 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
     }
 
     @RequestMapping(value = "/popularhashtags",  method = RequestMethod.POST, consumes = "application/json")
-    public ResponseEntity<String> popularhashtags(@RequestBody TweetFilter tq, @RequestParam( value = "limit", defaultValue = "5") int limit ) {
+    public ResponseEntity<String> popularhashtags(@RequestBody TweetFilter tf, @RequestParam( value = "limit", defaultValue = "5") int limit ) {
 
-        List<HashtagCount> tags = tweetRepository.getMostPopularHashtags(tq, limit);
-        int total = tweetRepository.countByOffensiveAndDate(tq);
+        List<HashtagCount> tags = tweetRepository.getMostPopularHashtags(tf, limit);
+        int total = tweetRepository.countByOffensiveAndDate(tf);
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");
         JSONArray hashtags = new JSONArray();
@@ -194,23 +193,18 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
         return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.CREATED);
     }
 
-    @RequestMapping("/timeline")
-    public ResponseEntity<String> timeline(@RequestParam(value = "offensive", defaultValue = "1") boolean offensive,
-                                        @RequestParam(value = "startdate", defaultValue = "1990-01-01") @DateTimeFormat(pattern = "yyyy-MM-dd") Date startdate,
-                                        @RequestParam(value = "enddate", defaultValue = "today") @DateTimeFormat(pattern = "yyyy-MM-dd") Date enddate) {
+    @RequestMapping(value="/timeline", method = RequestMethod.POST, consumes = "application/json")
+    public ResponseEntity<String> timeline(@RequestBody TweetFilter tf) {
 
-	    TweetFilterBuilder filterBuilder = new TweetFilterBuilder();
-	    filterBuilder.setOffensive(offensive)
-                .setStart(new Timestamp(startdate.getTime()))
-                .setEnd(new Timestamp(enddate.getTime()));
-
-	    List<Integer> count = tweetRepository.countByOffensiveAndDayInInterval(filterBuilder.build());
+	    Timeline timeline = tweetRepository.countByOffensiveAndDayInInterval(tf);
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");
         JSONObject out = new JSONObject();
-        JSONArray timeline = new JSONArray();
-        timeline.addAll(count);
-        out.put("timeline", timeline);
+        JSONArray arr = new JSONArray();
+        arr.addAll(timeline.timeline);
+        out.put("timeline", arr);
+        out.put("start", timeline.start.toString());
+        out.put("end", timeline.end.toString());
         return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.CREATED);
     }
 

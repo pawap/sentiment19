@@ -1,15 +1,21 @@
 package sentiments.domain.repository;
 
 import sentiments.domain.model.HashtagCount;
+import sentiments.domain.model.Timeline;
 import sentiments.domain.model.TweetFilter;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
  * @author paw, 6runge
  */
 public interface TweetRepositoryCustom {
-    List<Integer> countByOffensiveAndDayInInterval(TweetFilter tweetFilter);
+    Timeline countByOffensiveAndDayInInterval(TweetFilter tweetFilter);
+
+    LocalDate getFirsrDate();
+
+    LocalDate getLastDate();
 
     String getRandomTwitterId(TweetFilter tweetFilter);
 
