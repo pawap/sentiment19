@@ -2,6 +2,7 @@ package sentiments.domain.model;
 
 import javax.persistence.*;
 import java.util.Date;
+import java.util.List;
 
 @MappedSuperclass
 public class AbstractTweet {
@@ -14,6 +15,7 @@ public class AbstractTweet {
 
 	private String language;
 
+	private List<String> lemma;
 	private Date crdate;
 	private Date tmstamp;
 	private boolean offensive;
@@ -69,4 +71,8 @@ public class AbstractTweet {
 	public void setOffensive(boolean offensive) {
 		this.offensive = offensive;
 	}
+
+	public List<String> getLemma(){ return lemma; }
+
+	public void setLemma(List<String> lemma){ this.lemma = lemma;}
 }

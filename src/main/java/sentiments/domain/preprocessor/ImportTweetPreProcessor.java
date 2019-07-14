@@ -34,10 +34,12 @@ public class ImportTweetPreProcessor implements TweetPreProcessor {
         tweet.setLanguage(detectedLanguage.getIsoCode());
 
         //test of the functionality
-        if(tweet.getLanguage()== "en") {
-            System.out.println(text);
-            System.out.println(sfl.lemmatize(text));
+        if(tweet.getLanguage()== "en" || tweet.getLanguage()== "de") {
+//            System.out.println(text);
+//            System.out.println(sfl.lemmatize(text));
 
+            //persist lemmtized tokens (german, english) into MongoDB
+            tweet.setLemma(sfl.lemmatize(text));
         }
     }
 
