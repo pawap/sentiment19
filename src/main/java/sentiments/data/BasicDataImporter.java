@@ -1,13 +1,7 @@
 package sentiments.data;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -65,10 +59,19 @@ public class BasicDataImporter {
 		this.dateTimeFormatter = DateTimeFormatter.ofPattern("E MMM dd HH:mm:ss Z yyyy", Locale.UK);
 	}
 
-	public void importFromJson(String jsonPath, TweetProvider<Tweet> tweetProvider, TweetPreProcessor processor, MongoRepository repo) {
+	public void importFromJson(String jsonPath, TweetProvider<Tweet> tweetProvider, TweetPreProcessor processor, MongoRepository repo)
+	{
 		try {
 			InputStream stream = new FileInputStream(jsonPath);
-			JsonReader reader = new JsonReader(new InputStreamReader(stream, "UTF-8"));
+			importFromStream(stream, tweetProvider, processor, repo);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void importFromStream(InputStream stream, TweetProvider<Tweet> tweetProvider, TweetPreProcessor processor, MongoRepository repo) {
+		try {
+			JsonReader reader = new JsonReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
 			Gson gson = new GsonBuilder().create();
 			reader.setLenient(true);
 			List<Tweet> tweets = tweetProvider.getNewTweetList();
@@ -108,18 +111,22 @@ public class BasicDataImporter {
 			reader.close();
 			processor.destroy();
 			System.gc();
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 
+	public void importFromStream(InputStream stream) {
+		importFromStream(stream, new TweetProvider<Tweet>() {
+					@Override
+					public Tweet createTweet() {
+						return new Tweet();
+					}
+				}, new ImportTweetPreProcessor()
+				, tweetRepository);
+	}
+	
 	public void importFromTsv(String tsvPath, TweetProvider tweetProvider) {
 		Reader in;
 		int i = 0;

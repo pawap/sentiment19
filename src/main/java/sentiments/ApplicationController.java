@@ -229,6 +229,25 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
        
         return new ResponseEntity<String>(response, responseHeaders,HttpStatus.CREATED);
     }
+
+    @RequestMapping("/backend")
+    public ResponseEntity<String> backend() {
+        String response = "";
+        try {
+            File file = ResourceUtils.getFile(
+                    "classpath:frontend/sentiment-backend.html");
+            response = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("Access-Control-Allow-Origin", "*");
+
+        return new ResponseEntity<String>(response, responseHeaders,HttpStatus.CREATED);
+    }
     
     @RequestMapping("/backend/import")
 	public ResponseEntity<String> tweetimport() {
@@ -315,9 +334,11 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
     @PostMapping("backend/upload")
     public ResponseEntity<String> singleFileUpload(@RequestParam("file") MultipartFile file,
                                    RedirectAttributes redirectAttributes) {
-
+        HttpHeaders responseHeaders = new HttpHeaders();
+        System.out.println("upload");
         if (file.isEmpty()) {
             redirectAttributes.addFlashAttribute("message", "Please select a file to upload");
+            System.out.println("empty");
             return new ResponseEntity<String>("redirect:uploadStatus", responseHeaders,HttpStatus.CREATED);
         }
 
@@ -332,7 +353,7 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
             e.printStackTrace();
         }
 
-        return new ResponseEntity<String>("redirect:/uploadStatus", responseHeaders,HttpStatus.CREATED);
+        return new ResponseEntity<String>("uploadStatus", responseHeaders,HttpStatus.CREATED);
     }
 
     @GetMapping("/uploadStatus")
