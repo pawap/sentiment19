@@ -326,11 +326,6 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
 	    binder.registerCustomEditor(Date.class, dateEditor);
 	}
 
-    @GetMapping("/")
-    public String index() {
-        return "upload";
-    }
-
     @PostMapping("backend/upload")
     public ResponseEntity<String> singleFileUpload(@RequestParam("file") MultipartFile file,
                                    RedirectAttributes redirectAttributes) {
@@ -339,7 +334,7 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
         if (file.isEmpty()) {
             redirectAttributes.addFlashAttribute("message", "Please select a file to upload");
             System.out.println("empty");
-            return new ResponseEntity<String>("redirect:uploadStatus", responseHeaders,HttpStatus.CREATED);
+            return new ResponseEntity<String>("uploadStatus: empty", responseHeaders,HttpStatus.CREATED);
         }
 
         try {
@@ -353,12 +348,8 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
             e.printStackTrace();
         }
 
-        return new ResponseEntity<String>("uploadStatus", responseHeaders,HttpStatus.CREATED);
+        return new ResponseEntity<String>("uploadStatus: postitve", responseHeaders,HttpStatus.CREATED);
     }
 
-    @GetMapping("/uploadStatus")
-    public String uploadStatus() {
-        return "uploadStatus";
-    }
 
 }
