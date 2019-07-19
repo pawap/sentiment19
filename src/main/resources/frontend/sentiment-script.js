@@ -22,6 +22,9 @@ window.addEventListener('load', function(){
                     start:  getDate(-7),
                     end:  getDate(0)
                 }, 
+
+                //status of classifier
+                classifierStatus: "noch nicht klassifiziert."
             }
         },
         methods:{
@@ -95,6 +98,14 @@ window.addEventListener('load', function(){
                 lineChart.data.datasets[1].data = nonOffData
                 lineChart.update()
             },
+
+            //To-Do: Post input to BE and receive classifier response AND reset modal after closing
+            classifyInput: function(){
+                
+                var input = document.getElementById('classifierInput').value
+                console.log(input)
+                this.classifierStatus = "wird klassifiziert."
+            }
         }
     })
 
