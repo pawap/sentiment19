@@ -15,15 +15,15 @@ window.addEventListener('load', function(){
                 pieNonOff: 0,
                 //time selection values
                 times: [
-                    {text: "Letzter Tag", value: "day"}, 
-                    {text: "Letzte Woche", value: "week"}, 
-                    {text: "Letzter Monat", value: "month"}, 
+                    {text: "Letzter Tag", value: "day"},
+                    {text: "Letzte Woche", value: "week"},
+                    {text: "Letzter Monat", value: "month"},
                 ],
                 //datepicker selection, initialized with one week
                 selectedDate: {
                     start:  getDate(-7),
                     end:  getDate(0)
-                }, 
+                },
             }
         },
         methods:{
@@ -40,7 +40,7 @@ window.addEventListener('load', function(){
                     this.nonOffensive = nonOff.data.count
                     this.updatePieChart()
                   }));
-                
+
             },
             //Update Pie Chart based on selected time frame
             //To-Do: Request Dataset
@@ -51,7 +51,7 @@ window.addEventListener('load', function(){
                 }
 
                 let data
-                
+
                 if(this.selectPieTime === ''){
                     data = [this.offensive, this.nonOffensive]
                     pieChart.data.datasets[0].data = data
@@ -134,7 +134,7 @@ window.addEventListener('load', function(){
         rotation: 0.5 * Math.PI
     }
     });
-    
+
 
     //Line chart - comparing offensive/nonOffensive over specified time
     var ctx2 = document.getElementById('lineChart').getContext('2d');
@@ -185,7 +185,7 @@ window.addEventListener('load', function(){
         vue.updateCounters()
         vue.updateLineChart()
     }
-    
+
    //run init function
     init()
 
@@ -200,17 +200,17 @@ function formatDate(date){
     return date.getDate() + "." + (date.getMonth()+1)  + "." + date.getFullYear().toString().slice(-2)
 }
 
-//Gets range of dates  between start and end date with key (for example 'day') steps 
+//Gets range of dates  between start and end date with key (for example 'day') steps
 function getRangeOfDates(start, end, key, arr = [start.startOf(key)]) {
-  
+
     if(start.isAfter(end)) throw new Error('start must precede end')
-    
+
     const next = moment(start).add(1, key).startOf(key);
-    
+
     if(next.isAfter(end, key)) return arr.map((v) => formatDate(v.toDate()))
-    
+
     return getRangeOfDates(next, end, key, arr.concat(next));
-    
+
 }
 
  //Get the tweets to be displayed
@@ -257,19 +257,19 @@ function getRangeOfDates(start, end, key, arr = [start.startOf(key)]) {
     .finally(function () {
         // always executed
     })
-    
+
 }
 
 //get number of tweets for each day between start and end date for specified label, currently just returns dummy data
 //To-Do: get real data from Backend
 function getDataRange(label, start, end, l){
     if(label === "off"){
-        //To-Do: Axios.get() request number of offensive tweets for each day from start to end 
+        //To-Do: Axios.get() request number of offensive tweets for each day from start to end
 
         //placeholder return
         return Array.from({length: l}, () => Math.floor(Math.random() * 25));
     }else if(label === "nonOff"){
-        //To-Do: Axios.get() request number of non-offensive tweets for each day from start to end 
+        //To-Do: Axios.get() request number of non-offensive tweets for each day from start to end
 
         //placeholder return
         return Array.from({length: l}, () => Math.floor(Math.random() * 25));
@@ -291,3 +291,98 @@ function getDate(d){
         return moment().toDate()
     }
 }
+
+// url Async requesting function
+function httpGetAsync(theUrl, callback)
+{
+    // create the request object
+    var xmlHttp = new XMLHttpRequest();
+
+    // set the state change callback to capture when the response comes in
+    xmlHttp.onreadystatechange = function()
+    {
+        if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
+        {
+            callback(xmlHttp.responseText);
+        }
+    }
+
+    // open as a GET call, pass in the url and set async = True
+    xmlHttp.open("GET", theUrl, true);
+
+    // call send with no params as they were passed in on the url string
+    xmlHttp.send(null);
+
+    return;
+}
+
+// callback for the random offensive search
+function tenorCallback_randomsearch_off(responsetext)
+{
+    // parse the json response
+    var response_objects = JSON.parse(responsetext);
+
+    top_10_gifs = response_objects["results"];
+
+    // load the GIFs -- for our example we will load the first GIFs preview size (nanogif) and share size (tinygif)
+
+    document.getElementById("Off_gif").src = top_10_gifs[0]["media"][0]["tinygif"]["url"];
+
+    return;
+
+}
+
+// callback for the random non-offensive search
+function tenorCallback_randomsearch_non_off(responsetext)
+{
+    // parse the json response
+    var response_objects = JSON.parse(responsetext);
+
+    top_10_gifs = response_objects["results"];
+
+    // load the GIFs
+    document.getElementById("Non_Off_gif").src = top_10_gifs[0]["media"][0]["nanogif"]["url"];
+
+    return;
+
+}
+
+
+// function to request random offensive gifs for a given search term
+function grab_data_off()
+{
+
+    // using default locale of en_US
+    var search_url = "https://api.tenor.com/v1/random?q=angry&key=SXCYAWE2GDPA&limit=8";
+
+    httpGetAsync(search_url,tenorCallback_randomsearch_off);
+
+    // data will be loaded by each call's callback
+    return;
+}
+
+// function to request random non-offensive gifs for a given search term
+function grab_data_non_off()
+{
+
+    // using default locale of en_US
+    var search_url = "https://api.tenor.com/v1/random?q=happy&key=SXCYAWE2GDPA&limit=8";
+
+    httpGetAsync(search_url,tenorCallback_randomsearch_non_off);
+
+    // data will be loaded by each call's callback
+    return;
+}
+
+// callback for anonymous id -- for first time users
+function tenorCallback_anonid(responsetext)
+{
+    // pass on to grab_data (offensive & non-offensive Gifs)
+    grab_data_off();
+    grab_data_non_off();
+}
+
+var url = "https://api.tenor.com/v1/anonid?key=SXCYAWE2GDPA";
+
+// start the flow by getting a new anonymous id and having the callback pass it to grab_data
+httpGetAsync(url,tenorCallback_anonid);
