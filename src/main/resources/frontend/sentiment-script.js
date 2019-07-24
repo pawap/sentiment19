@@ -24,7 +24,7 @@ window.addEventListener('load', function(){
                 }, 
 
                 //status of classifier
-                classifierStatus: "noch nicht klassifiziert."
+                classifierStatus: "ist noch nicht klassifiziert"
             }
         },
         methods:{
@@ -101,11 +101,19 @@ window.addEventListener('load', function(){
 
             //To-Do: Post input to BE and receive classifier response AND reset modal after closing
             classifyInput: function(){
-                
                 var input = document.getElementById('classifierInput').value
                 console.log(input)
-                this.classifierStatus = "wird klassifiziert."
+                this.classifierStatus = "wird klassifiziert"
+            },
+
+            //
+            addModalEvent: function(){
+                $(".modal").on("show.bs.modal", function(){
+                    vue.classifierStatus = "ist noch nicht klassifiziert";
+                    $(this).find("textarea").val('');
+                });
             }
+
         }
     })
 
@@ -186,6 +194,7 @@ window.addEventListener('load', function(){
         displayTweet()
         vue.updateCounters()
         vue.updateLineChart()
+        vue.addModalEvent()
     }
     
    //run init function
