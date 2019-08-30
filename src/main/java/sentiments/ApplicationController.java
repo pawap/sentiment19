@@ -16,6 +16,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
@@ -48,6 +49,7 @@ import java.util.stream.Collectors;
 //@Configuration
 @RestController
 @EnableAutoConfiguration
+@EnableScheduling
 @ComponentScan
 public class ApplicationController implements SentimentAnalysisWebInterface{
 
