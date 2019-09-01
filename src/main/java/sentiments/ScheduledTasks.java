@@ -11,7 +11,6 @@ import sentiments.data.TweetDataImporter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-
 @Component
 public class ScheduledTasks {
 
