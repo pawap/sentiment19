@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import sentiments.data.TweetDataImporter;
+import sentiments.data.ImportManager;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -15,7 +15,7 @@ import java.util.Date;
 public class ScheduledTasks {
 
     @Autowired
-    private TweetDataImporter tweetDataImporter;
+    private ImportManager importManager;
 
     private static final Logger log = LoggerFactory.getLogger(ScheduledTasks.class);
 
@@ -29,7 +29,7 @@ public class ScheduledTasks {
     public void crawlDataServer() throws InterruptedException {
         int mycount = ++threadCount;
         log.info("Starting crawl (" + mycount + ") at {}", dateFormat.format(new Date()));
-        tweetDataImporter.importTweets();
+        importManager.importTweets();
         log.info("Ending crawl (" + mycount + ")  at {}", dateFormat.format(new Date()));
 
     }
