@@ -3,6 +3,8 @@ package sentiments.data;
 import com.jcraft.jsch.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
 import java.util.Vector;
@@ -11,6 +13,8 @@ import java.util.Vector;
  * Imports tweet data from the host specified in application.properties
  * @author 6runge
  */
+@Transactional
+@Service
 public class TweetDataImporter extends BasicDataImporter{
 
     @Autowired
