@@ -10,6 +10,8 @@ import sentiments.data.TweetDataImporter;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 @Component
 public class ScheduledTasks {
@@ -21,16 +23,24 @@ public class ScheduledTasks {
 
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
 
+    private static int maxThreadCount = 4;
+
     private static int threadCount = 0;
 
 
     @Async
     @Scheduled(cron = "*/30 * * * * *")
     public void crawlDataServer() throws InterruptedException {
-        int mycount = ++threadCount;
-        log.info("Starting crawl (" + mycount + ") at {}", dateFormat.format(new Date()));
-        tweetDataImporter.importTweets();
-        log.info("Ending crawl (" + mycount + ")  at {}", dateFormat.format(new Date()));
-
+        if (threadCount >= maxThreadCount) {
+            int mycount = ++threadCount;
+            log.info("Starting crawl (" + mycount + ") at {}", dateFormat.format(new Date()));
+            CompletableFuture<Boolean> cf = tweetDataImporter.importTweets();
+            try {
+                cf.get();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
+            log.info("Ending crawl (" + mycount + ")  at {}", dateFormat.format(new Date()));
+        }
     }
 }
