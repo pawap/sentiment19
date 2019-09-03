@@ -8,23 +8,34 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Properties;
 import java.util.Vector;
+import java.util.concurrent.CompletableFuture;
 import java.util.zip.GZIPInputStream;
 
 /**
- * Imports tweet data from the host specified in application.properties
+ * Manages importing tweet data into the DB
  * @author 6runge
  */
 @Transactional
 @Service
-public class TweetDataImporter extends BasicDataImporter{
+public class ImportManager {
 
-  //  @Autowired
-  //  Environment env;
+    @Autowired
+    BasicDataImporter basicDataImporter;
 
-    public void importTweets() {
+    @Autowired
+    Environment env;
 
+
+    /**
+     * Transfers tweets from the location specified in application.properties to the Database specified in application.properties
+     */
+    public CompletableFuture<Boolean> importTweets() {
+
+        String filename = this.getNextFilename();
 
         JSch jsch = new JSch();
 
@@ -49,7 +60,7 @@ public class TweetDataImporter extends BasicDataImporter{
             System.out.println(remotePassword);
             System.out.println(tweetDir);
 
-            // OR non-interactive version. Relies in host key being in known-hosts file
+
             session.setPassword(remotePassword);
 
             session.connect(5000);
@@ -60,21 +71,13 @@ public class TweetDataImporter extends BasicDataImporter{
 
             ChannelSftp sftpChannel = (ChannelSftp) channel;
 
-            //crawling
-            //sftpChannel.cd(tweetDir);
             Vector<ChannelSftp.LsEntry> filelist = sftpChannel.ls(tweetDir);
             for(int i=0; i<filelist.size();i++){
                 System.out.println(filelist.get(i).getFilename());
                 InputStream in = sftpChannel.get(tweetDir + "/" + filelist.get(i).getFilename());
                 GZIPInputStream gin = new GZIPInputStream(in);
-                this.importFromStream(gin);
+                basicDataImporter.importFromStream(gin);
             }
-
-            //sftpChannel.get("remote-file", "local-file");
-            // OR
-
-            // process inputstream as needed
-
 
             sftpChannel.exit();
             session.disconnect();
@@ -84,5 +87,31 @@ public class TweetDataImporter extends BasicDataImporter{
         }
 
     }
+
+    private String getNextFilename() {
+
+
+    }
+
+    /*
+     * Extracts a LocalDateTime from a filename that follows the pattern tweetyyyyMMDDmm:HH.json
+     * @param name a filename in the correct format
+     * @return the corresponding LocalDateTime
+     */
+    private LocalDateTime filenameToDateTime(String name){
+
+        int year = Integer.valueOf(name.substring(5,9));
+        int month = Integer.valueOf(name.substring(9,11));
+        int day = Integer.valueOf(name.substring(11,13));
+        int hour = Integer.valueOf(name.substring(13,15));
+        int minute = Integer.valueOf(name.substring(16,18));
+
+
+        LocalDateTime dateTime = LocalDateTime.of(year, month, day, hour, minute);
+
+        return dateTime;
+    }
+
+
 
 }

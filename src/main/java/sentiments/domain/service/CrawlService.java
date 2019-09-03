@@ -6,7 +6,6 @@ import sentiments.domain.model.Crawl;
 import sentiments.domain.repository.CrawlRepository;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 
 @Service
 public class CrawlService {
@@ -27,7 +26,9 @@ public class CrawlService {
     }
 
     public void finishCrawl(LocalDateTime date) {
-        Crawl crawl = crawlRepository.findByDate(LocalDateTime );
+        Crawl crawl = crawlRepository.findByDate(date);
+        crawl.setStatus(Crawl.FINISHED);
+        crawlRepository.save(crawl);
     }
 
 }
