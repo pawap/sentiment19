@@ -10,6 +10,8 @@ import sentiments.data.ImportManager;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 @Component
 public class ScheduledTasks {
@@ -27,13 +29,19 @@ public class ScheduledTasks {
 
 
     @Async
-    @Scheduled(cron = "*/30 * * * * *")
+    @Scheduled(cron = "*/5 * * * * *")
     public void crawlDataServer() throws InterruptedException {
-        if (threadCount >= maxThreadCount) {
+        if (threadCount < maxThreadCount) {
             int mycount = ++threadCount;
             log.info("Starting crawl (" + mycount + ") at {}", dateFormat.format(new Date()));
-            importManager.importTweets();
+            CompletableFuture completableFuture = importManager.importTweets();
+            try {
+                System.out.println(completableFuture.get());
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
             log.info("Ending crawl (" + mycount + ")  at {}", dateFormat.format(new Date()));
+            threadCount--;
         }
     }
 }

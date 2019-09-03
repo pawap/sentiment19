@@ -6,6 +6,7 @@ import sentiments.domain.model.Crawl;
 import sentiments.domain.repository.CrawlRepository;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 
 @Service
 public class CrawlService {
@@ -15,8 +16,9 @@ public class CrawlService {
 
     public LocalDateTime getLastStart() {
         Crawl crawl = crawlRepository.findTopByOrderByDateDesc();
+        System.out.println(crawl.getDate());
         if (crawl == null) {
-            return LocalDateTime.of(2018, 1,1,0,0);
+            return LocalDateTime.of(2018, Month.JANUARY,1, 0, 0);
         }
         return crawl.getDate();
     }
