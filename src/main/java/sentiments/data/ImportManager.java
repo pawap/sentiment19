@@ -1,14 +1,18 @@
 package sentiments.data;
 
 import com.jcraft.jsch.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Properties;
 import java.util.Vector;
+import java.util.concurrent.CompletableFuture;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -17,13 +21,21 @@ import java.util.zip.GZIPInputStream;
  */
 @Transactional
 @Service
-public class ImportManager extends BasicDataImporter{
+public class ImportManager {
+
+    @Autowired
+    BasicDataImporter basicDataImporter;
+
+    @Autowired
+    Environment env;
+
 
     /**
-     * Trasnfers tweets from the location specified in application.properties to the Database specified in application.properties
+     * Transfers tweets from the location specified in application.properties to the Database specified in application.properties
      */
-    public void importTweets() {
+    public CompletableFuture<Boolean> importTweets() {
 
+        String filename = this.getNextFilename();
 
         JSch jsch = new JSch();
 
@@ -64,7 +76,7 @@ public class ImportManager extends BasicDataImporter{
                 System.out.println(filelist.get(i).getFilename());
                 InputStream in = sftpChannel.get(tweetDir + "/" + filelist.get(i).getFilename());
                 GZIPInputStream gin = new GZIPInputStream(in);
-                this.importFromStream(gin);
+                basicDataImporter.importFromStream(gin);
             }
 
             sftpChannel.exit();
@@ -76,12 +88,17 @@ public class ImportManager extends BasicDataImporter{
 
     }
 
-    /**
+    private String getNextFilename() {
+
+
+    }
+
+    /*
      * Extracts a LocalDateTime from a filename that follows the pattern tweetyyyyMMDDmm:HH.json
      * @param name a filename in the correct format
      * @return the corresponding LocalDateTime
      */
-    public LocalDateTime FilenameToDateTime(String name){
+    private LocalDateTime filenameToDateTime(String name){
 
         int year = Integer.valueOf(name.substring(5,9));
         int month = Integer.valueOf(name.substring(9,11));
@@ -94,5 +111,7 @@ public class ImportManager extends BasicDataImporter{
 
         return dateTime;
     }
+
+
 
 }
