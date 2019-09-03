@@ -15,6 +15,9 @@ public class CrawlService {
 
     public LocalDateTime getLastStart() {
         Crawl crawl = crawlRepository.findTopByOrderByDateDesc();
+        if (crawl == null) {
+            return LocalDateTime.of(2018, 1,1,0,0);
+        }
         return crawl.getDate();
     }
 
