@@ -5,6 +5,16 @@ import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
+import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.List;
+
 import org.apache.commons.io.FileUtils;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.word2vec.Word2Vec;
@@ -25,9 +35,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import sentiments.data.BasicDataImporter;
+import sentiments.domain.model.HashtagCount;
+import sentiments.domain.model.TweetFilter;
 import sentiments.domain.repository.TweetRepository;
+import sentiments.domain.service.TweetFilterBuilder;
 import sentiments.ml.W2VTweetClassifier;
 import sentiments.ml.WordVectorBuilder;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.stream.Collectors;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -70,29 +89,37 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
 	@RequestMapping("/tweet")
     public ResponseEntity<String> tweet(@RequestParam(value = "offensive", defaultValue = "1") boolean offensive) {
         String base_url = "https://publish.twitter.com/oembed?url=https://twitter.com/user/status/";
-        String url = base_url + "911789314169823232" + "&align=center";
+        String twitterId;
         StringBuffer response = new StringBuffer();
         JsonObject obj = null;
 
         int responseCode = 0;
-        try {
-            URL urlObj = new URL(url);
-            HttpURLConnection con = (HttpURLConnection) urlObj.openConnection();
+        int i = 0;
+        while (responseCode != 200 && i < 100) {
+            i++;
+            try {
+                TweetFilterBuilder tfb = new TweetFilterBuilder();
+                twitterId = tweetRepository.getRandomTwitterId(tfb.setOffensive(offensive).build());
+                if (twitterId == null) break;
+                String url = base_url + twitterId + "&align=center";
+                URL urlObj = new URL(url);
+                HttpURLConnection con = (HttpURLConnection) urlObj.openConnection();
 
-            // optional default is GET
-            con.setRequestMethod("GET");
+                // optional default is GET
+                con.setRequestMethod("GET");
 
-            //add request header
-            responseCode = con.getResponseCode();
-            System.out.println("\nSending 'GET' request to URL : " + url);
-            System.out.println("Response Code : " + responseCode);
+                //add request header
+                responseCode = con.getResponseCode();
+                System.out.println("\nSending 'GET' request to URL : " + url);
+                System.out.println("Response Code : " + responseCode);
 
-            JsonReader reader = new JsonReader(new InputStreamReader(con.getInputStream()));
-            obj = new JsonParser().parse(reader).getAsJsonObject();
-            reader.close();
+                JsonReader reader = new JsonReader(new InputStreamReader(con.getInputStream()));
+                obj = new JsonParser().parse(reader).getAsJsonObject();
+                reader.close();
 
-        } catch (IOException e) {
-            e.printStackTrace();
+            } catch (IOException e) {
+
+            }
         }
         String str = null;
         if (obj != null) {
@@ -100,6 +127,7 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
         } else {
             str = "<h3>Couldn't fetch tweet</h3>";
         }
+
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");
         JSONObject out = new JSONObject();
@@ -125,26 +153,92 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
         return new ResponseEntity<String>(response, responseHeaders,HttpStatus.CREATED);
     }
     
-    @RequestMapping("/stats")
-	public ResponseEntity<String> stats(@RequestParam(value = "offensive", defaultValue = "1") boolean offensive,
-			@RequestParam(value = "startdate", defaultValue = "1990-01-01") @DateTimeFormat(pattern = "yyyy-MM-dd") Date startdate,
-			@RequestParam(value = "enddate", defaultValue = "today") @DateTimeFormat(pattern = "yyyy-MM-dd") Date enddate) {
+    @RequestMapping(value = "/stats",  method = RequestMethod.POST, consumes = "application/json")
+	public ResponseEntity<String> stats(@RequestBody TweetFilter tq) {
 
-    	int count = tweetRepository.countByOffensiveAndDate(offensive, new Timestamp(startdate.getTime()), new Timestamp(enddate.getTime()));
+    	int count = tweetRepository.countByOffensiveAndDate(tq);
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");
-        String response;
         JSONObject out = new JSONObject();
         out.put("count", count);
         return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.CREATED);
-    }    
+    }
+
+    @RequestMapping(value = "/popularhashtags",  method = RequestMethod.POST, consumes = "application/json")
+    public ResponseEntity<String> popularhashtags(@RequestBody TweetFilter tq, @RequestParam( value = "limit", defaultValue = "5") int limit ) {
+
+        List<HashtagCount> tags = tweetRepository.getMostPopularHashtags(tq, limit);
+        int total = tweetRepository.countByOffensiveAndDate(tq);
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("Access-Control-Allow-Origin", "*");
+        JSONArray hashtags = new JSONArray();
+        hashtags.addAll(tags.stream().map(HashtagCount::toJSONObject).collect(Collectors.toList()));
+        JSONObject out = new JSONObject();
+        out.put("hashtags", hashtags );
+        out.put("total", total );
+        return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.CREATED);
+    }
+
+    @RequestMapping("/count")
+    public ResponseEntity<String> count() {
+
+        int count = tweetRepository.countfindAllTweets();
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("Access-Control-Allow-Origin", "*");
+        JSONObject out = new JSONObject();
+        out.put("count", count);
+        return new ResponseEntity<String>(out.toString(), responseHeaders, HttpStatus.CREATED);
+    }
+
+    @RequestMapping("/byDateBetween")
+    public ResponseEntity<String> byDateBetween(@RequestParam(value = "startdate", defaultValue = "1990-01-01") @DateTimeFormat(pattern = "yyyy-MM-dd") Date startdate,
+                                                @RequestParam(value = "enddate", defaultValue = "today") @DateTimeFormat(pattern = "yyyy-MM-dd") Date enddate) {
+
+        int count = tweetRepository.countfindAllByDateBetween(new Timestamp(startdate.getTime()), new Timestamp(enddate.getTime()));
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("Access-Control-Allow-Origin", "*");
+        JSONObject out = new JSONObject();
+        out.put("count", count);
+        return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.CREATED);
+    }
+
+    @RequestMapping("/countOffensive")
+    public ResponseEntity<String> cOffensive(@RequestParam(value = "offensive", defaultValue = "1") boolean offensive) {
+
+        int count = tweetRepository.countByOffensive(offensive);
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("Access-Control-Allow-Origin", "*");
+        JSONObject out = new JSONObject();
+        out.put("count", count);
+        return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.CREATED);
+    }
+
+    @RequestMapping("/timeline")
+    public ResponseEntity<String> timeline(@RequestParam(value = "offensive", defaultValue = "1") boolean offensive,
+                                        @RequestParam(value = "startdate", defaultValue = "1990-01-01") @DateTimeFormat(pattern = "yyyy-MM-dd") Date startdate,
+                                        @RequestParam(value = "enddate", defaultValue = "today") @DateTimeFormat(pattern = "yyyy-MM-dd") Date enddate) {
+
+	    TweetFilterBuilder filterBuilder = new TweetFilterBuilder();
+	    filterBuilder.setOffensive(offensive)
+                .setStart(new Timestamp(startdate.getTime()))
+                .setEnd(new Timestamp(enddate.getTime()));
+
+	    List<Integer> count = tweetRepository.countByOffensiveAndDayInInterval(filterBuilder.build());
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("Access-Control-Allow-Origin", "*");
+        JSONObject out = new JSONObject();
+        JSONArray timeline = new JSONArray();
+        timeline.addAll(count);
+        out.put("timeline", timeline);
+        return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.CREATED);
+    }
 
     @RequestMapping("/")
 	public ResponseEntity<String> html() {
         String response = "";
         try {
             File file = ResourceUtils.getFile(
-                    "classpath:html-tester/Sentiments-Frontend.html");
+                    "classpath:frontend/sentiment-frontend.html");
             response = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
