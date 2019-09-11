@@ -25,11 +25,6 @@ public class WordVectorBuilder {
      * Returns the path where the word vectors are persisted.
      * @return the file path of the model file
      */
-    public static String getModelFilePath() {
-        return modelFilePath;
-    }
-
-    private static String modelFilePath = "resources/word2vec.bin";
 
     /**
      * Constructor
@@ -41,7 +36,7 @@ public class WordVectorBuilder {
 
 
     /**
-     * Builds wordvectors and persists them at a location accessible via {@link #getModelFilePath()}.
+     * Builds wordvectors and persists them at a location accessible via {@see sentiments.data.ml.WordVectorService#getWordVectorPath()}.
      * @throws IOException
      */
     public  void train() throws IOException {
@@ -61,7 +56,7 @@ public class WordVectorBuilder {
                 .build();
         vec.fit();
 
-        WordVectorSerializer.writeWord2VecModel(vec, modelFilePath);
+        WordVectorSerializer.writeWord2VecModel(vec, WordVectorsService.getWordVectorPath());
     }
 }
 

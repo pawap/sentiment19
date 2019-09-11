@@ -5,16 +5,6 @@ import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.Date;
-import java.sql.Timestamp;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.List;
-
 import org.apache.commons.io.FileUtils;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.word2vec.Word2Vec;
@@ -30,10 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.InitBinder;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import sentiments.data.BasicDataImporter;
 import sentiments.domain.model.HashtagCount;
 import sentiments.domain.model.TweetFilter;
@@ -41,12 +28,7 @@ import sentiments.domain.repository.TweetRepository;
 import sentiments.domain.service.TweetFilterBuilder;
 import sentiments.ml.W2VTweetClassifier;
 import sentiments.ml.WordVectorBuilder;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.stream.Collectors;
+import sentiments.ml.WordVectorsService;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -60,6 +42,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Paw, 6runge
@@ -292,7 +276,7 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
     @RequestMapping("/backend/ml/w2vtest")
     public ResponseEntity<String> w2vtest() {
 
-        Word2Vec word2VecModel = WordVectorSerializer.readWord2VecModel(new File(WordVectorBuilder.getModelFilePath()));
+        Word2Vec word2VecModel = WordVectorSerializer.readWord2VecModel(new File(WordVectorsService.getWordVectorPath()));
 
         String examples = "Some words with their closest neighbours: \n";
 
