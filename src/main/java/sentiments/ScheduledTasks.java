@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import sentiments.data.ImportManager;
 
@@ -29,7 +28,7 @@ public class ScheduledTasks {
 
 
     @Async
-    @Scheduled(cron = "*/5 * * * * *")
+    //@Scheduled(cron = "*/5 * * * * *")
     public void crawlDataServer() throws InterruptedException {
         if (threadCount < maxThreadCount) {
             int mycount = ++threadCount;

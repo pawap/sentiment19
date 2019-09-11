@@ -3,17 +3,17 @@ package sentiments.domain.repository;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
-import org.springframework.data.repository.query.Param;
+import sentiments.domain.model.TrainingTweet;
 import sentiments.domain.model.Tweet;
 
-public interface TrainingTweetRepository extends MongoRepository<Tweet,Integer> {
+public interface TrainingTweetRepository extends MongoRepository<TrainingTweet,Integer> {
 
 	//return an Iterable wit all (non-) offensive tweets
 	@Query("{ 'offensive' : ?0 }")
 	public Iterable<Tweet> findAllByOffensive(Boolean offensive);
 
 	//returns an Iterable of all tweets that are labled as test/training and (non-) offensive
-	@Query("{ 'test' : ?1 , 'offensive' : ?0 }")
+	@Query("{ 'test' : ?0 , 'offensive' : ?1 }")
 	public Iterable<Tweet> findAllByTestAndOffensive(Boolean test, Boolean offensive);
 
 	//returns the count of all samples

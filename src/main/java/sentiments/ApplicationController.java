@@ -34,19 +34,6 @@ import sentiments.ml.W2VTweetClassifier;
 import sentiments.ml.WordVectorBuilder;
 import sentiments.ml.WordVectorsService;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.sql.Timestamp;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -54,6 +41,7 @@ import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -360,6 +348,13 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
         responseHeaders.set("Access-Control-Allow-Origin", "*");
 
         return new ResponseEntity<String>(examples, responseHeaders,HttpStatus.CREATED);
+    }
+
+    @RequestMapping("/backend/ml/trainNet")
+    public ResponseEntity<String> trainNet() {
+	    tweetClassifier.train();
+        HttpHeaders responseHeaders = new HttpHeaders();
+	    return new ResponseEntity<String>("training done", responseHeaders,HttpStatus.CREATED);
     }
     
     private String generateJSONResponse(String input) {

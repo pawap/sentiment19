@@ -1,11 +1,5 @@
 package sentiments.ml;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.NoSuchElementException;
-
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 import org.deeplearning4j.text.tokenization.tokenizer.preprocessor.CommonPreprocessor;
 import org.deeplearning4j.text.tokenization.tokenizerfactory.DefaultTokenizerFactory;
@@ -19,7 +13,8 @@ import org.nd4j.linalg.indexing.INDArrayIndex;
 import org.nd4j.linalg.indexing.NDArrayIndex;
 import sentiments.domain.model.Tweet;
 import sentiments.domain.repository.TrainingTweetRepository;
-import sentiments.domain.repository.TweetRepository;
+
+import java.util.*;
 
 /**
  * @author Paw
@@ -50,10 +45,10 @@ public class TweetIterator implements DataSetIterator{
         this.batchSize = batchSize;
         this.vectorSize = wordVectors.getWordVector(wordVectors.vocab().wordAtIndex(0)).length;
         this.tweetRepository = tweetRepository;
+        this.test = test;
         this.reset();
         this.wordVectors = wordVectors;
         this.truncateLength = truncateLength;
-        this.test = test;
         tokenizerFactory = new DefaultTokenizerFactory();
         tokenizerFactory.setTokenPreProcessor(new CommonPreprocessor());
         System.out.println("totalExamples: " + totalExamples);
@@ -72,22 +67,23 @@ public class TweetIterator implements DataSetIterator{
         //Second: tokenize reviews and filter out unknown words
         List<List<String>> allTokens = new ArrayList<>();
         int maxLength = 0;
-        System.out.println("num: " + num);
         boolean[] offensive = new boolean[num];
         String tweet;
         for (int i = 0; i < num && cursor < totalExamples(); i++ ){
         	if (offensiveTweets.hasNext() && (!nonoffensiveTweets.hasNext() || (cursor % 3 == 0))) {
         		tweet = offensiveTweets.next().getText();
-                offensive[i] = true;  
-            } else {
+                offensive[i] = true;
+            } else if (nonoffensiveTweets.hasNext()){
         		tweet = nonoffensiveTweets.next().getText();
         		offensive[i] = false;
+            } else {
+        	    System.out.println("break");
+        	    break;
             }
     		List<String> tokens = tokenizeTweet(tweet);
             if (tokens.isEmpty()) {
             	i--;
             	totalExamples--;
-            	System.out.println("No tokens for " + (offensive[i]? "" : "non") + "offensive Tweet: " + tweet);
             } else {
             	allTokens.add(tokens);
                 maxLength = Math.max(maxLength,tokens.size());
@@ -172,7 +168,7 @@ public class TweetIterator implements DataSetIterator{
         cursor = 0;
         this.offensiveTweets = tweetRepository.findAllByTestAndOffensive(test,true).iterator();
        	this.nonoffensiveTweets = tweetRepository.findAllByTestAndOffensive(test, false).iterator();
-        this.totalExamples = (int) tweetRepository.count();
+        this.totalExamples = (int) tweetRepository.countTest(this.test);
     }
 
     public boolean resetSupported() {
