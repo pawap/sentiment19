@@ -1,9 +1,9 @@
 package sentiments.ml;
 
-import java.io.File;
-
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
+
+import java.io.File;
 
 /**
  * @author Paw
@@ -12,14 +12,20 @@ import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 public class WordVectorsService {
 	
     private static WordVectors INSTANCE;
-    
+
+    private static String vectorPath = "resources/word2vec.bin";
+
     private WordVectors wv;
     
     private WordVectorsService() {}
-    
+
+    public static String getWordVectorPath() {
+        return vectorPath;
+    }
+
     synchronized public static WordVectors getWordVectors() {
     	if (INSTANCE == null) {
-    		INSTANCE = WordVectorSerializer.loadStaticModel(new File("resources/GoogleNews-vectors-negative300.bin.gz"));
+    		INSTANCE = WordVectorSerializer.loadStaticModel(new File(vectorPath));
     	}
         return INSTANCE;
     }
