@@ -12,7 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.CustomDateEditor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
@@ -27,8 +29,10 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import sentiments.data.BasicDataImporter;
 import sentiments.domain.model.HashtagCount;
+import sentiments.domain.model.Language;
 import sentiments.domain.model.TweetFilter;
 import sentiments.domain.repository.TweetRepository;
+import sentiments.domain.service.LanguageService;
 import sentiments.domain.service.TweetFilterBuilder;
 import sentiments.ml.W2VTweetClassifier;
 import sentiments.ml.WordVectorBuilder;
@@ -54,10 +58,9 @@ import java.util.stream.Collectors;
  */
 //@Configuration
 @RestController
-@EnableAutoConfiguration
+@SpringBootApplication
 @EnableScheduling
 @EnableAsync
-@ComponentScan
 public class ApplicationController implements SentimentAnalysisWebInterface{
 
 	@Autowired
@@ -71,6 +74,9 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
 	
 	@Autowired
     TweetRepository tweetRepository;
+
+	@Autowired
+    LanguageService languageService;
 
 
 	@RequestMapping("/tweet")
@@ -352,7 +358,7 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
 
     @RequestMapping("/backend/ml/trainNet")
     public ResponseEntity<String> trainNet() {
-	    tweetClassifier.train();
+	    tweetClassifier.train(languageService.getLanguage("en"));
         HttpHeaders responseHeaders = new HttpHeaders();
 	    return new ResponseEntity<String>("training done", responseHeaders,HttpStatus.CREATED);
     }
@@ -363,7 +369,7 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
 
         JSONArray sentiments = new JSONArray();
 
-        sentiments.add(tweetClassifier.classifyTweet(input));
+        sentiments.add(tweetClassifier.classifyTweet(input, languageService.getLanguage("en")));
         
         out.put("sentiments", sentiments);
 
@@ -375,7 +381,7 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
 
         output.append("input: " + input);
         output.append("\nsentiments:");
-        output.append(tweetClassifier.classifyTweet(input));
+        output.append(tweetClassifier.classifyTweet(input, languageService.getLanguage("en")));
  
         return output.toString();
     }

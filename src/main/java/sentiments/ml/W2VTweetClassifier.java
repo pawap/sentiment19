@@ -26,6 +26,7 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
+import sentiments.domain.model.Language;
 import sentiments.domain.repository.TrainingTweetRepository;
 
 import java.io.File;
@@ -57,7 +58,7 @@ public class W2VTweetClassifier {
 		}
 	}
 	
-	public void train() {
+	public void train(Language language) {
 		int batchSize = 64;     //Number of examples in each minibatch
 	    int vectorSize = 300;   //Size of the word vectors. 300 in the Google News model
 	    int nEpochs = 5;        //Number of epochs (full passes of training data) to train on
@@ -94,8 +95,8 @@ public class W2VTweetClassifier {
 	    
 	    //DataSetIterators for training and testing respectively
 	    WordVectors wordVectors = WordVectorsService.getWordVectors();
-	    TweetIterator train = new TweetIterator(tweetRepository, wordVectors, batchSize, truncateReviewsToLength, false);
-	    TweetIterator test = new TweetIterator(tweetRepository, wordVectors, batchSize, truncateReviewsToLength, true);
+	    TweetIterator train = new TweetIterator(tweetRepository, wordVectors, batchSize, truncateReviewsToLength, false, language);
+	    TweetIterator test = new TweetIterator(tweetRepository, wordVectors, batchSize, truncateReviewsToLength, true, language);
 	    System.out.println("Starting training");
 	    for (int i = 0; i < nEpochs; i++) {
 	        net.fit(train);
@@ -107,7 +108,7 @@ public class W2VTweetClassifier {
 	    }
 	    
 	    try {
-			ModelSerializer.writeModel(net, ResourceUtils.getFile("resources/nets/rnnw2v.nn"), true);
+			ModelSerializer.writeModel(net, ResourceUtils.getFile(language.getClassifierFilename()), true);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -144,10 +145,10 @@ public class W2VTweetClassifier {
 		
 	}
 	
-	public String classifyTweet(String tweet) {
+	public String classifyTweet(String tweet, Language language) {
 		if (this.net == null) {
 			System.out.println("No model. Training new one.");
-			train();
+			train(language);
 		}
 		INDArray features = loadFeaturesFromString(tweet, 300);
 	    INDArray networkOutput = net.output(features);

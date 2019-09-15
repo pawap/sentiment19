@@ -11,6 +11,7 @@ import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.indexing.INDArrayIndex;
 import org.nd4j.linalg.indexing.NDArrayIndex;
+import sentiments.domain.model.Language;
 import sentiments.domain.model.Tweet;
 import sentiments.domain.repository.TrainingTweetRepository;
 
@@ -34,14 +35,17 @@ public class TweetIterator implements DataSetIterator{
 	private int totalExamples;
 	private TrainingTweetRepository tweetRepository;
 	private boolean test;
+    private String language;
 
     /**
      * @param wordVectors WordVectors object
      * @param batchSize Size of each minibatch for training
      * @param truncateLength If reviews exceed
      * @param test If true: return the testing data. If false: return the training data.
+     * @param language
      */
-    public TweetIterator(TrainingTweetRepository tweetRepository, WordVectors wordVectors, int batchSize, int truncateLength, boolean test) {
+    public TweetIterator(TrainingTweetRepository tweetRepository, WordVectors wordVectors, int batchSize, int truncateLength, boolean test, Language language) {
+        this.language = language.getIso();
         this.batchSize = batchSize;
         this.vectorSize = wordVectors.getWordVector(wordVectors.vocab().wordAtIndex(0)).length;
         this.tweetRepository = tweetRepository;
@@ -166,9 +170,9 @@ public class TweetIterator implements DataSetIterator{
     @Override
     public void reset() {
         cursor = 0;
-        this.offensiveTweets = tweetRepository.findAllByTestAndOffensive(test,true).iterator();
-       	this.nonoffensiveTweets = tweetRepository.findAllByTestAndOffensive(test, false).iterator();
-        this.totalExamples = (int) tweetRepository.countTest(this.test);
+        this.offensiveTweets = tweetRepository.findAllByTestAndOffensiveAndLanguage(test,true, language).iterator();
+       	this.nonoffensiveTweets = tweetRepository.findAllByTestAndOffensiveAndLanguage(test, false, language).iterator();
+        this.totalExamples = (int) tweetRepository.countByTestAndLanguage(this.test);
     }
 
     public boolean resetSupported() {
