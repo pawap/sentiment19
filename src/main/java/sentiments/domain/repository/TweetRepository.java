@@ -23,4 +23,6 @@ public interface TweetRepository extends MongoRepository<Tweet, Integer>, TweetR
 	//returns an int with the count of Tweets with a timestamp inbetween startdate and enddate
 	@Query(value = "{ 'tmstamp' : { $gte: ?0, $lte: ?1} }", count = true)
 	public int countfindAllByDateBetween(Timestamp startdate, Timestamp enddate);
+
+    Iterable<Tweet> findAllByLanguage(String language);
 }

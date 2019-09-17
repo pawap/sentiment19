@@ -2,6 +2,7 @@ package sentiments.ml;
 
 import org.deeplearning4j.text.sentenceiterator.SentenceIterator;
 import org.deeplearning4j.text.sentenceiterator.SentencePreProcessor;
+import sentiments.domain.model.Language;
 import sentiments.domain.model.Tweet;
 import sentiments.domain.repository.TweetRepository;
 
@@ -14,6 +15,7 @@ import java.util.Iterator;
  * @author 6runge
  */
 public class TweetSentenceIterator implements SentenceIterator {
+    private String language;
     private SentencePreProcessor preProcessor;
     private TweetRepository tweetRepository;
     private Iterator<Tweet> tweets;
@@ -22,24 +24,28 @@ public class TweetSentenceIterator implements SentenceIterator {
      * Constructor
      * @param sentencePreProcessor The PreProcessor used on all the tweets.
      * @param tweetRepository the repository containing the tweets to iterate over
+     * @param language
      */
-    public TweetSentenceIterator(SentencePreProcessor sentencePreProcessor, TweetRepository tweetRepository) {
+    public TweetSentenceIterator(SentencePreProcessor sentencePreProcessor, TweetRepository tweetRepository, Language language) {
         this.preProcessor = sentencePreProcessor;
         this.tweetRepository = tweetRepository;
-        this.tweets = tweetRepository.findAll().iterator();
+        this.language = language.getIso();
+        this.tweets = tweetRepository.findAllByLanguage(this.language).iterator();
+
     }
 
     /**
      * Constructor
      * @param tweetRepository the repository containing the tweets to iterate over
+     * @param language
      */
-    public TweetSentenceIterator(TweetRepository tweetRepository) {
+    public TweetSentenceIterator(TweetRepository tweetRepository, Language language) {
         this(new SentencePreProcessor() {
             @Override
             public String preProcess(String sentence) {
                 return sentence.replaceAll("[^a-zA-Z ]", "").toLowerCase();
             }
-        }, tweetRepository);
+        }, tweetRepository, language);
     }
 
     @Override

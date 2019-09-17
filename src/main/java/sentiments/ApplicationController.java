@@ -7,6 +7,7 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.FileUtils;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
+import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 import org.deeplearning4j.models.word2vec.Word2Vec;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.CustomDateEditor;
@@ -286,25 +287,34 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
     }
 
     @RequestMapping("/backend/ml/w2vtraining")
-    public ResponseEntity<String> w2vtraining() {
+    public ResponseEntity<String> w2vtraining(@RequestParam( value = "lang", defaultValue = "5") String lang) {
         WordVectorBuilder w2vb = new WordVectorBuilder(tweetRepository);
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("Access-Control-Allow-Origin", "*");
         try {
-            w2vb.train();
+            Language language = languageService.getLanguage(lang);
+            if (language == null) {
+                return new ResponseEntity<String>("language not supported", responseHeaders,HttpStatus.NOT_FOUND);
+            }
+            w2vb.train(language);
             System.out.println("finished training");
         } catch (IOException e) {
             e.printStackTrace();
+            return new ResponseEntity<String>("Request failed", responseHeaders,HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
-        HttpHeaders responseHeaders = new HttpHeaders();
-        responseHeaders.set("Access-Control-Allow-Origin", "*");
-
         return new ResponseEntity<String>("finished training", responseHeaders,HttpStatus.CREATED);
     }
 
     @RequestMapping("/backend/ml/w2vtest")
-    public ResponseEntity<String> w2vtest() {
+    public ResponseEntity<String> w2vtest(@RequestParam( value = "lang", defaultValue = "en") String lang) {
 
-        Word2Vec word2VecModel = WordVectorSerializer.readWord2VecModel(new File(WordVectorsService.getWordVectorPath()));
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("Access-Control-Allow-Origin", "*");
+        Language language = languageService.getLanguage(lang);
+        if (language == null) {
+            return new ResponseEntity<String>("language not supported", responseHeaders,HttpStatus.NOT_FOUND);
+        }
+        WordVectors word2VecModel = WordVectorsService.getWordVectors(language);
 
         String examples = "Some words with their closest neighbours: \n";
 
@@ -350,10 +360,7 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
         list = word2VecModel.wordsNearest("nobody", 10);
         examples += " nobody: " + list + " ";
 
-        HttpHeaders responseHeaders = new HttpHeaders();
-        responseHeaders.set("Access-Control-Allow-Origin", "*");
-
-        return new ResponseEntity<String>(examples, responseHeaders,HttpStatus.CREATED);
+        return new ResponseEntity<String>(examples, responseHeaders,HttpStatus.OK);
     }
 
     @RequestMapping("/backend/ml/trainNet")

@@ -7,4 +7,5 @@ public interface LanguageRepository extends MongoRepository<Language, Integer> {
 
     Language findOneByIso(String iso);
 
+    Iterable<Language> findAllByActive(boolean active);
 }

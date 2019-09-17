@@ -5,14 +5,45 @@ import org.springframework.stereotype.Service;
 import sentiments.domain.model.Language;
 import sentiments.domain.repository.LanguageRepository;
 
+import java.util.HashMap;
+
 @Service
 public class LanguageService {
 
-    @Autowired
+
     LanguageRepository languageRepository;
 
-    public Language getLanguage(String iso) {
-        return languageRepository.findOneByIso(iso);
+    private HashMap<String, Language> langs;
+
+    @Autowired
+    public LanguageService(LanguageRepository languageRepository) {
+        this.languageRepository = languageRepository;
+        reload();
     }
 
+    public void reload() {
+        langs = new HashMap<>();
+        for(Language language: languageRepository.findAllByActive(true)) {
+            langs.put(language.getIso(),language);
+        }
+    }
+
+    public Language getLanguage(String iso) {
+        return langs.get(iso);
+    }
+
+    public void setupLanguages(String[] isoCodes) {
+        for (String s : isoCodes) {
+            Language l = langs.get(s);
+            if (l == null) {
+                l = new Language();
+                l.setIso(s);
+                l.setWordVectorsFilename("");
+                l.setClassifierFilename("");
+                l.setName(s);
+                langs.put(s,l);
+                languageRepository.save(l);
+            }
+        }
+    }
 }

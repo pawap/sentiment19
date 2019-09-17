@@ -13,7 +13,9 @@ public class Language {
 
     private String classifierFilename;
 
-    private String wordvectorsFilename;
+    private String wordVectorsFilename;
+
+    private boolean active;
 
     public String getIso() {
         return iso;
@@ -39,12 +41,19 @@ public class Language {
         this.classifierFilename = classifierFilename;
     }
 
-    public String getWordvectorsFilename() {
-        return wordvectorsFilename;
+    public String getWordVectorsFilename() {
+        return wordVectorsFilename;
     }
 
-    public void setWordvectorsFilename(String wordvectorsFilename) {
-        this.wordvectorsFilename = wordvectorsFilename;
+    public void setWordVectorsFilename(String wordVectorsFilename) {
+        this.wordVectorsFilename = wordVectorsFilename;
     }
 
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
 }

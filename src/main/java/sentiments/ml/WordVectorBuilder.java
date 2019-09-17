@@ -8,6 +8,7 @@ import org.deeplearning4j.text.sentenceiterator.SentenceIterator;
 import org.deeplearning4j.text.tokenization.tokenizer.preprocessor.CommonPreprocessor;
 import org.deeplearning4j.text.tokenization.tokenizerfactory.DefaultTokenizerFactory;
 import org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory;
+import sentiments.domain.model.Language;
 import sentiments.domain.repository.TweetRepository;
 
 import java.io.IOException;
@@ -39,8 +40,8 @@ public class WordVectorBuilder {
      * Builds wordvectors and persists them at a location accessible via {@see sentiments.data.ml.WordVectorService#getWordVectorPath()}.
      * @throws IOException
      */
-    public  void train() throws IOException {
-        SentenceIterator sentenceIterator = new TweetSentenceIterator(tweetRepo);
+    public  void train(Language language) throws IOException {
+        SentenceIterator sentenceIterator = new TweetSentenceIterator(tweetRepo, language);
         TokenizerFactory tokenizerFactory = new DefaultTokenizerFactory();
         tokenizerFactory.setTokenPreProcessor(new CommonPreprocessor());
 
@@ -55,8 +56,8 @@ public class WordVectorBuilder {
                 .tokenizerFactory(tokenizerFactory)
                 .build();
         vec.fit();
+        WordVectorsService.saveWordVectors(vec, language);
 
-        WordVectorSerializer.writeWord2VecModel(vec, WordVectorsService.getWordVectorPath());
     }
 }
 
