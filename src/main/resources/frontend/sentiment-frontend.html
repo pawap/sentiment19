@@ -61,7 +61,7 @@
 				</div>
 			</div>
 			<div class="row">
-				<div class="col-sm-6">
+				<div class="col-sm-3">
 					<h5>Hashtags</h5>
 					<div class="row p-3">
 						<span v-bind:class="{'badge-primary': (hashtag.popular == 1), 'badge-secondary': (hashtag.popular != 1)}" class="badge small m-1 btn"
@@ -79,7 +79,7 @@
 					</div>
 				</div>
 
-				<div class="col-sm-6">
+				<div class="col-sm-3">
 					<h5>popular</h5>
 					<div class="row p-3">
 						<span class="badge badge-primary small m-1 btn"
@@ -92,33 +92,62 @@
 						</span>
 					</div>
 				</div>
+				<div class="col-sm-3">
+					<div class="row p-3">
+						<v-date-picker
+								popover-align="center"
+								:max-date='new Date()'
+								mode='range'
+								value="selectedDate"
+								v-model="selectedDate"
+								:input-props='{ "class": "form-control", "id":"selectedDate" }'
+								day-format="YYYY-MM-DD">
+						</v-date-picker>
+					</div>
+					<div class="row p-3">
+						<div class="btn-group btn-group-toggle">
+							<template v-for="time in times">
+								<label class="btn btn-default btn-sm" :class="{'active': time.start == selectedDate.start && time.end == selectedDate.end}" :for="'radio-' + time.value">
+									<input type="radio"
+										   :id="'radio-' + time.value"
+										   v-model="selectedDate"
+										   v-bind:value="{'start': time.start, 'end': time.end}"
+										   :checked="time.start == selectedDate.start && time.end == selectedDate.end"/>
+									{{time.text}}
+								</label>
+							</template>
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-3">
+					<div class="row p-3">
+
+					</div>
+				</div>
 			</div>
 			<div class="row my-3">
-				<div class="col-sm-6">
+				<div class="col-sm-4">
 					<div class="content p-2">
 						<h4>Anzahl offensive vs. non-offensive Tweets</h4>
-						<select v-model="selectPieTime" @change='updatePieChart()'>
-								<option value="all">Gesamter Zeitraum</option>
-								<option v-for="time in times" v-bind:value="time.value">
-										{{ time.text }}
-								</option>
-						</select>
 						<div>
 							<canvas id="pieChart"></canvas>
 						</div>
 					</div>
+					<h4>Top Hashtags</h4>
+					<div class="content p-2">
+						<div>
+							<canvas id="barChartNonOff"></canvas>
+						</div>
+					</div>
+					<div class="content p-2">
+						<div>
+							<canvas id="barChartOff"></canvas>
+						</div>
+					</div>
 				</div>
-				<div class="col-sm-6">
+				<div class="col-sm-8">
 					<div class="content p-2">
 						<h4>Verlauf offensive & non-offensive Tweets</h4>
-						<v-date-picker
-						@input="updateLineChart()"
-						popover-align="center"
-						:max-date='new Date()'
-						mode='range'
-						v-model="selectedDate"
-						day-format="YYYY-MM-DD">
-						</v-date-picker>	
 						<div>
 							<canvas id="lineChart"></canvas>
 						</div>		
