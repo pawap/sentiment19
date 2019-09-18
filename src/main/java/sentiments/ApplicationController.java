@@ -5,41 +5,50 @@ import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.Date;
-import java.sql.Timestamp;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.List;
-
 import org.apache.commons.io.FileUtils;
+import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
+import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
+import org.deeplearning4j.models.word2vec.Word2Vec;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.CustomDateEditor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import sentiments.data.BasicDataImporter;
 import sentiments.domain.model.HashtagCount;
+import sentiments.domain.model.Language;
 import sentiments.domain.model.TweetFilter;
 import sentiments.domain.repository.TweetRepository;
+import sentiments.domain.service.LanguageService;
 import sentiments.domain.service.TweetFilterBuilder;
 import sentiments.ml.W2VTweetClassifier;
+import sentiments.ml.WordVectorBuilder;
+import sentiments.ml.WordVectorsService;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -50,8 +59,9 @@ import java.util.stream.Collectors;
  */
 //@Configuration
 @RestController
-@EnableAutoConfiguration
-@ComponentScan
+@SpringBootApplication
+@EnableScheduling
+@EnableAsync
 public class ApplicationController implements SentimentAnalysisWebInterface{
 
 	@Autowired
@@ -65,6 +75,9 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
 	
 	@Autowired
     TweetRepository tweetRepository;
+
+	@Autowired
+    LanguageService languageService;
 
 
 	@RequestMapping("/tweet")
@@ -232,6 +245,25 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
        
         return new ResponseEntity<String>(response, responseHeaders,HttpStatus.CREATED);
     }
+
+    @RequestMapping("/backend")
+    public ResponseEntity<String> backend() {
+        String response = "";
+        try {
+            File file = ResourceUtils.getFile(
+                    "classpath:frontend/sentiment-backend.html");
+            response = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("Access-Control-Allow-Origin", "*");
+
+        return new ResponseEntity<String>(response, responseHeaders,HttpStatus.CREATED);
+    }
     
     @RequestMapping("/backend/import")
 	public ResponseEntity<String> tweetimport() {
@@ -252,7 +284,91 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
         responseHeaders.set("Access-Control-Allow-Origin", "*");
        
         return new ResponseEntity<String>("finished", responseHeaders,HttpStatus.CREATED);
-    }    
+    }
+
+    @RequestMapping("/backend/ml/w2vtraining")
+    public ResponseEntity<String> w2vtraining(@RequestParam( value = "lang", defaultValue = "5") String lang) {
+        WordVectorBuilder w2vb = new WordVectorBuilder(tweetRepository);
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("Access-Control-Allow-Origin", "*");
+        try {
+            Language language = languageService.getLanguage(lang);
+            if (language == null) {
+                return new ResponseEntity<String>("language not supported", responseHeaders,HttpStatus.NOT_FOUND);
+            }
+            w2vb.train(language);
+            System.out.println("finished training");
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new ResponseEntity<String>("Request failed", responseHeaders,HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return new ResponseEntity<String>("finished training", responseHeaders,HttpStatus.CREATED);
+    }
+
+    @RequestMapping("/backend/ml/w2vtest")
+    public ResponseEntity<String> w2vtest(@RequestParam( value = "lang", defaultValue = "en") String lang) {
+
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("Access-Control-Allow-Origin", "*");
+        Language language = languageService.getLanguage(lang);
+        if (language == null) {
+            return new ResponseEntity<String>("language not supported", responseHeaders,HttpStatus.NOT_FOUND);
+        }
+        WordVectors word2VecModel = WordVectorsService.getWordVectors(language);
+
+        String examples = "Some words with their closest neighbours: \n";
+
+        Collection<String> list = word2VecModel.wordsNearest("woman" , 10);
+        examples += " woman: " + list + ",  ";
+
+        list = word2VecModel.wordsNearest("man" , 10);
+        examples += " man: " + list + ",  ";
+
+        list = word2VecModel.wordsNearest("girl" , 10);
+        examples += " girl: " + list + ",  ";
+
+        list = word2VecModel.wordsNearest("boy" , 10);
+        examples += " boy: " + list + ",  ";
+
+        list = word2VecModel.wordsNearest("day" , 10);
+        examples += " day: " + list + ",  ";
+
+        list = word2VecModel.wordsNearest("night" , 10);
+        examples += " night: " + list + ",  ";
+
+        list = word2VecModel.wordsNearest("shit" , 10);
+        examples += " shit: " + list + ",  ";
+
+        list = word2VecModel.wordsNearest("motherfucker" , 10);
+        examples += " motherfucker: " + list + ",  ";
+
+        list = word2VecModel.wordsNearest("cat" , 10);
+        examples += " cat: " + list + ",  ";
+
+        list = word2VecModel.wordsNearest("merkel" , 10);
+        examples += " merkel: " + list + ",  ";
+
+        list = word2VecModel.wordsNearest("trump" , 10);
+        examples += " trump: " + list + ",  ";
+
+        list = word2VecModel.wordsNearest("germany", 10);
+        examples += " germany: " + list + ",  ";
+
+        list = word2VecModel.wordsNearest("usa", 10);
+        examples += " usa: " + list + ",  ";
+
+        list = word2VecModel.wordsNearest("nobody", 10);
+        examples += " nobody: " + list + " ";
+
+        return new ResponseEntity<String>(examples, responseHeaders,HttpStatus.OK);
+    }
+
+    @RequestMapping("/backend/ml/trainNet")
+    public ResponseEntity<String> trainNet() {
+	    tweetClassifier.train(languageService.getLanguage("en"));
+        HttpHeaders responseHeaders = new HttpHeaders();
+	    return new ResponseEntity<String>("training done", responseHeaders,HttpStatus.CREATED);
+    }
     
     private String generateJSONResponse(String input) {
         JSONObject out = new JSONObject();
@@ -260,7 +376,7 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
 
         JSONArray sentiments = new JSONArray();
 
-        sentiments.add(tweetClassifier.classifyTweet(input));
+        sentiments.add(tweetClassifier.classifyTweet(input, languageService.getLanguage("en")));
         
         out.put("sentiments", sentiments);
 
@@ -272,7 +388,7 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
 
         output.append("input: " + input);
         output.append("\nsentiments:");
-        output.append(tweetClassifier.classifyTweet(input));
+        output.append(tweetClassifier.classifyTweet(input, languageService.getLanguage("en")));
  
         return output.toString();
     }
@@ -309,4 +425,31 @@ public class ApplicationController implements SentimentAnalysisWebInterface{
 	    };
 	    binder.registerCustomEditor(Date.class, dateEditor);
 	}
+
+    @PostMapping("backend/upload")
+    public ResponseEntity<String> singleFileUpload(@RequestParam("file") MultipartFile file,
+                                   RedirectAttributes redirectAttributes) {
+        HttpHeaders responseHeaders = new HttpHeaders();
+        System.out.println("upload");
+        if (file.isEmpty()) {
+            redirectAttributes.addFlashAttribute("message", "Please select a file to upload");
+            System.out.println("empty");
+            return new ResponseEntity<String>("uploadStatus: empty", responseHeaders,HttpStatus.CREATED);
+        }
+
+        try {
+            InputStream stream = file.getInputStream();
+            basicDataImporter.importFromStream(stream);
+
+            redirectAttributes.addFlashAttribute("message",
+                    "You successfully uploaded '" + file.getOriginalFilename() + "'");
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return new ResponseEntity<String>("uploadStatus: postitve", responseHeaders,HttpStatus.CREATED);
+    }
+
+
 }

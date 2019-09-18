@@ -1,10 +1,5 @@
 package sentiments.ml;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.deeplearning4j.api.storage.StatsStorage;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 import org.deeplearning4j.nn.conf.GradientNormalization;
@@ -30,7 +25,14 @@ import org.nd4j.linalg.learning.config.Adam;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ResourceUtils;
+import sentiments.domain.model.Language;
 import sentiments.domain.repository.TrainingTweetRepository;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Paw
@@ -56,10 +58,10 @@ public class W2VTweetClassifier {
 		}
 	}
 	
-	public void train() {
+	public void train(Language language) {
 		int batchSize = 64;     //Number of examples in each minibatch
 	    int vectorSize = 300;   //Size of the word vectors. 300 in the Google News model
-	    int nEpochs = 2;        //Number of epochs (full passes of training data) to train on
+	    int nEpochs = 5;        //Number of epochs (full passes of training data) to train on
 	    int truncateReviewsToLength = 256;  //Truncate reviews with length (# words) greater than this
 	    final int seed = 0;     //Seed for reproducibility
 
@@ -68,13 +70,13 @@ public class W2VTweetClassifier {
 	    //Set up network configuration
 	    MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
 	        .seed(seed)
-	        .updater(new Adam(5e-3))
+	        .updater(new Adam(5e-4))
 	        .l2(1e-5)
 	        .weightInit(WeightInit.XAVIER)
 	        .gradientNormalization(GradientNormalization.ClipElementWiseAbsoluteValue).gradientNormalizationThreshold(1.0)
 	        .list()
 	        .layer(0, new LSTM.Builder().nIn(vectorSize).nOut(256)
-	            .activation(Activation.TANH).build())
+	            .activation(Activation.RELU).build())
 	        .layer(1, new RnnOutputLayer.Builder().activation(Activation.SOFTMAX)
 	            .lossFunction(LossFunctions.LossFunction.MCXENT).nIn(256).nOut(2).build())
 	        .build();
@@ -92,9 +94,9 @@ public class W2VTweetClassifier {
 	    net.setListeners(new StatsListener(statsStorage));
 	    
 	    //DataSetIterators for training and testing respectively
-	    WordVectors wordVectors = WordVectorsService.getWordVectors();
-	    TweetIterator train = new TweetIterator(tweetRepository, wordVectors, batchSize, truncateReviewsToLength, true);
-	    TweetIterator test = new TweetIterator(tweetRepository, wordVectors, batchSize, truncateReviewsToLength, false);
+	    WordVectors wordVectors = WordVectorsService.getWordVectors(language);
+	    TweetIterator train = new TweetIterator(tweetRepository, wordVectors, batchSize, truncateReviewsToLength, false, language);
+	    TweetIterator test = new TweetIterator(tweetRepository, wordVectors, batchSize, truncateReviewsToLength, true, language);
 	    System.out.println("Starting training");
 	    for (int i = 0; i < nEpochs; i++) {
 	        net.fit(train);
@@ -106,7 +108,7 @@ public class W2VTweetClassifier {
 	    }
 	    
 	    try {
-			ModelSerializer.writeModel(net, new File("resources/nets/rnnw2v.nn"), true);
+			ModelSerializer.writeModel(net, ResourceUtils.getFile(language.getClassifierFilename()), true);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -114,7 +116,7 @@ public class W2VTweetClassifier {
 	    //After training: load a single example and generate predictions
 	    String shortOffensiveTweet = "You are all bloody suckers. I hate filthy assholes like u";
 
-	    INDArray features = loadFeaturesFromString(shortOffensiveTweet, truncateReviewsToLength);
+	    INDArray features = loadFeaturesFromString(shortOffensiveTweet, truncateReviewsToLength, language);
 	    INDArray networkOutput = net.output(features);
 	    long timeSeriesLength = networkOutput.size(2);
 	    INDArray probabilitiesAtLastWord = networkOutput.get(NDArrayIndex.point(0), NDArrayIndex.all(), NDArrayIndex.point(timeSeriesLength - 1));
@@ -129,7 +131,7 @@ public class W2VTweetClassifier {
 	    //After training: load a single example and generate predictions
 	    String shortNonOffensiveTweet = "I love you all. Happiness is evreywhere.";
 
-	    features = loadFeaturesFromString(shortNonOffensiveTweet, truncateReviewsToLength);
+	    features = loadFeaturesFromString(shortNonOffensiveTweet, truncateReviewsToLength, language);
 	    networkOutput = net.output(features);
 	    timeSeriesLength = networkOutput.size(2);
 	    probabilitiesAtLastWord = networkOutput.get(NDArrayIndex.point(0), NDArrayIndex.all(), NDArrayIndex.point(timeSeriesLength - 1));
@@ -143,12 +145,12 @@ public class W2VTweetClassifier {
 		
 	}
 	
-	public String classifyTweet(String tweet) {
+	public String classifyTweet(String tweet, Language language) {
 		if (this.net == null) {
 			System.out.println("No model. Training new one.");
-			train();
+			train(language);
 		}
-		INDArray features = loadFeaturesFromString(tweet, 300);
+		INDArray features = loadFeaturesFromString(tweet, 300, language);
 	    INDArray networkOutput = net.output(features);
 	    long timeSeriesLength = networkOutput.size(2);
 	    INDArray probabilitiesAtLastWord = networkOutput.get(NDArrayIndex.point(0), NDArrayIndex.all(), NDArrayIndex.point(timeSeriesLength - 1));
@@ -158,20 +160,20 @@ public class W2VTweetClassifier {
     /**
      * Used post training to convert a String to a features INDArray that can be passed to the network output method
      *
-     * @param reviewContents Contents of the review to vectorize
      * @param maxLength Maximum length (if review is longer than this: truncate to maxLength). Use Integer.MAX_VALUE to not nruncate
      * @return Features array for the given input String
      */
-    private INDArray loadFeaturesFromString(String tweetContents, int maxLength){
+    private INDArray loadFeaturesFromString(String tweetContents, int maxLength, Language language){
         DefaultTokenizerFactory tokenizerFactory = new DefaultTokenizerFactory();
         tokenizerFactory.setTokenPreProcessor(new CommonPreprocessor());
-	    WordVectors wordVectors = WordVectorsService.getWordVectors();
+	    WordVectors wordVectors = WordVectorsService.getWordVectors(language);
 	    int vectorSize = wordVectors.getWordVector(wordVectors.vocab().wordAtIndex(0)).length;
 	    List<String> tokens = tokenizerFactory.create(tweetContents).getTokens();
         List<String> tokensFiltered = new ArrayList<>();
         for(String t : tokens ){
             if(wordVectors.hasWord(t)) tokensFiltered.add(t);
         }
+
         int outputLength = Math.min(maxLength,tokensFiltered.size());
 
         INDArray features = Nd4j.create(1, vectorSize, outputLength);

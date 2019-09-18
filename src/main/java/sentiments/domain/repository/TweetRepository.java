@@ -16,24 +16,13 @@ public interface TweetRepository extends MongoRepository<Tweet, Integer>, TweetR
 	@Query(value="{}", count = true)
 	public int countfindAllTweets();
 
-
-	//returns an Iterable with every (non-) offensive Tweet
-	@Query("{ 'offensive' : ?0 }")
-	public Iterable<Tweet> findAllByOffensive(Boolean offensive);
-
 	//returns an int with the count of every (non-) offensive Tweet
 	@Query(value = "{ 'offensive' : ?0 }", count = true)
 	public int countByOffensive(Boolean offensive);
 
-	//returns an Iterable with every (non-) offensive Tweet within a timerange
-	@Query(value = "{ '$and' : [{'offensive' : ?0},{ 'tmstamp' : {$gte: ?0, $lte: ?1}}]}")
-	public Iterable<Tweet> findAllByOffensiveAndDate( Boolean offensive, Timestamp startdate, Timestamp enddate);
-
-	//returns an Iterable with every Tweet with a timestamp inbetween startdate and enddate
-	@Query(value = "{ 'tmstamp' : { $gte: ?0, $lte: ?1} }")
-	public Iterable<Tweet> findAllByDateBetween(Timestamp startdate, Timestamp enddate);
-
 	//returns an int with the count of Tweets with a timestamp inbetween startdate and enddate
 	@Query(value = "{ 'tmstamp' : { $gte: ?0, $lte: ?1} }", count = true)
 	public int countfindAllByDateBetween(Timestamp startdate, Timestamp enddate);
+
+    Iterable<Tweet> findAllByLanguage(String language);
 }

@@ -1,13 +1,27 @@
 package sentiments.data;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.UnsupportedEncodingException;
+import com.google.gson.*;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
+import com.joestelmach.natty.DateGroup;
+import com.joestelmach.natty.Parser;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVRecord;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import sentiments.domain.model.AbstractTweet;
+import sentiments.domain.model.TrainingTweet;
+import sentiments.domain.model.Tweet;
+import sentiments.domain.preprocessor.ImportTweetPreProcessor;
+import sentiments.domain.preprocessor.TweetPreProcessor;
+import sentiments.domain.repository.TrainingTweetRepository;
+import sentiments.domain.repository.TweetRepository;
+
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -15,30 +29,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Locale;
-
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVRecord;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
-import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.stereotype.Service;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonSyntaxException;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
-import com.joestelmach.natty.DateGroup;
-import com.joestelmach.natty.Parser;
-import org.springframework.transaction.annotation.Transactional;
-import sentiments.domain.model.AbstractTweet;
-import sentiments.domain.model.TrainingTweet;
-import sentiments.domain.model.Tweet;
-import sentiments.domain.preprocessor.ImportTweetPreProcessor;
-import sentiments.domain.preprocessor.TweetPreProcessor;
-import sentiments.domain.repository.TweetRepository;
 
 
 
@@ -58,6 +48,9 @@ public class BasicDataImporter {
 	@Autowired
 	TweetRepository tweetRepository;
 
+	@Autowired
+	TrainingTweetRepository trainingTweetRepository;
+
 	DateTimeFormatter dateTimeFormatter;
 
 	public BasicDataImporter() {
@@ -65,10 +58,19 @@ public class BasicDataImporter {
 		this.dateTimeFormatter = DateTimeFormatter.ofPattern("E MMM dd HH:mm:ss Z yyyy", Locale.UK);
 	}
 
-	public void importFromJson(String jsonPath, TweetProvider<Tweet> tweetProvider, TweetPreProcessor processor, MongoRepository repo) {
+	public void importFromJson(String jsonPath, TweetProvider<Tweet> tweetProvider, TweetPreProcessor processor, MongoRepository repo)
+	{
 		try {
 			InputStream stream = new FileInputStream(jsonPath);
-			JsonReader reader = new JsonReader(new InputStreamReader(stream, "UTF-8"));
+			importFromStream(stream, tweetProvider, processor, repo);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void importFromStream(InputStream stream, TweetProvider<Tweet> tweetProvider, TweetPreProcessor processor, MongoRepository repo) {
+		try {
+			JsonReader reader = new JsonReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
 			Gson gson = new GsonBuilder().create();
 			reader.setLenient(true);
 			List<Tweet> tweets = tweetProvider.getNewTweetList();
@@ -108,37 +110,46 @@ public class BasicDataImporter {
 			reader.close();
 			processor.destroy();
 			System.gc();
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 
-	public void importFromTsv(String tsvPath, TweetProvider tweetProvider) {
+	public void importFromStream(InputStream stream) {
+		importFromStream(stream, new TweetProvider<Tweet>() {
+					@Override
+					public Tweet createTweet() {
+						return new Tweet();
+					}
+				}, new ImportTweetPreProcessor()
+				, tweetRepository);
+	}
+
+	public void importFromTsv(String tsvPath, TweetProvider<TrainingTweet> tweetProvider, MongoRepository repo, TweetPreProcessor processor) {
 		Reader in;
 		int i = 0;
 		try {
 			FileInputStream fstream = new FileInputStream(tsvPath);
 			in = new BufferedReader(new InputStreamReader(fstream));
 			Iterable<CSVRecord> records = CSVFormat.TDF.withHeader().parse(in);
+			List<TrainingTweet> tweets = tweetProvider.getNewTweetList();
 			for (CSVRecord record : records) {
-				AbstractTweet tweet = tweetProvider.createTweet();
+				TrainingTweet tweet = tweetProvider.createTweet();
 				this.mapTsvToTweet(record, tweet);
 				if (tweet != null && tweet.getText() != null) {
 					i++;
-					//entityManager.persist(tweet);
+					processor.preProcess(tweet);
+					tweets.add(tweet);
 				}
 				System.out.println(i);
 				if (i % BATCH_SIZE == 0) {
-					//entityManager.flush();
-					//entityManager.clear();
+					repo.saveAll(tweets);
+					tweets.clear();
 				}
+			}
+			if (!tweets.isEmpty()) {
+				repo.saveAll(tweets);
 			}
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
@@ -206,12 +217,13 @@ public class BasicDataImporter {
 	}
 
 	public void importTsvTestAndTrain() {
+		TweetPreProcessor preproc = new ImportTweetPreProcessor();
 		importFromTsv(this.env.getProperty("localTweetTsv.train"), new TweetProvider<TrainingTweet>() {
 			@Override
 			public TrainingTweet createTweet() {
-				return null;
+				return new TrainingTweet();
 			}
-		});
+		}, trainingTweetRepository, preproc);
 		importFromTsv(this.env.getProperty("localTweetTsv.test"),new TweetProvider<TrainingTweet>()
 		{
 			@Override
@@ -221,7 +233,7 @@ public class BasicDataImporter {
 				return tweet;
 			}
 
-		});
+		}, trainingTweetRepository, preproc);
 	}
 }
 

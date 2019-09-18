@@ -1,8 +1,13 @@
 server.port=8080
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.properties.hibernate.jdbc.batch_size=1024
+spring.data.mongodb.database=hash
 spring.data.mongodb.host=localhost
 spring.data.mongodb.port=27017
 server.servlet.context-path=/sentiment19
-spring.data.mongodb.uri=mongodb://localhost/dbname
-localTweetJson = resources/tweets.json
+localTweetJson = resources/tweets2.json
+spring.servlet.multipart.maxFileSize=4GB
+spring.servlet.multipart.maxRequestSize=4GB
+TweetHost = XXX,
+TweetHostUsername = XXX
+TweetHostPW = XXX

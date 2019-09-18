@@ -1,9 +1,12 @@
 package sentiments.ml;
 
-import java.io.File;
-
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
+import org.deeplearning4j.models.word2vec.Word2Vec;
+import sentiments.domain.model.Language;
+
+import java.io.File;
+import java.util.HashMap;
 
 /**
  * @author Paw
@@ -11,17 +14,25 @@ import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
  */
 public class WordVectorsService {
 	
-    private static WordVectors INSTANCE;
-    
+    private static HashMap<Language,WordVectors> INSTANCE;
+
     private WordVectors wv;
-    
-    private WordVectorsService() {}
-    
-    synchronized public static WordVectors getWordVectors() {
+
+    synchronized public static WordVectors getWordVectors(Language language) {
     	if (INSTANCE == null) {
-    		INSTANCE = WordVectorSerializer.loadStaticModel(new File("resources/GoogleNews-vectors-negative300.bin.gz"));
+    		INSTANCE = new HashMap<Language,WordVectors>();
     	}
-        return INSTANCE;
+    	if (!INSTANCE.containsKey(language)) {
+            WordVectors vec = WordVectorSerializer.loadStaticModel(new File(language.getWordVectorsFilename()));
+            INSTANCE.put(language, vec);
+    	}
+
+        return INSTANCE.get(language);
     }
 
+
+    synchronized public static void saveWordVectors(Word2Vec vec, Language language) {
+        WordVectorSerializer.writeWord2VecModel(vec, new File(language.getWordVectorsFilename()));
+        INSTANCE.put(language, vec);
+    }
 }
