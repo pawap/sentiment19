@@ -8,23 +8,32 @@ window.addEventListener('load', function(){
                 offensive: 0,
                 //counter number of offensive tweets
                 nonOffensive: 0,
-                //pie chart time selection value
-                selectPieTime: 'all',
-                //Pie chart time selection values
+                //radio buttons time selection values
                 times: [
-                    {text: "Letzter Tag", value: "day"}, 
-                    {text: "Letzte Woche", value: "week"}, 
-                    {text: "Letzter Monat", value: "month"},
-                    {text: "Gewählter Zeitraum", value: "range"},
+                    {text: "Letzter Tag", value: "day", start: getDate(-1), end: getDate(0)},
+                    {text: "Letzte Woche", value: "week", start: getDate(-7), end: getDate(0)},
+                    {text: "Letzter Monat", value: "month", start: getDate(-30), end: getDate(0)},
+                    {text: "Gesamter Zeitraum", value: "range", start: null, end: getDate(0)},
                 ],
+
+                // most popular tweets in whole db
+                popularHashtags: [],
+
+                // most popular tweets for chosen filters
+                topHashtags: [],
+
+                // -------- FILTERS -----------
+
                 //datepicker selection, initialized with one week
                 selectedDate: {
                     start:  getDate(-7),
                     end:  getDate(0)
                 },
+                //hashtags empty init
                 hashtags: [],
 
-                popularHashtags: [],
+                // TODO language-Filter
+
 
             }
         },
@@ -69,167 +78,316 @@ window.addEventListener('load', function(){
                 
             },
             /**
+             * Updates bar chart, based on selected filter
+             */
+            updateBarChart: function(){
+
+                axios.post('/sentiment19/popularhashtags?limit=5',this.getCurrentFilter(0))
+                    .then(response => {
+                        barChartNonOff.data.labels = response.data.hashtags.map(function (tag, index) {
+                            return tag.hashtag;
+                        })
+                        barChartNonOff.data.datasets[0].data = response.data.hashtags.map(function (tag, index) {
+                            return tag.count;
+                        })
+                        barChartNonOff.data.datasets[0].backgroundColor = response.data.hashtags.map(function (tag, index) {
+                            return 'rgb(108,117,125)';
+                        })
+                        barChartNonOff.update()
+
+                    })
+                axios.post('/sentiment19/popularhashtags?limit=5',this.getCurrentFilter(1))
+                    .then(response => {
+                        barChartOff.data.labels = response.data.hashtags.map(function (tag, index) {
+                            return tag.hashtag;
+                        })
+                        barChartOff.data.datasets[0].data = response.data.hashtags.map(function (tag, index) {
+                            return tag.count;
+                        })
+                        barChartOff.data.datasets[0].backgroundColor = response.data.hashtags.map(function (tag, index) {
+                            return 'rgb(108,117,125)';
+                        })
+                        barChartOff.update()
+
+                    })
+            },
+            /**
              * Updates pie chart, based on selected time frame
              */
             updatePieChart: function(){
 
-                //local function to format given date to match the required format for backend request
-                function stringDate(d){
-                    return d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate()
-                }
-
-                let data
-                let startDate = new Date()
-                let endDate = new Date();
-
-                //if selected time frame is not further specified, counts from entire period are used (value the same as the counters)
-                if(this.selectPieTime === ''){
-                    data = [this.offensive, this.nonOffensive]
+                axios.all([
+                    axios.post('/sentiment19/stats',
+                        this.getCurrentFilter(1)),
+                    axios.post('/sentiment19/stats',
+                        this.getCurrentFilter(0))
+                  ])
+                  .then(axios.spread((off, nonOff) => {
+                    data =  [off.data.count, nonOff.data.count]
                     pieChart.data.datasets[0].data = data
                     pieChart.update()
-                //Request data for chosen time frame from backend
-                } else {
-                    if(this.selectPieTime === 'day'){
-                        startDate = getDate(-1)
-                    }else if(this.selectPieTime === 'week'){
-                        startDate = getDate(-7)
-                    }else if(this.selectPieTime === 'month'){
-                        startDate = getDate(-30)
-                    }else if(this.selectPieTime === 'range'){
-                        endDate = this.selectedDate.end
-                        startDate = this.selectedDate.start;
-                        console.log('there')
-                    } else {
-                        console.log('here')
-                        startDate = null;
-                        endDate = null;
-                    }
-                    axios.all([
-                        axios.post('/sentiment19/stats',{offensive: 1, start: startDate,  end: endDate, hashtags: this.hashtags.map(function (o) {
-                                    return o.value
-                                })}),
-                        axios.post('/sentiment19/stats',
-                        {offensive: 0, start: startDate,  end: endDate, hashtags: this.hashtags.map(function (o) {
-                                    return o.value
-                                })})
-                      ])
-                      .then(axios.spread((off, nonOff) => {
-                        data =  [off.data.count, nonOff.data.count]
-                        pieChart.data.datasets[0].data = data
-                        pieChart.update()
+                }));
+
+            },
+            updateTweets: function(){
+
+                axios.all([
+                    axios.post('/sentiment19/tweet',
+                        this.getCurrentFilter(1)),
+                    axios.post('/sentiment19/tweet',
+                        this.getCurrentFilter(0))
+                ])
+                    .then(axios.spread((offTweet, nonOffTweet) => {
+                        document.getElementById("offTweet").innerHTML = offTweet.data.html
+                        document.getElementById("nonOffTweet").innerHTML = nonOffTweet.data.html
+                        twttr.widgets.load()
                     }));
-                }
             },
 
             //Update the line chart labels based on the selected start-/enddate
             //To-Do: Change the dataset aswell -> has to be requested from backend
             updateLineChart: function(){
                 axios.all([
-                    axios.get('/sentiment19/timeline',
-                        {params: {offensive: 1, startdate: this.selectedDate.start, enddate: this.selectedDate.end}}),
-                    axios.get('/sentiment19/timeline',
-                        {params: {offensive: 0, startdate: this.selectedDate.start, enddate: this.selectedDate.end}})
+                    axios.post('/sentiment19/timeline', this.getCurrentFilter(1)),
+                    axios.post('/sentiment19/timeline', this.getCurrentFilter(0))
                 ])
                     .then(axios.spread((off, nonOff) => {
-                        dateRange = getRangeOfDates(moment(this.selectedDate.start), moment(this.selectedDate.end), 'day')
+                        console.log(off.data.start);
+                        dateRange = getRangeOfDates(off.data.start, new Date(off.data.end));
                         lineChart.data.labels = dateRange
                         lineChart.data.datasets[0].data = off.data.timeline
                         lineChart.data.datasets[1].data = nonOff.data.timeline
                         lineChart.update()
-                        if (this.selectPieTime == 'range') {
-                            vue.updatePieChart();
-                        }
                     }));
 
             },
+            getCurrentFilter: function(offensive){
+                return {
+                    offensive: offensive,
+                    start: this.selectedDate.start,
+                    end: this.selectedDate.end,
+                    hashtags: this.hashtags.map(function (o) {
+                        return o.value
+                    })
+                }
+            }
         },
         updated: function () {
             $(function(){
                 $('[data-toggle="tooltip"]').tooltip({ trigger: "hover", html:true});
                 $('.tooltip').remove();
-            })
+            });
+            this.updatePieChart();
+            this.updateLineChart();
+            this.updateTweets();
+            this.updateBarChart();
         }
-    })
+    });
 
     //Used Chart.js as it seemed easier (compared to D3.js) to quickly implement the graphs we need (atleast for now)
 
     //Pie chart for direct comparison off vs. nonOff tweet amount
-    var ctx2 = document.getElementById('pieChart').getContext('2d');
-    var pieChart = new Chart(ctx2, {
-    // type of chart
-    type: 'pie',
+    var ctx2 = document.getElementById('barChartNonOff').getContext('2d');
 
-    //Data and style options for the line chart
-    data: {
-        labels: ['offensive', 'non-offensive'],
-        datasets: [{
-            backgroundColor: ['rgb(255, 99, 132)','rgb(0,255,0)'],
-            borderColor: 'rgb(255,255,255)',
-            fill: false,
-            data: [vue.offensive, vue.nonOffensive]
+    var barChartNonOff = new Chart(ctx2, {
+        // type of chart
+        type: 'bar',
+        data: {
+            labels: [],
+            datasets: [{
+                backgroundColor: [],
+                borderColor: 'rgb(255,255,255)',
+                fill: false,
+                data: []
+            }
+            ]
         },
-    ]
-    },
 
-    // Configuration options go here
-    options: {
-        rotation: 0.5 * Math.PI
-    }
+        //Data and style options for the bar chart
+        options: {
+            legend: { display: false },
+            title: {
+                display: true,
+                text: 'Top nonoff-Hashtags for chosen timeframe'
+            },
+            scales: {
+                yAxes: [{
+                  ticks: {
+                      precision:0,
+                      beginAtZero: true //y-Axis starts at 0
+
+                  }
+                }],
+                xAxes: [{
+                    position: 'top',
+                    ticks: {
+                        callback: function(value) {
+                            var padding = value.length > 5 ? '...':'';
+                            return value.substr(0, 5) + padding;//truncate
+                        },
+                        maxRotation: 90,
+                        minRotation: 90}
+                }]
+            },
+            tooltips: {
+                enabled: true,
+                mode: 'label',
+                callbacks: {
+                    title: function(tooltipItems, data) {
+                        var idx = tooltipItems[0].index;
+                        return data.labels[idx];//do something with title
+                    },
+                    label: function(tooltipItems, data) {
+                        var idx = tooltipItems.index;
+                        return data.datasets[0].data[idx];
+                    }
+                }
+            },
+        }
+
     });
-    
+    var ctx2 = document.getElementById('barChartOff').getContext('2d');
+    var barChartOff = new Chart(ctx2, {
+        // type of chart
+        type: 'bar',
+        data: {
+            labels: [],
+            datasets: [{
+                backgroundColor: [],
+                borderColor: 'rgb(255,255,255)',
+                fill: false,
+                data: []
+            }
+            ]
+        },
+
+        //Data and style options for the bar chart
+        options: {
+            legend: { display: false },
+            title: {
+                display: true,
+                text: 'Top off-Hashtags for chosen timeframe',
+                position: 'bottom'
+            },
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        reverse: true,
+                        precision: 0,
+                        beginAtZero: true //y-Axis starts at 0
+
+                    }
+                }],
+
+                xAxes: [{
+                    ticks: {
+                        callback: function(value) {
+                            var padding = value.length > 5 ? '...':'';
+                            return value.substr(0, 5) + padding;//truncate
+                        },
+
+                    maxRotation: 90,
+                    minRotation: 90}
+
+                }]
+
+            },
+            tooltips: {
+                enabled: true,
+                mode: 'label',
+                callbacks: {
+                    title: function(tooltipItems, data) {
+                        var idx = tooltipItems[0].index;
+                        return data.labels[idx];//do something with title
+                    },
+                    label: function(tooltipItems, data) {
+                        var idx = tooltipItems.index;
+                        return data.datasets[0].data[idx];
+                    }
+                }
+            },
+        }
+
+    });
+
+    //Pie chart for direct comparison off vs. nonOff tweet amount
+    var ctx2 = document.getElementById('pieChart').getContext('2d');
+
+    var pieChart = new Chart(ctx2, {
+        // type of chart
+        type: 'pie',
+
+        //Data and style options for the line chart
+        data: {
+            labels: ['offensive', 'non-offensive'],
+            datasets: [{
+                backgroundColor: ['rgb(255, 99, 132)','rgb(0,255,0)'],
+                borderColor: 'rgb(255,255,255)',
+                fill: false,
+                data: [vue.offensive, vue.nonOffensive]
+            },
+        ]
+        },
+
+        // Configuration options go here
+        options: {
+            rotation: 0.5 * Math.PI
+        }
+    });
 
     //Line chart - comparing offensive/nonOffensive over specified time
     var ctx2 = document.getElementById('lineChart').getContext('2d');
     var lineChart = new Chart(ctx2, {
-    // type of chart
-    type: 'line',
+        // type of chart
+        type: 'line',
 
-    //Data and style options for the line chart
-    data: {
-        labels: [''],
-        datasets: [{
-            label: 'offensive',
-            backgroundColor: 'rgb(255, 99, 132)',
-            borderColor: 'rgb(255, 99, 132)',
-            fill: false,
-            data: [1,2,3,4]
+        //Data and style options for the line chart
+        data: {
+            labels: [''],
+            datasets: [{
+                label: 'offensive',
+                backgroundColor: 'rgb(255, 99, 132)',
+                borderColor: 'rgb(255, 99, 132)',
+                fill: false,
+                data: [1,2,3,4]
+                },
+                {
+                label: 'non-offensive',
+                backgroundColor: 'rgb(0, 255, 0)',
+                borderColor: 'rgb(0, 255, 0)',
+                fill: false,
+                data: [5,6,7,8]
+                },
+            ]
         },
-        {
-            label: 'non-offensive',
-            backgroundColor: 'rgb(0, 255, 0)',
-            borderColor: 'rgb(0, 255, 0)',
-            fill: false,
-            data: [5,6,7,8]
-        },
-    ]
-    },
 
-    // Configuration options go here
-    options: {
-        elements: {
-            line: {
-                tension: 0 // disables bezier curves
-            }
-        },
-        scales: {
-            yAxes: [{
-                ticks:{
-                    beginAtZero: true //y-Axis starts at 0
+        // Configuration options go here
+        options: {
+            elements: {
+                line: {
+                    tension: 0 // disables bezier curves
                 }
-            }]
+            },
+            scales: {
+                yAxes: [{
+                    ticks:{
+                        beginAtZero: true //y-Axis starts at 0
+                    }
+                }]
+            }
         }
-    }
     });
 
     /**
      * Initialise Tweet display, Tweet amount counters and the pie and line charts
      */
     function init(){
-        displayTweet()
+        vue.updateTweets()
         vue.updateCounters()
         vue.updatePieChart()
         vue.updateLineChart()
         vue.updateHashtags()
+        vue.updateBarChart()
 
     $(document).on('load', function () {
         $(function(){
@@ -256,39 +414,21 @@ function formatDate(date){
  * Returns range of dates, between specified start and end date, with a given step length (key)
  * @param {*} start Start date for the date range
  * @param {*} end End date for the date range
- * @param {*} key Increment size to be used for each step
- * @param {*} arr Resulting array - does not need to be provided on function call
- * @returns (Already formmatted) date range
+ * @returns array containing(Already formmatted) date range
  */
-function getRangeOfDates(start, end, key, arr = [start.startOf(key)]) {
-  
-    if(start.isAfter(end)) throw new Error('start must precede end')
-    
-    const next = moment(start).add(1, key).startOf(key);
-    
-    if(next.isAfter(end, key)) return arr.map((v) => formatDate(v.toDate()))
-    
-    return getRangeOfDates(next, end, key, arr.concat(next));
+function getRangeOfDates(start, end) {
+    var dateArr = [];
+    var dateCounter = new Date(start);
+    while(dateCounter <= end){
+        dateArr.push(moment(dateCounter).format('DD.MM.YYYY'));
+        var newDate = dateCounter.setDate(dateCounter.getDate() + 1);
+        dateCounter = new Date(newDate);
+    }
+    return dateArr;
     
 }
 
-/**
- * Requests html code for offensive/nonoffensive Tweets and displays them as examples
- */
- function displayTweet(){
 
-    axios.all([
-        axios.get('/sentiment19/tweet',
-        {params: {offensive: 1}}),
-        axios.get('/sentiment19/tweet',
-        {params: {offensive: 0}})
-      ])
-      .then(axios.spread((offTweet, nonOffTweet) => {
-        document.getElementById("offTweet").innerHTML = offTweet.data.html
-        document.getElementById("nonOffTweet").innerHTML = nonOffTweet.data.html
-        twttr.widgets.load()
-    }));
-}
 
 /**
  *Get today's date plus or minus a specified number of days (0 for today)

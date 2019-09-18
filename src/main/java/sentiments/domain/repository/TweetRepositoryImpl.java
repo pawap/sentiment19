@@ -32,7 +32,7 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
     }
 
     @Override
-    public List<Integer> countByOffensiveAndDayInInterval(TweetFilter tweetFilter) {
+    public Timeline countByOffensiveAndDayInInterval(TweetFilter tweetFilter) {
         List<AggregationOperation> list = getWhereOperations(tweetFilter);
         list.add(Aggregation.project()
                 .andExpression("year(crdate)").as("year")
@@ -43,13 +43,31 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
         list.add(Aggregation.sort(Sort.Direction.ASC, "year", "month", "day1"));
         list.add(Aggregation.project("count").andExpression("concat(substr(year,0,-1),'-',substr(month,0,-1),'-',substr(day1,0,-1))").as("day"));
 
-
         Aggregation agg = Aggregation.newAggregation(list);
-
 
         List<Integer> result = new LinkedList<>();
         DateTimeFormatter f = DateTimeFormatter.ofPattern("yyyy-M-d", Locale.US);
-        LocalDate current = tweetFilter.getStart().toLocalDateTime().toLocalDate();
+
+        // init StartDate
+        LocalDate start;
+
+        if (tweetFilter.getStart() != null) {
+            start = tweetFilter.getStart().toLocalDateTime().toLocalDate();
+        } else {
+            start = getFirsrDate();
+        }
+
+        // init EndDate
+        LocalDate end;
+
+        if (tweetFilter.getEnd() != null) {
+            end = tweetFilter.getEnd().toLocalDateTime().toLocalDate();
+        } else {
+            end = getLastDate();
+        }
+
+        //Loop over Aggregation-Result and fill in 0 for missing days.
+        LocalDate current = start;
 
         for (DayCount i : mongoTemplate.aggregate(agg, Tweet.class, DayCount.class)) {
             LocalDate currentDate = LocalDate.parse(i.day, f);
@@ -60,12 +78,37 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
             current = current.plusDays(1);
             result.add(i.count);
         }
-        while (current.compareTo(tweetFilter.getEnd().toLocalDateTime().toLocalDate()) < 0) {
+        while (current.compareTo(end) < 0) {
             result.add(0);
             current = current.plusDays(1);
         }
+        Timeline timeline = new Timeline();
+        timeline.start = start;
+        timeline.end = end;
+        timeline.timeline = result;
+        return timeline;
+    }
 
-        return result;
+    @Override
+    public LocalDate getFirsrDate() {
+        Tweet first = mongoTemplate.aggregate(Aggregation.newAggregation(
+                Aggregation.sort(Sort.Direction.ASC, "crdate"),
+                Aggregation.limit(1)
+        ), Tweet.class, Tweet.class).getUniqueMappedResult();
+        return first.getCrdate().toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
+    }
+
+    @Override
+    public LocalDate getLastDate() {
+        Tweet last = mongoTemplate.aggregate(Aggregation.newAggregation(
+                Aggregation.sort(Sort.Direction.DESC, "crdate"),
+                Aggregation.limit(1)
+        ), Tweet.class, Tweet.class).getUniqueMappedResult();
+        return last.getCrdate().toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
     }
 
     @Override
