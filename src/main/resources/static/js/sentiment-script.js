@@ -33,6 +33,11 @@ window.addEventListener('load', function(){
                 hashtags: [],
 
                 // TODO language-Filter
+                // default language is english
+                selectedLanguage: "en",
+
+                languages: [ 'en','de', 'fr'],
+
 
 
             }
@@ -75,7 +80,7 @@ window.addEventListener('load', function(){
                     this.nonOffensive = nonOff.data.count
                     this.updatePieChart()
                   }));
-                
+
             },
             /**
              * Updates bar chart, based on selected filter
@@ -395,7 +400,7 @@ window.addEventListener('load', function(){
         })
     })
     }
-    
+
    //run init function
     init()
 
@@ -425,7 +430,7 @@ function getRangeOfDates(start, end) {
         dateCounter = new Date(newDate);
     }
     return dateArr;
-    
+
 }
 
 
