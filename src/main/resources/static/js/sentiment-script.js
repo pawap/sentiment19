@@ -75,7 +75,7 @@ window.addEventListener('load', function(){
                     this.nonOffensive = nonOff.data.count
                     this.updatePieChart()
                   }));
-                
+
             },
             /**
              * Updates bar chart, based on selected filter
@@ -395,7 +395,7 @@ window.addEventListener('load', function(){
         })
     })
     }
-    
+
    //run init function
     init()
 
@@ -425,7 +425,7 @@ function getRangeOfDates(start, end) {
         dateCounter = new Date(newDate);
     }
     return dateArr;
-    
+
 }
 
 
@@ -445,3 +445,112 @@ function getDate(d){
         return moment().toDate()
     }
 }
+
+
+/**
+ * Function requesting an async url.
+ *
+ * @param theUrl of the requested Object
+ */
+function httpGetAsync(theUrl, callback)
+{
+    // create the requested object
+    var xmlHttp = new XMLHttpRequest();
+
+    // set the state change callback to capture when the response comes in
+    xmlHttp.onreadystatechange = function()
+    {
+        if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
+        {
+            callback(xmlHttp.responseText);
+        }
+    }
+
+    // open as a GET call, pass in the url and set async = True
+    xmlHttp.open("GET", theUrl, true);
+
+    // call send with no params as they were passed in on the url string
+    xmlHttp.send(null);
+
+    return;
+}
+
+/**
+* Callbackfunction for the search of a random, offensive Object (GIFs in this case).
+*/
+function tenorCallback_randomsearch_off(responsetext)
+{
+    // parse the json response
+    var response_objects = JSON.parse(responsetext);
+
+    top_10_gifs = response_objects["results"];
+
+    // load the GIFs in the tinygif-size.
+    document.getElementById("Off_gif").src = top_10_gifs[0]["media"][0]["tinygif"]["url"];
+
+    return;
+
+}
+
+/**
+* Callbackfunction for the search of a random, non-offensive Object (GIFs in this case).
+*/
+function tenorCallback_randomsearch_non_off(responsetext)
+{
+    // parse the json response
+    var response_objects = JSON.parse(responsetext);
+
+    top_10_gifs = response_objects["results"];
+
+    // load the GIFs in the tinygif-size.
+    document.getElementById("Non_Off_gif").src = top_10_gifs[0]["media"][0]["tinygif"]["url"];
+
+    return;
+
+}
+
+/**
+ * Function enabling to request random offensive GIFs.
+ * (The searchterm "angry" is used to get offensive GIFs.)
+ */
+function grab_data_off()
+{
+
+    // Using the Tenor-API-Key and the searchterm "angry" to get offensive GIFs.
+    var search_url = "https://api.tenor.com/v1/random?q=angry&key=SXCYAWE2GDPA&limit=8";
+
+    httpGetAsync(search_url,tenorCallback_randomsearch_off);
+
+    // data will be loaded by each call's callback
+    return;
+}
+
+/**
+ * Function enabling to request random non-offensive GIFs.
+ * (The searchterm "happy" is used to get non-offensive GIFs.)
+ */
+function grab_data_non_off()
+{
+
+    // Using the Tenor-API-Key and the searchterm "happy" to get non-offensive GIFs.
+    var search_url = "https://api.tenor.com/v1/random?q=happy&key=SXCYAWE2GDPA&limit=8";
+
+    httpGetAsync(search_url,tenorCallback_randomsearch_non_off);
+
+    // data will be loaded by each call's callback
+    return;
+}
+
+// callback for anonymous id
+function tenorCallback_anonid(responsetext)
+{
+    // pass on to grab_data (offensive & non-offensive GIFs)
+    grab_data_off();
+    grab_data_non_off();
+}
+
+// The url to enable the use of the Tenor-API.
+var url = "https://api.tenor.com/v1/anonid?key=SXCYAWE2GDPA";
+
+// start the flow by getting a new anonymous id and having the callback pass it to grab_data
+httpGetAsync(url,tenorCallback_anonid);
