@@ -16,9 +16,6 @@ window.addEventListener('load', function(){
                     {text: "Gesamter Zeitraum", value: "range", start: null, end: getDate(0)},
                 ],
 
-                // most popular tweets in whole db
-                popularHashtags: [],
-
                 // most popular tweets for chosen filters
                 topHashtags: [],
 
@@ -37,6 +34,10 @@ window.addEventListener('load', function(){
 
             }
         },
+
+        // most popular tweets in whole db
+        popularHashtags: [],
+
         methods:{
 
             addHashtag: function () {
@@ -47,7 +48,7 @@ window.addEventListener('load', function(){
                 },
 
             updateHashtags: function () {
-                axios.post('/sentiment19/popularhashtags?limit=8',{})
+                axios.post('/sentiment19/popularhashtags?limit=8',this.getCurrentFilter())
                     .then(response => this.popularHashtags = response.data.hashtags.map(function (tag, index) {
                         return {value: tag.hashtag, key: index, popular: 1, hidden: 0, count: tag.count,
                             percent: (tag.count / response.data.total * 100).toFixed(2) + '%'
@@ -55,7 +56,7 @@ window.addEventListener('load', function(){
                     }))
 
                 this.popularHashtags.forEach(function (e) {
-                    if (this.hashtags.filter(tag => (tag.value === e.value)).length > 0) {
+                    if (vue.hashtags.filter(tag => (tag.value === e.value)).length > 0) {
                         e.hidden = 1;
                     }
                 })
@@ -82,7 +83,7 @@ window.addEventListener('load', function(){
              */
             updateBarChart: function(){
 
-                axios.post('/sentiment19/popularhashtags?limit=5',this.getCurrentFilter(0))
+                axios.post('/sentiment19/popularhashtags?limit=5',this.getCurrentFilterByOffensive(0))
                     .then(response => {
                         barChartNonOff.data.labels = response.data.hashtags.map(function (tag, index) {
                             return tag.hashtag;
@@ -96,7 +97,7 @@ window.addEventListener('load', function(){
                         barChartNonOff.update()
 
                     })
-                axios.post('/sentiment19/popularhashtags?limit=5',this.getCurrentFilter(1))
+                axios.post('/sentiment19/popularhashtags?limit=5',this.getCurrentFilterByOffensive(1))
                     .then(response => {
                         barChartOff.data.labels = response.data.hashtags.map(function (tag, index) {
                             return tag.hashtag;
@@ -118,9 +119,9 @@ window.addEventListener('load', function(){
 
                 axios.all([
                     axios.post('/sentiment19/stats',
-                        this.getCurrentFilter(1)),
+                        this.getCurrentFilterByOffensive(1)),
                     axios.post('/sentiment19/stats',
-                        this.getCurrentFilter(0))
+                        this.getCurrentFilterByOffensive(0))
                   ])
                   .then(axios.spread((off, nonOff) => {
                     data =  [off.data.count, nonOff.data.count]
@@ -133,9 +134,9 @@ window.addEventListener('load', function(){
 
                 axios.all([
                     axios.post('/sentiment19/tweet',
-                        this.getCurrentFilter(1)),
+                        this.getCurrentFilterByOffensive(1)),
                     axios.post('/sentiment19/tweet',
-                        this.getCurrentFilter(0))
+                        this.getCurrentFilterByOffensive(0))
                 ])
                     .then(axios.spread((offTweet, nonOffTweet) => {
                         document.getElementById("offTweet").innerHTML = offTweet.data.html
@@ -148,8 +149,8 @@ window.addEventListener('load', function(){
             //To-Do: Change the dataset aswell -> has to be requested from backend
             updateLineChart: function(){
                 axios.all([
-                    axios.post('/sentiment19/timeline', this.getCurrentFilter(1)),
-                    axios.post('/sentiment19/timeline', this.getCurrentFilter(0))
+                    axios.post('/sentiment19/timeline', this.getCurrentFilterByOffensive(1)),
+                    axios.post('/sentiment19/timeline', this.getCurrentFilterByOffensive(0))
                 ])
                     .then(axios.spread((off, nonOff) => {
                         console.log(off.data.start);
@@ -161,9 +162,18 @@ window.addEventListener('load', function(){
                     }));
 
             },
-            getCurrentFilter: function(offensive){
+            getCurrentFilterByOffensive: function(offensive){
                 return {
                     offensive: offensive,
+                    start: this.selectedDate.start,
+                    end: this.selectedDate.end,
+                    hashtags: this.hashtags.map(function (o) {
+                        return o.value
+                    })
+                }
+            },
+            getCurrentFilter: function(){
+                return {
                     start: this.selectedDate.start,
                     end: this.selectedDate.end,
                     hashtags: this.hashtags.map(function (o) {
@@ -177,6 +187,7 @@ window.addEventListener('load', function(){
                 $('[data-toggle="tooltip"]').tooltip({ trigger: "hover", html:true});
                 $('.tooltip').remove();
             });
+            this.updateHashtags();
             this.updatePieChart();
             this.updateLineChart();
             this.updateTweets();
