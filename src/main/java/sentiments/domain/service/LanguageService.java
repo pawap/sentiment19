@@ -49,4 +49,8 @@ public class LanguageService {
             }
         }
     }
+
+    public Iterable<Language> getActiveLanguages() {
+        return langs.values();
+    }
 }

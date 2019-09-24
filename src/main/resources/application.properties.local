@@ -11,3 +11,7 @@ spring.servlet.multipart.maxRequestSize=4GB
 TweetHost = XXX,
 TweetHostUsername = XXX
 TweetHostPW = XXX
+localTweetTsv.test.de = resources/offenseval-trial-DE.tsv
+localTweetTsv.train.de = resources/offenseval-train-DE.tsv
+localTweetTsv.test.en = resources/offenseval-trial-EN.tsv
+localTweetTsv.train.en = resources/offenseval-train-EN.tsv

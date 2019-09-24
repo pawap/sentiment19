@@ -13,6 +13,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sentiments.domain.model.AbstractTweet;
+import sentiments.domain.model.Language;
 import sentiments.domain.model.TrainingTweet;
 import sentiments.domain.model.Tweet;
 import sentiments.domain.preprocessor.ImportTweetPreProcessor;
@@ -40,7 +41,7 @@ import java.util.Locale;
 @Service
 public class BasicDataImporter {
 
-	private static final int BATCH_SIZE = 1024;
+	private static final int BATCH_SIZE = 512;
 
 	@Autowired
 	Environment env;
@@ -100,7 +101,7 @@ public class BasicDataImporter {
 				}
 				// persist tweets in batch
 				if (i % BATCH_SIZE == 0) {
-					System.out.println(i);
+					System.out.println("Persisting batch of " + i + " tweets in DB.");
 					tweetRepository.saveAll(tweets);
 					tweets.clear();
 				}
@@ -126,17 +127,18 @@ public class BasicDataImporter {
 				, tweetRepository);
 	}
 
-	public void importFromTsv(String tsvPath, TweetProvider<TrainingTweet> tweetProvider, MongoRepository repo, TweetPreProcessor processor) {
+	public void importFromTsv(String tsvPath, TweetProvider<TrainingTweet> tweetProvider, MongoRepository repo, TweetPreProcessor processor, String lang) {
 		Reader in;
 		int i = 0;
 		try {
+			System.out.println(tsvPath);
 			FileInputStream fstream = new FileInputStream(tsvPath);
 			in = new BufferedReader(new InputStreamReader(fstream));
-			Iterable<CSVRecord> records = CSVFormat.TDF.withHeader().parse(in);
+			Iterable<CSVRecord> records = CSVFormat.TDF.withHeader().withQuote(null).parse(in);
 			List<TrainingTweet> tweets = tweetProvider.getNewTweetList();
 			for (CSVRecord record : records) {
 				TrainingTweet tweet = tweetProvider.createTweet();
-				this.mapTsvToTweet(record, tweet);
+				this.mapTsvToTweet(record, tweet, lang);
 				if (tweet != null && tweet.getText() != null) {
 					i++;
 					processor.preProcess(tweet);
@@ -163,16 +165,15 @@ public class BasicDataImporter {
 //		entityManager.clear();
 	}
 
-	private void mapTsvToTweet(CSVRecord record, AbstractTweet tweet) {
+	private void mapTsvToTweet(CSVRecord record, AbstractTweet tweet, String lang) {
 		tweet.setText(record.get("tweet"));
-		switch (record.get("subtask_a")) {
+		tweet.setLanguage(lang);
+		switch (record.get("subtask_a").substring(0,3)) {
 			case "OFF":
 				tweet.setOffensive(true);
 				break;
-			case "NOT":
-				tweet.setOffensive(false);
-				break;
 			default:
+				tweet.setOffensive(false);
 		}
 	}
 
@@ -203,6 +204,7 @@ public class BasicDataImporter {
 			}
 		}
 		tweet.setTmstamp(Timestamp.valueOf(LocalDateTime.now()));
+		tweet.setClassified(null);
 	}
 
 	public void importExampleJson() {
@@ -216,15 +218,17 @@ public class BasicDataImporter {
 				, tweetRepository);
 	}
 
-	public void importTsvTestAndTrain() {
+	public void importTsvTestAndTrain(Language lang) {
 		TweetPreProcessor preproc = new ImportTweetPreProcessor();
-		importFromTsv(this.env.getProperty("localTweetTsv.train"), new TweetProvider<TrainingTweet>() {
+		String iso = lang.getIso();
+		System.out.println("importTsvTestAndTrain was called with " + lang + " and extracted the following iso: " + iso);
+		importFromTsv(this.env.getProperty("localTweetTsv.train." + iso), new TweetProvider<TrainingTweet>() {
 			@Override
 			public TrainingTweet createTweet() {
 				return new TrainingTweet();
 			}
-		}, trainingTweetRepository, preproc);
-		importFromTsv(this.env.getProperty("localTweetTsv.test"),new TweetProvider<TrainingTweet>()
+		}, trainingTweetRepository, preproc, iso);
+		importFromTsv(this.env.getProperty("localTweetTsv.test." + iso),new TweetProvider<TrainingTweet>()
 		{
 			@Override
 			public TrainingTweet createTweet() {
@@ -233,7 +237,7 @@ public class BasicDataImporter {
 				return tweet;
 			}
 
-		}, trainingTweetRepository, preproc);
+		}, trainingTweetRepository, preproc, iso);
 	}
 }
 

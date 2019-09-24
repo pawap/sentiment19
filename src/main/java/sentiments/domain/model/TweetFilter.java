@@ -9,7 +9,7 @@ import java.util.List;
 public class TweetFilter {
 
     private boolean offensive;
-    private Timestamp start, end;
+    private Timestamp start, end, classified;
     private List<String> languages;
     private List<String> hashtags;
 
@@ -51,5 +51,13 @@ public class TweetFilter {
 
     public void setHashtags(List<String> hashtags) {
         this.hashtags = hashtags;
+    }
+
+    public Timestamp getClassified() {
+        return classified;
+    }
+
+    public void setClassified(Timestamp classified) {
+        this.classified = classified;
     }
 }

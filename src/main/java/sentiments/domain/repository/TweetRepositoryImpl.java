@@ -54,7 +54,7 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
         if (tweetFilter.getStart() != null) {
             start = tweetFilter.getStart().toLocalDateTime().toLocalDate();
         } else {
-            start = getFirsrDate();
+            start = getFirstDate();
         }
 
         // init EndDate
@@ -90,7 +90,7 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
     }
 
     @Override
-    public LocalDate getFirsrDate() {
+    public LocalDate getFirstDate() {
         Tweet first = mongoTemplate.aggregate(Aggregation.newAggregation(
                 Aggregation.sort(Sort.Direction.ASC, "crdate"),
                 Aggregation.limit(1)
@@ -187,6 +187,9 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
         //languages
         if (tweetFilter.getLanguages() != null) {
             list.add(Aggregation.match(Criteria.where("language").in(tweetFilter.getLanguages())));
+        }
+        if (tweetFilter.getClassified() != null) {
+            list.add(Aggregation.match(Criteria.where("classified").is(tweetFilter.isOffensive())));
         }
 
         return list;

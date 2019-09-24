@@ -76,9 +76,9 @@ public class BackendController {
     }
 
     @RequestMapping("/backend/import/testandtrain")
-    public ResponseEntity<String> testAndTrainimport() {
-
-        this.basicDataImporter.importTsvTestAndTrain();
+    public ResponseEntity<String> testAndTrainimport(@RequestParam( value = "lang", defaultValue = "en") String lang) {
+System.out.println("testAndTrainimport was called with " + lang);
+        this.basicDataImporter.importTsvTestAndTrain(languageService.getLanguage(lang));
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");
 

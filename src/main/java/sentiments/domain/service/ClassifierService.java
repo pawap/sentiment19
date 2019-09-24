@@ -20,7 +20,7 @@ public class ClassifierService {
     public ClassifierService() {
         this.classifiers = new HashMap<>();
     }
-
+//TODO reutrn null if bad lang
     public Classifier getClassifier(Language language) {
         if (!this.classifiers.containsKey(language)){
             Classifier classifier = new W2VTweetClassifier(language);
@@ -37,6 +37,7 @@ public class ClassifierService {
     public void trainClassifier(Language language) {
         this.getClassifier(language).train(tweetRepository);
     }
+
 }
 
 

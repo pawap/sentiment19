@@ -13,7 +13,7 @@ import java.util.List;
 public interface TweetRepositoryCustom {
     Timeline countByOffensiveAndDayInInterval(TweetFilter tweetFilter);
 
-    LocalDate getFirsrDate();
+    LocalDate getFirstDate();
 
     LocalDate getLastDate();
 
