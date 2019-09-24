@@ -1,12 +1,13 @@
 package sentiments.domain.model;
 
+import org.springframework.data.mongodb.core.index.Indexed;
+
 import javax.persistence.Entity;
-import javax.persistence.Id;
 
 @Entity
 public class Language {
 
-    @Id
+    @Indexed(unique = true)
     private String iso;
 
     private String name;

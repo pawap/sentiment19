@@ -23,9 +23,8 @@ import org.nd4j.linalg.indexing.INDArrayIndex;
 import org.nd4j.linalg.indexing.NDArrayIndex;
 import org.nd4j.linalg.learning.config.Adam;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
+import sentiments.domain.model.Classification;
 import sentiments.domain.model.Language;
 import sentiments.domain.repository.TrainingTweetRepository;
 
@@ -38,18 +37,17 @@ import java.util.List;
  * @author Paw
  *
  */
-@Service
-public class W2VTweetClassifier {
-	
-	@Autowired
-    TrainingTweetRepository tweetRepository;
+public class W2VTweetClassifier implements Classifier{
 	
 	private MultiLayerNetwork net;
-	
-	public W2VTweetClassifier() {
+
+	private Language language;
+
+	public W2VTweetClassifier(Language language) {
 		File netFile;
+		this.language = language;
 		this.net = null;
-		if ((netFile = new File("resources/nets/rnnw2v.nn")).exists()) {
+		if ((netFile = new File(language.getClassifierFilename())).exists()) {
 			try {
 				net = ModelSerializer.restoreMultiLayerNetwork(netFile);
 			} catch (IOException e) {
@@ -57,14 +55,15 @@ public class W2VTweetClassifier {
 			}
 		}
 	}
-	
-	public void train(Language language) {
+
+
+	public void train(TrainingTweetRepository tweetRepository) {
 		int batchSize = 64;     //Number of examples in each minibatch
 	    int vectorSize = 300;   //Size of the word vectors. 300 in the Google News model
 	    int nEpochs = 5;        //Number of epochs (full passes of training data) to train on
 	    int truncateReviewsToLength = 256;  //Truncate reviews with length (# words) greater than this
 	    final int seed = 0;     //Seed for reproducibility
-
+		MultiLayerNetwork net;
 	    Nd4j.getMemoryManager().setAutoGcWindow(10000);  //https://deeplearning4j.org/workspaces
 
 	    //Set up network configuration
@@ -106,7 +105,7 @@ public class W2VTweetClassifier {
 	        Evaluation evaluation = net.evaluate(test);
 	        System.out.println(evaluation.stats());
 	    }
-	    
+	    this.net = net;
 	    try {
 			ModelSerializer.writeModel(net, ResourceUtils.getFile(language.getClassifierFilename()), true);
 		} catch (IOException e) {
@@ -144,18 +143,26 @@ public class W2VTweetClassifier {
 	    System.out.println("----- Example complete -----");
 		
 	}
-	
-	public String classifyTweet(String tweet, Language language) {
+
+	@Override
+	public boolean isTrained() {
+		return net != null;
+	}
+
+	public Classification classifyTweet(String tweet) {
 		if (this.net == null) {
-			System.out.println("No model. Training new one.");
-			train(language);
+			System.out.println("No model.");
+			return null;
 		}
 		INDArray features = loadFeaturesFromString(tweet, 300, language);
 	    INDArray networkOutput = net.output(features);
 	    long timeSeriesLength = networkOutput.size(2);
 	    INDArray probabilitiesAtLastWord = networkOutput.get(NDArrayIndex.point(0), NDArrayIndex.all(), NDArrayIndex.point(timeSeriesLength - 1));
 	    double offProb = probabilitiesAtLastWord.getDouble(0);
-	    return ((offProb >= 0.5)? "offensive" : "nonoffensive") + "(" + ((offProb >= 0.5)? offProb : 1 - offProb) + ")";	
+	    Classification classification = new Classification();
+	    classification.setOffensive(offProb >= 0.5);
+	    classification.setProbability((offProb >= 0.5)? offProb : 1 - offProb);
+		return classification;
 	}
     /**
      * Used post training to convert a String to a features INDArray that can be passed to the network output method

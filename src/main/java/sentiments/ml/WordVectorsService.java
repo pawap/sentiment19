@@ -23,7 +23,7 @@ public class WordVectorsService {
     		INSTANCE = new HashMap<Language,WordVectors>();
     	}
     	if (!INSTANCE.containsKey(language)) {
-            WordVectors vec = WordVectorSerializer.loadStaticModel(new File(language.getWordVectorsFilename()));
+            WordVectors vec = WordVectorSerializer.readWord2VecModel(new File(language.getWordVectorsFilename()));
             INSTANCE.put(language, vec);
     	}
 
@@ -33,6 +33,9 @@ public class WordVectorsService {
 
     synchronized public static void saveWordVectors(Word2Vec vec, Language language) {
         WordVectorSerializer.writeWord2VecModel(vec, new File(language.getWordVectorsFilename()));
+        if (INSTANCE == null) {
+            INSTANCE = new HashMap<Language,WordVectors>();
+        }
         INSTANCE.put(language, vec);
     }
 }
