@@ -155,11 +155,17 @@ public class W2VTweetClassifier implements Classifier{
 			return null;
 		}
 		INDArray features = loadFeaturesFromString(tweet, 300, language);
-	    INDArray networkOutput = net.output(features);
+		Classification classification = new Classification();
+		if (features == null) {
+			classification.setOffensive(false);
+			classification.setProbability(0);
+			return classification;
+		}
+		INDArray networkOutput = net.output(features);
 	    long timeSeriesLength = networkOutput.size(2);
 	    INDArray probabilitiesAtLastWord = networkOutput.get(NDArrayIndex.point(0), NDArrayIndex.all(), NDArrayIndex.point(timeSeriesLength - 1));
 	    double offProb = probabilitiesAtLastWord.getDouble(0);
-	    Classification classification = new Classification();
+
 	    classification.setOffensive(offProb >= 0.5);
 	    classification.setProbability((offProb >= 0.5)? offProb : 1 - offProb);
 		return classification;
@@ -180,6 +186,9 @@ public class W2VTweetClassifier implements Classifier{
         for(String t : tokens ){
             if(wordVectors.hasWord(t)) tokensFiltered.add(t);
         }
+        if (tokensFiltered.isEmpty()) {
+        	return null;
+		}
 
         int outputLength = Math.min(maxLength,tokensFiltered.size());
 

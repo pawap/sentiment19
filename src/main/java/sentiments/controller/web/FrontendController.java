@@ -13,16 +13,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.annotation.*;
-import sentiments.domain.model.Classification;
-import sentiments.domain.model.HashtagCount;
-import sentiments.domain.model.Timeline;
-import sentiments.domain.model.TweetFilter;
+import sentiments.domain.model.*;
 import sentiments.domain.repository.TweetRepository;
 import sentiments.domain.service.ClassifierService;
 import sentiments.domain.service.LanguageService;
 import sentiments.domain.service.ResponseService;
 import sentiments.ml.Classifier;
-import sentiments.ml.W2VTweetClassifier;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -156,7 +152,7 @@ public class FrontendController extends BasicWebController {
         JSONObject out = new JSONObject();
         out.put("hashtags", hashtags );
         out.put("total", total );
-        return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.CREATED);
+        return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.OK);
     }
 
     @RequestMapping(value="/timeline", method = RequestMethod.POST, consumes = "application/json")
@@ -171,7 +167,21 @@ public class FrontendController extends BasicWebController {
         out.put("timeline", arr);
         out.put("start", timeline.start.toString());
         out.put("end", timeline.end.toString());
-        return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.CREATED);
+        return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.OK);
+    }
+
+    @RequestMapping(value="/availablelanguages")
+    public ResponseEntity<String> availablelanguages() {
+        HttpHeaders responseHeaders = new HttpHeaders();
+
+        Iterable<Language> langs = languageService.getAvailableLanguages();
+        JSONObject out = new JSONObject();
+        JSONArray arr = new JSONArray();
+        for (Language lang: langs) {
+            arr.add(lang.toJSONObject());
+        }
+        out.put("availableLanguages", arr);
+        return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.OK);
     }
 
 }
