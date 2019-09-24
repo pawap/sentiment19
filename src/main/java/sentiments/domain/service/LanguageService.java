@@ -6,6 +6,7 @@ import sentiments.domain.model.Language;
 import sentiments.domain.repository.LanguageRepository;
 
 import java.util.HashMap;
+import java.util.List;
 
 @Service
 public class LanguageService {
@@ -48,5 +49,9 @@ public class LanguageService {
                 }
             }
         }
+    }
+
+    public Iterable<Language> getAvailableLanguages() {
+        return languageRepository.findAllByActive(true);
     }
 }
