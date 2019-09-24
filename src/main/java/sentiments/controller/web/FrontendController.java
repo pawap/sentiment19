@@ -13,12 +13,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.annotation.*;
+import sentiments.domain.model.Classification;
 import sentiments.domain.model.HashtagCount;
 import sentiments.domain.model.Timeline;
 import sentiments.domain.model.TweetFilter;
 import sentiments.domain.repository.TweetRepository;
+import sentiments.domain.service.ClassifierService;
 import sentiments.domain.service.LanguageService;
 import sentiments.domain.service.ResponseService;
+import sentiments.ml.Classifier;
 import sentiments.ml.W2VTweetClassifier;
 
 import java.io.File;
@@ -38,7 +41,7 @@ public class FrontendController extends BasicWebController {
     Environment env;
 
     @Autowired
-    W2VTweetClassifier tweetClassifier;
+    ClassifierService classifierService;
 
     @Autowired
     TweetRepository tweetRepository;
@@ -115,23 +118,17 @@ public class FrontendController extends BasicWebController {
         return new ResponseEntity<String>(out.toString(), responseHeaders, HttpStatus.CREATED);
     }
 
-    @RequestMapping("/sentiments")
-    public ResponseEntity<String> home(@RequestParam(value = "tweet", defaultValue = "") String tweet, @RequestParam(value = "format", defaultValue = "text") String format) {
+    @RequestMapping("/classify")
+    public ResponseEntity<String> classify(@RequestParam(value = "tweet", defaultValue = "") String tweet) {
         String cleanTweet = tweet.replace("\r", " ").replace("\n", " ").trim();
-        System.out.println("tweet:" + cleanTweet);
-        String cleanFormat = format.replace("\r", " ").replace("\n", " ").trim();
-
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");
-        String classification = tweetClassifier.classifyTweet(cleanTweet, languageService.getLanguage("en"));
-        String response;
-        if (cleanFormat.compareTo("json") == 0) {
-            response = responseService.generateJSONResponse(classification);
-        } else {
-            response = responseService.generateTextResponse(classification);
-        }
-
-        return new ResponseEntity<String>(response, responseHeaders,HttpStatus.CREATED);
+        Classifier tweetClassifier = classifierService.getClassifier(languageService.getLanguage("en"));
+        Classification classification = tweetClassifier.classifyTweet(cleanTweet);
+        JSONObject out = new JSONObject();
+        out.put("offensive", classification.isOffensive());
+        out.put("probability", classification.getProbability());
+        return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.CREATED);
     }
 
     @RequestMapping(value = "/stats",  method = RequestMethod.POST, consumes = "application/json")
@@ -150,6 +147,8 @@ public class FrontendController extends BasicWebController {
 
         List<HashtagCount> tags = tweetRepository.getMostPopularHashtags(tf, limit);
         int total = tweetRepository.countByOffensiveAndDate(tf);
+        tf.setOffensive(true);
+        total += tweetRepository.countByOffensiveAndDate(tf);
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");
         JSONArray hashtags = new JSONArray();

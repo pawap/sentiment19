@@ -36,13 +36,16 @@ public class LanguageService {
         for (String s : isoCodes) {
             Language l = langs.get(s);
             if (l == null) {
-                l = new Language();
-                l.setIso(s);
-                l.setWordVectorsFilename("resources/word2vec_" + s + ".bin");
-                l.setClassifierFilename("resources/classifier_" + s + ".nn");
-                l.setName(s);
-                langs.put(s,l);
-                languageRepository.save(l);
+                l = languageRepository.findOneByIso(s);
+                if (l == null) {
+                    l = new Language();
+                    l.setIso(s);
+                    l.setWordVectorsFilename("resources/word2vec_" + s + ".bin");
+                    l.setClassifierFilename("resources/classifier_" + s + ".nn");
+                    l.setName(s);
+                    langs.put(s,l);
+                    languageRepository.save(l);
+                }
             }
         }
     }

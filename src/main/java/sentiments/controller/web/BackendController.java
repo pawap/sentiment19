@@ -16,7 +16,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import sentiments.data.BasicDataImporter;
 import sentiments.domain.model.Language;
 import sentiments.domain.repository.TweetRepository;
+import sentiments.domain.service.ClassifierService;
 import sentiments.domain.service.LanguageService;
+import sentiments.ml.Classifier;
 import sentiments.ml.W2VTweetClassifier;
 import sentiments.ml.WordVectorBuilder;
 import sentiments.ml.WordVectorsService;
@@ -35,7 +37,7 @@ public class BackendController {
     BasicDataImporter basicDataImporter;
 
     @Autowired
-    W2VTweetClassifier tweetClassifier;
+    ClassifierService classifierService;
 
     @Autowired
     TweetRepository tweetRepository;
@@ -84,7 +86,7 @@ public class BackendController {
     }
 
     @RequestMapping("/backend/ml/w2vtraining")
-    public ResponseEntity<String> w2vtraining(@RequestParam( value = "lang", defaultValue = "5") String lang) {
+    public ResponseEntity<String> w2vtraining(@RequestParam( value = "lang", defaultValue = "en") String lang) {
         WordVectorBuilder w2vb = new WordVectorBuilder(tweetRepository);
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");
@@ -160,9 +162,9 @@ public class BackendController {
         return new ResponseEntity<String>(examples, responseHeaders,HttpStatus.OK);
     }
 
-    @RequestMapping("/backend/ml/trainNet")
+    @RequestMapping("/backend/ml/trainnet")
     public ResponseEntity<String> trainNet() {
-        tweetClassifier.train(languageService.getLanguage("en"));
+        classifierService.trainClassifier(languageService.getLanguage("en"));
         HttpHeaders responseHeaders = new HttpHeaders();
         return new ResponseEntity<String>("training done", responseHeaders,HttpStatus.CREATED);
     }

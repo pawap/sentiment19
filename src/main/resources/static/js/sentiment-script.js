@@ -1,5 +1,67 @@
 window.addEventListener('load', function(){
     //Vue.js element
+    Vue.component('popular-hashtags', {
+        data: function () {
+            return {
+                popularHashtags: []
+            }
+        },
+        template: "#popular-hashtags",
+        methods: {
+            setTags: function (tags) {
+                this.popularHashtags = tags;
+                this.$nextTick(() => $(function(){
+                    $('.has-tooltip').tooltip({trigger: "hover", html:true});
+                    $('.tooltip').remove();
+                }));
+            }
+        }
+    });
+
+    Vue.component('tweet-filter', {
+        props: ['value'],
+        data: function() {
+            return {
+                times: [
+                    {text: "Letzter Tag", value: "day", start: getDate(-1), end: getDate(0)},
+                    {text: "Letzte Woche", value: "week", start: getDate(-7), end: getDate(0)},
+                    {text: "Letzter Monat", value: "month", start: getDate(-30), end: getDate(0)},
+                    {text: "Gesamter Zeitraum", value: "range", start: null, end: getDate(0)},
+                ],
+            }
+        },
+        template: "#tweet-filter",
+        methods: {
+            addHashtag: function (newTag = null) {
+                let tag =  newTag;
+                if(!tag) {
+                    let newHashtag = $('#newhashtag');
+                    tag = {
+                        value: newHashtag.val()
+                    };
+                    if (tag.value.substr(0,1) !== "#") tag.value = '#' + tag.value;
+                    newHashtag.val('');
+                }
+                this.value.hashtags.push(tag);
+                this.filterUpdated();
+            },
+            setPopularHashtags: function (tags) {
+                this.$refs.popularhashtags.setTags(tags);
+            },
+            filterUpdated: function () {
+                console.log('updated filter:' + this.value)
+                this.$emit('input', {
+                    selectedDate: this.value.selectedDate,
+                    hashtags: this.value.hashtags,
+                }
+                )
+            }
+        },
+        // updated:
+    });
+
+
+
     const vue = new Vue({
         el: "#app",
         data: function(){
@@ -9,57 +71,47 @@ window.addEventListener('load', function(){
                 //counter number of offensive tweets
                 nonOffensive: 0,
                 //radio buttons time selection values
-                times: [
-                    {text: "Letzter Tag", value: "day", start: getDate(-1), end: getDate(0)},
-                    {text: "Letzte Woche", value: "week", start: getDate(-7), end: getDate(0)},
-                    {text: "Letzter Monat", value: "month", start: getDate(-30), end: getDate(0)},
-                    {text: "Gesamter Zeitraum", value: "range", start: null, end: getDate(0)},
-                ],
-
-                // most popular tweets for chosen filters
-                topHashtags: [],
 
                 // -------- FILTERS -----------
 
-                //datepicker selection, initialized with one week
-                selectedDate: {
-                    start:  getDate(-7),
-                    end:  getDate(0)
-                },
-                //hashtags empty init
-                hashtags: [],
 
-                // TODO language-Filter
+                tweetFilter: {
+                    //datepicker selection, initialized with one week
+                    selectedDate: {
+                        start: getDate(-7),
+                        end: getDate(0)
+                    },
+                    // hashtags empty init
+                    hashtags: [],
 
-
+                    //languages empty init
+                    languages: []
+                }
             }
         },
 
-        // most popular tweets in whole db
-        popularHashtags: [],
 
         methods:{
-
-            addHashtag: function () {
-                let tag =  $('#newhashtag').val();
-                if (tag.substr(0,1) !== "#") tag = '#' + tag;
-                this.hashtags.push({value: tag});
-                $('#newhashtag').val('');
-                },
-
             updateHashtags: function () {
                 axios.post('/sentiment19/popularhashtags?limit=8',this.getCurrentFilter())
-                    .then(response => this.popularHashtags = response.data.hashtags.map(function (tag, index) {
-                        return {value: tag.hashtag, key: index, popular: 1, hidden: 0, count: tag.count,
-                            percent: (tag.count / response.data.total * 100).toFixed(2) + '%'
-                        };
-                    }))
+                    .then(response => {
+                        let popularHashtags = response.data.hashtags.map(function (tag, index) {
+                            return {
+                                value: tag.hashtag, key: index, popular: 1, hidden: 0, count: tag.count,
+                                percent: (tag.count / response.data.total * 100).toFixed(2) + '%'
+                            };
 
-                this.popularHashtags.forEach(function (e) {
-                    if (vue.hashtags.filter(tag => (tag.value === e.value)).length > 0) {
-                        e.hidden = 1;
-                    }
-                })
+                        });
+                        popularHashtags.forEach(function (e) {
+                            if (vue.tweetFilter.hashtags.filter(tag => (tag.value === e.value)).length > 0) {
+                                e.hidden = 1;
+                            }
+                        })
+                        console.log(popularHashtags);
+                        this.$refs.tweetfilter.setPopularHashtags(popularHashtags);
+                    })
+
+
 
             },
             /**
@@ -68,13 +120,12 @@ window.addEventListener('load', function(){
             updateCounters: function(){
 
                 axios.all([
-                    axios.post('/sentiment19/stats',{offensive: 1}),
-                    axios.post('/sentiment19/stats',{offensive: 0})
+                    axios.post('/sentiment19/stats',this.getCurrentFilterByOffensive(1)),
+                    axios.post('/sentiment19/stats',this.getCurrentFilterByOffensive(0))
                   ])
                   .then(axios.spread((off, nonOff) => {
                     this.offensive = off.data.count
                     this.nonOffensive = nonOff.data.count
-                    this.updatePieChart()
                   }));
                 
             },
@@ -165,33 +216,48 @@ window.addEventListener('load', function(){
             getCurrentFilterByOffensive: function(offensive){
                 return {
                     offensive: offensive,
-                    start: this.selectedDate.start,
-                    end: this.selectedDate.end,
-                    hashtags: this.hashtags.map(function (o) {
+                    start: this.tweetFilter.selectedDate.start,
+                    end: this.tweetFilter.selectedDate.end,
+                    hashtags: this.tweetFilter.hashtags.map(function (o) {
                         return o.value
                     })
                 }
             },
             getCurrentFilter: function(){
                 return {
-                    start: this.selectedDate.start,
-                    end: this.selectedDate.end,
-                    hashtags: this.hashtags.map(function (o) {
+                    start: this.tweetFilter.selectedDate.start,
+                    end: this.tweetFilter.selectedDate.end,
+                    hashtags: this.tweetFilter.hashtags.map(function (o) {
                         return o.value
                     })
                 }
+            },
+
+            //To-Do: Post input to BE and receive classifier response AND reset modal after closing
+            classifyInput: function(){
+                var input = document.getElementById('classifierInput').value
+                this.classifierStatus = "wird klassifiziert"
+                axios
+                    .get("/sentiment19/classify?tweet=" + input)
+                    .then(response => { this.classifierStatus = response.data.offensive? "offensive":"nonoffensive"
+                                                                    + " (" + response.data.probability + ")"; this.$forceUpdate()  } )
+            },
+
+            //
+            addModalEvent: function(){
+                $(".modal").on("show.bs.modal", function(){
+                    vue.classifierStatus = "ist noch nicht klassifiziert";
+                    $(this).find("textarea").val('');
+                });
             }
         },
         updated: function () {
-            $(function(){
-                $('[data-toggle="tooltip"]').tooltip({ trigger: "hover", html:true});
-                $('.tooltip').remove();
-            });
             this.updateHashtags();
             this.updatePieChart();
             this.updateLineChart();
             this.updateTweets();
             this.updateBarChart();
+            this.updateCounters();
         }
     });
 
@@ -393,6 +459,8 @@ window.addEventListener('load', function(){
      * Initialise Tweet display, Tweet amount counters and the pie and line charts
      */
     function init(){
+        //status of classifier
+        vue.classifierStatus = "ist noch nicht klassifiziert";
         vue.updateTweets()
         vue.updateCounters()
         vue.updatePieChart()
@@ -402,7 +470,7 @@ window.addEventListener('load', function(){
 
     $(document).on('load', function () {
         $(function(){
-            $('[data-toggle="tooltip"]').tooltip();
+            $('[data-toggle="tooltip"]').tooltip({ trigger: "hover", html:true});
         })
     })
     }
