@@ -50,12 +50,13 @@ public class ScheduledTasks {
 
     private static int batchSize = 512;
 
-    @Async
-    @Scheduled(cron = "*/30 * * * * *")
+    @Scheduled(cron = "*/5 * * * * *")
     public void classifyNextBatch() {
         if (classifying) {
+            System.out.println("already classifying");
             return;
         }
+        System.out.println("new call");
             classifying = true;
             Iterable<Language> langs = languageService.getActiveLanguages();
             for (Language lang : langs) {
@@ -69,13 +70,22 @@ public class ScheduledTasks {
                         tweet.setOffensive(classification.isOffensive());
                         tweet.setClassified(new Date());
                         currentBatch.add(tweet);
-                        if (currentBatch.size() == batchSize) {
-                            tweetRepository.saveAll(currentBatch);
-                            currentBatch.clear();
-                        }
+                        System.out.println(currentBatch.size() + " in batch");
+//                        if (currentBatch.size() == batchSize) {
+ //                           tweetRepository.saveAll(currentBatch);
+   //                         log.info("batch of " + currentBatch.size() + " classified");
+     //                       currentBatch.clear();
+       //                 }
                     }
                 });
+                if (!currentBatch.isEmpty()) {
+                    tweetRepository.saveAll(currentBatch);
+                    log.info("batch of " + currentBatch.size() + " classified");
+                    currentBatch.clear();
+                }
+
             }
+        log.info("done classifying language");
             classifying = false;
     }
 
