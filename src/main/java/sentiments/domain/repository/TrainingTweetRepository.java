@@ -1,14 +1,18 @@
 package sentiments.domain.repository;
 
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
+import sentiments.domain.model.TrainingTweet;
 import sentiments.domain.model.Tweet;
 
-public interface TrainingTweetRepository extends TweetRepository {
-	
-	@Query("from Tweet where test=:test and offensive=:offensive")
-	public Iterable<Tweet> findAllByTestAndOffensive(@Param("test") Boolean test, @Param("offensive") Boolean offensive);
+public interface TrainingTweetRepository extends MongoRepository<TrainingTweet,Integer> {
 
-	@Query("select count(*) from Tweet where test=:test")
-	public int count(@Param("test") boolean test);
+	//returns an Iterable of all tweets that are labled as test/training and (non-) offensive
+	@Query("{ 'test' : ?0 , 'offensive' : ?1 , 'language': ?2}")
+	public Iterable<Tweet> findAllByTestAndOffensiveAndLanguage(Boolean test, Boolean offensive, String language);
+
+	//returns the count of test/training samples
+	@Query(value="{ 'test' : ?0 }", count = true)
+	public int countByTestAndLanguage(boolean test);
 }

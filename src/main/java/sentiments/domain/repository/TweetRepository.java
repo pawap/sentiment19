@@ -2,26 +2,27 @@ package sentiments.domain.repository;
 
 import java.sql.Timestamp;
 
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.repository.query.Param;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
 import sentiments.domain.model.Tweet;
 
 /**
  * @author Paw
  *
  */
-public interface TweetRepository extends CrudRepository<Tweet, Integer> {
-	
-	@Query("from Tweet where offensive=:offensive")
-	public Iterable<Tweet> findAllByOffensive(@Param("offensive") Boolean offensive);
-	
-	@Query("from Tweet where offensive=:offensive and crdate>=:startdate and crdate<=:enddate")
-	public Iterable<Tweet> findAllByOffensiveAndDate(@Param("offensive") Boolean offensive, @Param("startdate") Timestamp startdate, @Param("enddate") Timestamp enddate);
+public interface TweetRepository extends MongoRepository<Tweet, Integer>, TweetRepositoryCustom {
 
-	@Query("select count(*) from Tweet where offensive=:offensive")
-	public int countByOffensive(@Param("offensive") Boolean offensive);
-	
-	@Query("select count(*) from Tweet where offensive=:offensive and crdate>=:startdate and crdate<=:enddate")
-	public int countByOffensiveAndDate(@Param("offensive") Boolean offensive, @Param("startdate") Timestamp startdate, @Param("enddate") Timestamp enddate);
+	//returns an Iterable with every (non-) offensive Tweet
+	@Query(value="{}", count = true)
+	public int countfindAllTweets();
+
+	//returns an int with the count of every (non-) offensive Tweet
+	@Query(value = "{ 'offensive' : ?0 }", count = true)
+	public int countByOffensive(Boolean offensive);
+
+	//returns an int with the count of Tweets with a timestamp inbetween startdate and enddate
+	@Query(value = "{ 'tmstamp' : { $gte: ?0, $lte: ?1} }", count = true)
+	public int countfindAllByDateBetween(Timestamp startdate, Timestamp enddate);
+
+    Iterable<Tweet> findAllByLanguage(String language);
 }

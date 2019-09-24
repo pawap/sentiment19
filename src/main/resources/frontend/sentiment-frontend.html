@@ -1,12 +1,19 @@
 <!DOCTYPE html>
+
+
+
 <html lang="en">
+
 	<head>
 		<meta charset='utf-8'>
 		<!--Bootstrap settings/import-->
 		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+		<!-- Optional theme -->
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap-theme.min.css" integrity="sha384-6pzBo3FDv/PJ8r2KRkGHifhEocL+1X2rVCTTkUfGk7/0pbek5mMa1upzvWbrUbOZ" crossorigin="anonymous">
 		<!--Vue.js import-->
 		<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
 		<!--VCalender import-->
 		<link rel='stylesheet' href='https://unpkg.com/v-calendar/lib/v-calendar.min.css'>
 		<script src='https://unpkg.com/v-calendar'></script>
@@ -19,7 +26,7 @@
 		<!--Twitter import-->
 		<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 		<!--Own Script-->
-		<script src="sentiment-script.js"></script>
+		<script src="/sentiment19/js/sentiment-script.js"></script>
 	</head>
 	<!--CSS Styling-->
 	<style>
@@ -52,6 +59,82 @@
 		}
 	</style>
 	<body>
+	<template id="popular-hashtags">
+		<div>
+			<h5>popular</h5>
+			<div class="row p-3">
+				<span class="badge badge-primary small m-1 btn has-tooltip"
+					  v-for="(hashtag, key) in popularHashtags"
+					  v-if="hashtag.hidden == 0"
+					  @click="hashtag.hidden = 1, $emit('new-hashtag', hashtag)"
+					  data-toggle="tooltip"
+					  data-placement="top"
+					  :id="'Hashtag-'+hashtag.value"
+					  :data-original-title="hashtag.count+'<br>'+hashtag.percent"
+					  :data-title="hashtag.count+'<br>'+hashtag.percent"
+					  :title="hashtag.count+'<br>'+hashtag.percent">
+					{{hashtag.value}}
+				</span>
+			</div>
+		</div>
+	</template>
+	<template id="tweet-filter">
+		<div class="row">
+			<div class="col-sm-3">
+				<h5>Hashtags</h5>
+				<div class="row p-3">
+					<span
+						:class="{'badge-primary': (hashtag.popular == 1), 'badge-secondary': (hashtag.popular != 1)}" class="badge small m-1 btn"
+				    	@click="filterUpdated(); $delete(value.hashtags, key); if (hashtag.popular == 1) {hashtag.hidden = 0}"
+						v-for="(hashtag, key) in value.hashtags">
+						{{hashtag.value}}
+					</span>
+				</div>
+				<div class="input-group">
+					<input class="form-control form-control-sm" type="text" @keydown.space.prevent id="newhashtag">
+					<button class="btn btn-sm btn-secondary input-group-btn" @click="addHashtag">Add Hashtag</button>
+				</div>
+			</div>
+
+			<div class="col-sm-3">
+				<popular-hashtags ref="popularhashtags" v-on:new-hashtag="addHashtag($event)"></popular-hashtags>
+			</div>
+			<div class="col-sm-3">
+				<div class="row p-3">
+					<v-date-picker
+							popover-align="center"
+							:max-date='new Date()'
+							mode='range'
+							value="value.selectedDate"
+							v-model="value.selectedDate"
+							v-on:change="filterUpdated"
+							:input-props='{ "class": "form-control", "id":"selectedDate" }'
+							day-format="YYYY-MM-DD">
+					</v-date-picker>
+				</div>
+				<div class="row p-3">
+					<div class="btn-group btn-group-toggle">
+						<template v-for="time in times">
+							<label class="btn btn-default btn-sm" :class="{'active': time.start == value.selectedDate.start && time.end == value.selectedDate.end}" :for="'radio-' + time.value">
+								<input type="radio"
+									   :id="'radio-' + time.value"
+									   v-model="value.selectedDate"
+									   v-bind:value="{'start': time.start, 'end': time.end}"
+									   :checked="time.start == value.selectedDate.start && time.end == value.selectedDate.end"
+									   v-on:change="filterUpdated"/>
+								{{time.text}}
+							</label>
+						</template>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-3">
+				<div class="row p-3">
+
+				</div>
+			</div>
+		</div>
+	</template>
 		<div class="container-fluid main" id="app">
 			<div class="row">
 				<div class="col-sm-12">
@@ -63,41 +146,41 @@
 							Classifier
 						</button>
 					</div>
-					
+
 				</div>
 			</div>
 			<hr>
 			<div class=row>
 				<div class="col-sm-12">
+					<h3>Anzahl Tweets: {{offensive + nonOffensive}}</h3>
 					<h3 class="offensive">Anzahl offensive Tweets: {{offensive}}</h3>
 					<h3 class="nonOffensive">Anzahl non-offensive Tweets: {{nonOffensive}}</h3>
 				</div>
 			</div>
+			<tweet-filter ref="tweetfilter" v-model="tweetFilter"></tweet-filter>
 			<div class="row my-3">
-				<div class="col-sm-6">
+				<div class="col-sm-4">
 					<div class="content p-2">
 						<h4>Anzahl offensive vs. non-offensive Tweets</h4>
-						<select v-model="selectPieTime" @change='updatePieChart()'>
-								<option value="">Gesamter Zeitraum</option>
-								<option v-for="time in times" v-bind:value="time.value">
-										{{ time.text }}
-								</option>
-						</select>
 						<div>
 							<canvas id="pieChart"></canvas>
 						</div>
 					</div>
+					<h4>Top Hashtags</h4>
+					<div class="content p-2">
+						<div>
+							<canvas id="barChartNonOff"></canvas>
+						</div>
+					</div>
+					<div class="content p-2">
+						<div>
+							<canvas id="barChartOff"></canvas>
+						</div>
+					</div>
 				</div>
-				<div class="col-sm-6">
+				<div class="col-sm-8">
 					<div class="content p-2">
 						<h4>Verlauf offensive & non-offensive Tweets</h4>
-						<v-date-picker
-						@input="updateLineChart()"
-						popover-align="center"
-						:max-date='new Date()'
-						mode='range'
-						v-model="selectedDate">
-						</v-date-picker>	
 						<div>
 							<canvas id="lineChart"></canvas>
 						</div>		
@@ -131,9 +214,9 @@
 						</div>
 						<div class="modal-body">
 							<div class="form-group">
-								<textarea placeholder="Ihre Eingabe hier einfügen" class="form-control" id="classifierInput" rows="5"></textarea>
+								<textarea placeholder="Enter input here" class="form-control" id="classifierInput" rows="5"></textarea>
 							</div>
-							Ihre Eingabe: {{classifierStatus}}
+							Classification of your Input: {{classifierStatus}}
 						</div>
 						<div class="modal-footer">
 							<button type="button" class="btn btn-secondary" data-dismiss="modal">Abbruch</button>
@@ -144,7 +227,10 @@
 			</div>
 		</div>	
 		<!--Bootstrap imports-->
-		<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+		<script
+				src="https://code.jquery.com/jquery-3.4.1.min.js"
+				integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+				crossorigin="anonymous"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
 		<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 	</body>
