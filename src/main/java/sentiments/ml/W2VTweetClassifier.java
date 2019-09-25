@@ -42,8 +42,11 @@ public class W2VTweetClassifier implements Classifier{
 	private MultiLayerNetwork net;
 
 	private Language language;
+	private DefaultTokenizerFactory tokenizerFactory;
 
 	public W2VTweetClassifier(Language language) {
+		tokenizerFactory = new DefaultTokenizerFactory();
+		tokenizerFactory.setTokenPreProcessor(new CommonPreprocessor());
 		File netFile;
 		this.language = language;
 		this.net = null;
@@ -115,7 +118,7 @@ public class W2VTweetClassifier implements Classifier{
 	    //After training: load a single example and generate predictions
 	    String shortOffensiveTweet = "You are all bloody suckers. I hate filthy assholes like u";
 
-	    INDArray features = loadFeaturesFromString(shortOffensiveTweet, truncateReviewsToLength, language);
+	    INDArray features = loadFeaturesFromString(shortOffensiveTweet, truncateReviewsToLength);
 	    INDArray networkOutput = net.output(features);
 	    long timeSeriesLength = networkOutput.size(2);
 	    INDArray probabilitiesAtLastWord = networkOutput.get(NDArrayIndex.point(0), NDArrayIndex.all(), NDArrayIndex.point(timeSeriesLength - 1));
@@ -130,7 +133,7 @@ public class W2VTweetClassifier implements Classifier{
 	    //After training: load a single example and generate predictions
 	    String shortNonOffensiveTweet = "I love you all. Happiness is evreywhere.";
 
-	    features = loadFeaturesFromString(shortNonOffensiveTweet, truncateReviewsToLength, language);
+	    features = loadFeaturesFromString(shortNonOffensiveTweet, truncateReviewsToLength);
 	    networkOutput = net.output(features);
 	    timeSeriesLength = networkOutput.size(2);
 	    probabilitiesAtLastWord = networkOutput.get(NDArrayIndex.point(0), NDArrayIndex.all(), NDArrayIndex.point(timeSeriesLength - 1));
@@ -154,7 +157,7 @@ public class W2VTweetClassifier implements Classifier{
 			System.out.println("No model.");
 			return null;
 		}
-		INDArray features = loadFeaturesFromString(tweet, 300, language);
+		INDArray features = loadFeaturesFromString(tweet, 300);
 		Classification classification = new Classification();
 		if (features == null) {
 			classification.setOffensive(false);
@@ -176,9 +179,7 @@ public class W2VTweetClassifier implements Classifier{
      * @param maxLength Maximum length (if review is longer than this: truncate to maxLength). Use Integer.MAX_VALUE to not nruncate
      * @return Features array for the given input String
      */
-    private INDArray loadFeaturesFromString(String tweetContents, int maxLength, Language language){
-        DefaultTokenizerFactory tokenizerFactory = new DefaultTokenizerFactory();
-        tokenizerFactory.setTokenPreProcessor(new CommonPreprocessor());
+    private INDArray loadFeaturesFromString(String tweetContents, int maxLength){
 	    WordVectors wordVectors = WordVectorsService.getWordVectors(language);
 	    int vectorSize = wordVectors.getWordVector(wordVectors.vocab().wordAtIndex(0)).length;
 	    List<String> tokens = tokenizerFactory.create(tweetContents).getTokens();

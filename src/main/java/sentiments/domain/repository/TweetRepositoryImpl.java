@@ -2,6 +2,7 @@ package sentiments.domain.repository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
@@ -155,6 +156,11 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
 
         return output.getMappedResults();
 
+    }
+
+    @Override
+    public BulkOperations getBulkOps() {
+        return mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED, Tweet.class);
     }
 
     private List<AggregationOperation> getWhereOperations(TweetFilter tweetFilter) {

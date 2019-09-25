@@ -16,10 +16,10 @@ import java.util.Set;
 @Entity
 public class Tweet extends AbstractTweet {
 
-    @Id
     @Indexed(unique = true)
     private String twitterId;
 
+    @Id
     private ObjectId _id;
 
     private Set<String> hashtags;
@@ -48,5 +48,13 @@ public class Tweet extends AbstractTweet {
 
     public void setClassified(Date classified) {
         this.classified = classified;
+    }
+
+    public ObjectId get_id() {
+        return _id;
+    }
+
+    public void set_id(ObjectId _id) {
+        this._id = _id;
     }
 }

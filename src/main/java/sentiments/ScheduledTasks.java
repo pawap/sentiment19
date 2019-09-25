@@ -1,8 +1,11 @@
 package sentiments;
 
+import java.util.LinkedList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.BulkOperations;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -24,6 +27,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static org.springframework.data.mongodb.core.query.Criteria.where;
+import static org.springframework.data.mongodb.core.query.Query.query;
 
 @Component
 public class ScheduledTasks {
@@ -50,7 +56,7 @@ public class ScheduledTasks {
 
     private static boolean classifying = false;
 
-    private static int batchSize = 2048;
+   // private static int batchSize = 1048;
 
     @Scheduled(cron = "*/5 * * * * *")
     public void classifyNextBatch() {
@@ -71,20 +77,55 @@ public class ScheduledTasks {
                 Stream<Tweet> tweets = tweetRepository.findAllByClassifiedAndLanguage(null, lang.getIso());
                 AtomicInteger index = new AtomicInteger(0);
 
-                Stream<List<Tweet>> stream = tweets.collect(Collectors.groupingBy(x -> index.getAndIncrement() / batchSize))
+                int batchSize = 1048;
+                int multiBatch = 1;
+                Stream<List<Tweet>> stream = tweets.collect(Collectors.groupingBy(x -> index.getAndIncrement() / batchSize ))
                         .entrySet().stream()
                         .sorted(Map.Entry.comparingByKey()).map(Map.Entry::getValue);
 
-                stream.forEach(tweetList -> {
-                    for(Tweet tweet: tweetList) {
+                // remove .parallel() for serial
+                stream.parallel().forEach(tweetList -> {
+
+                    // --- bulkOps  multiBatch just multiplies batchSize to get effective batchSize
+                    BulkOperations ops = tweetRepository.getBulkOps();
+                    for (Tweet tweet : tweetList) {
                         Classification classification = classifier.classifyTweet(tweet.getText());
-                        tweet.setOffensive(classification.isOffensive());
-                        tweet.setClassified(runDate);
+                        Update update = new Update();
+                        update.addToSet("offenisve", classification.isOffensive());
+                        update.addToSet("classified", runDate);
+                        ops.updateOne(query(where("_id").is(tweet.get_id())), update);
                     }
-                    System.out.println("saving a list of size " + tweetList.size());
-                    tweetRepository.saveAll(tweetList);
+                    ops.execute();
+
+                    // single batch multiBatch needs to be set to one
+//                    for(Tweet tweet: tweetList) {
+//                        Classification classification = classifier.classifyTweet(tweet.getText());
+//                        tweet.setOffensive(classification.isOffensive());
+//                        tweet.setClassified(runDate);
+//                        batch.add(tweet);
+//                        if (batch.size() % batchSize == 0) {
+//                            tweetRepository.saveAll(batch);
+//                            batch.clear();
+//                        }
+//                    }
+//                    tweetRepository.saveAll(tweetList);
+
+                    // multi batch need to set multiBatch > 1
+//                    List<Tweet> batch = new LinkedList<>();
+//                    for(Tweet tweet: tweetList) {
+//                        Classification classification = classifier.classifyTweet(tweet.getText());
+//                        tweet.setOffensive(classification.isOffensive());
+//                        tweet.setClassified(runDate);
+//                        batch.add(tweet);
+//                        if (batch.size() % batchSize == 0) {
+//                            tweetRepository.saveAll(batch);
+//                            batch.clear();
+//                        }
+//                    }
+                    System.out.println("finished a list of size " + tweetList.size());
+//                    tweetRepository.saveAll(tweetList);
                 });
-//
+//          old stuff
 //                    List<Tweet> currentBatch = new LinkedList<>();
 //                    for (int i = 0; i < batchSize && split.tryAdvance(tweet -> {
 //
