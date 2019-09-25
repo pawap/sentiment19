@@ -1,6 +1,10 @@
 package sentiments.domain.model;
 
+import org.bson.types.ObjectId;
+import org.springframework.data.mongodb.core.index.Indexed;
+
 import javax.persistence.Entity;
+import javax.persistence.Id;
 import java.util.Date;
 import java.util.Set;
 
@@ -12,7 +16,11 @@ import java.util.Set;
 @Entity
 public class Tweet extends AbstractTweet {
 
+    @Id
+    @Indexed(unique = true)
     private String twitterId;
+
+    private ObjectId _id;
 
     private Set<String> hashtags;
 

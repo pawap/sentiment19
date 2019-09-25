@@ -17,10 +17,12 @@ import sentiments.ml.Classifier;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Component
@@ -48,7 +50,7 @@ public class ScheduledTasks {
 
     private static boolean classifying = false;
 
-    private static int batchSize = 512;
+    private static int batchSize = 2048;
 
     @Scheduled(cron = "*/5 * * * * *")
     public void classifyNextBatch() {
@@ -62,28 +64,47 @@ public class ScheduledTasks {
             for (Language lang : langs) {
                 log.info("begin classifying " + lang.getIso() + " tweets");
                 Classifier classifier = classifierService.getClassifier(lang);
+                if (classifier == null) {
+                continue;
+                }
+                Date runDate = new Date();
                 Stream<Tweet> tweets = tweetRepository.findAllByClassifiedAndLanguage(null, lang.getIso());
-                List<Tweet> currentBatch = new LinkedList<Tweet>();
-                tweets.forEach(tweet -> {
-                    if (classifier != null) {
+                AtomicInteger index = new AtomicInteger(0);
+
+                Stream<List<Tweet>> stream = tweets.collect(Collectors.groupingBy(x -> index.getAndIncrement() / batchSize))
+                        .entrySet().stream()
+                        .sorted(Map.Entry.comparingByKey()).map(Map.Entry::getValue);
+
+                stream.forEach(tweetList -> {
+                    for(Tweet tweet: tweetList) {
                         Classification classification = classifier.classifyTweet(tweet.getText());
                         tweet.setOffensive(classification.isOffensive());
-                        tweet.setClassified(new Date());
-                        currentBatch.add(tweet);
-                        System.out.println(currentBatch.size() + " in batch");
-//                        if (currentBatch.size() == batchSize) {
- //                           tweetRepository.saveAll(currentBatch);
-   //                         log.info("batch of " + currentBatch.size() + " classified");
-     //                       currentBatch.clear();
-       //                 }
+                        tweet.setClassified(runDate);
                     }
+                    System.out.println("saving a list of size " + tweetList.size());
+                    tweetRepository.saveAll(tweetList);
                 });
-                if (!currentBatch.isEmpty()) {
-                    tweetRepository.saveAll(currentBatch);
-                    log.info("batch of " + currentBatch.size() + " classified");
-                    currentBatch.clear();
-                }
-
+//
+//                    List<Tweet> currentBatch = new LinkedList<>();
+//                    for (int i = 0; i < batchSize && split.tryAdvance(tweet -> {
+//
+//                        Classification classification = classifier.classifyTweet(tweet.getText());
+//                        tweet.setOffensive(classification.isOffensive());
+//                        tweet.setClassified(new Date());
+//                        currentBatch.add(tweet);
+//                        System.out.println(currentBatch.size() + " in batch");
+//
+//                    }); i++) {
+//                    }
+//                    if (currentBatch.isEmpty()) {
+//                        System.out.println("break");
+//                        break;
+//
+//                    }
+//                    tweetRepository.saveAll(currentBatch);
+//                    log.info("batch of " + currentBatch.size() + " classified");
+//                    currentBatch.clear();
+                //}
             }
         log.info("done classifying language");
             classifying = false;
