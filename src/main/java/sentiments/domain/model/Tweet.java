@@ -16,6 +16,7 @@ import java.util.Set;
 @Entity
 public class Tweet extends AbstractTweet {
 
+
     @Indexed(unique = true)
     private String twitterId;
 
@@ -32,6 +33,14 @@ public class Tweet extends AbstractTweet {
 
     public void setTwitterId(String twitterId) {
         this.twitterId = twitterId;
+    }
+
+    public ObjectId get_id() {
+        return _id;
+    }
+
+    public void set_id(ObjectId _id) {
+        this._id = _id;
     }
 
     public Set<String> getHashtags() {

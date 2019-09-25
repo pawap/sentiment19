@@ -173,7 +173,7 @@ public class W2VTweetClassifier implements Classifier{
 	    classification.setProbability((offProb >= 0.5)? offProb : 1 - offProb);
 		return classification;
 	}
-    /**
+    /*
      * Used post training to convert a String to a features INDArray that can be passed to the network output method
      *
      * @param maxLength Maximum length (if review is longer than this: truncate to maxLength). Use Integer.MAX_VALUE to not nruncate
@@ -193,7 +193,7 @@ public class W2VTweetClassifier implements Classifier{
 
         int outputLength = Math.min(maxLength,tokensFiltered.size());
 
-        INDArray features = Nd4j.create(1, vectorSize, outputLength);
+        INDArray features = Nd4j.create(1, vectorSize, Math.max(outputLength, 1));
 
         int count = 0;
         for (int j = 0; j < tokensFiltered.size() && count < maxLength; j++ ){
