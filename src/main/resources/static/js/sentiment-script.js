@@ -1,5 +1,35 @@
 window.addEventListener('load', function(){
     //Vue.js element
+    Vue.component('modal-classifier', {
+        data: function () {
+            return {
+                status: "not classified",
+                input: ""
+            }
+        },
+        template: "#modal-classifier",
+        methods: {
+            //To-Do: Post input to BE and receive classifier response AND reset modal after closing
+            classifyInput: function(){
+                this.status = "classifying"
+                axios
+                    .get("/sentiment19/classify?tweet=" + this.input)
+                    .then(response => {
+                        this.status = response.data.offensive ? "offensive" : "nonoffensive"
+                            + " (" + response.data.probability + ")"
+                    })
+            },
+
+            //
+            addModalEvent: function(){
+                $(".modal").on("show.bs.modal", function(){
+                    this.status = "not classified";
+                    $(this).find("textarea").val('');
+                });
+            }
+        }
+    });
+
     Vue.component('popular-hashtags', {
         data: function () {
             return {
@@ -28,9 +58,15 @@ window.addEventListener('load', function(){
                     {text: "Letzter Monat", value: "month", start: getDate(-30), end: getDate(0)},
                     {text: "Gesamter Zeitraum", value: "range", start: null, end: getDate(0)},
                 ],
+                availableLanguages: [],
+                selectedLanguages: []
             }
         },
         template: "#tweet-filter",
+        created: function() {
+            axios.get('/sentiment19/availablelanguages')
+                .then(response => this.availableLanguages = response.data.availableLanguages)
+        },
         methods: {
             addHashtag: function (newTag = null) {
                 let tag =  newTag;
@@ -49,10 +85,15 @@ window.addEventListener('load', function(){
                 this.$refs.popularhashtags.setTags(tags);
             },
             filterUpdated: function () {
-                console.log('updated filter:' + this.value)
+                let languages = (this.selectedLanguages.length > 0) ?
+                    this.selectedLanguages :
+                    this.availableLanguages.map(lang => lang.iso);
+
+                console.log(languages);
                 this.$emit('input', {
                     selectedDate: this.value.selectedDate,
                     hashtags: this.value.hashtags,
+                    languages: languages
                 }
                 )
             }
@@ -220,7 +261,8 @@ window.addEventListener('load', function(){
                     end: this.tweetFilter.selectedDate.end,
                     hashtags: this.tweetFilter.hashtags.map(function (o) {
                         return o.value
-                    })
+                    }),
+                    languages: this.tweetFilter.languages
                 }
             },
             getCurrentFilter: function(){
@@ -229,27 +271,10 @@ window.addEventListener('load', function(){
                     end: this.tweetFilter.selectedDate.end,
                     hashtags: this.tweetFilter.hashtags.map(function (o) {
                         return o.value
-                    })
+                    }),
+                    languages: this.tweetFilter.languages
                 }
             },
-
-            //To-Do: Post input to BE and receive classifier response AND reset modal after closing
-            classifyInput: function(){
-                var input = document.getElementById('classifierInput').value
-                this.classifierStatus = "wird klassifiziert"
-                axios
-                    .get("/sentiment19/classify?tweet=" + input)
-                    .then(response => { this.classifierStatus = response.data.offensive? "offensive":"nonoffensive"
-                                                                    + " (" + response.data.probability + ")"; this.$forceUpdate()  } )
-            },
-
-            //
-            addModalEvent: function(){
-                $(".modal").on("show.bs.modal", function(){
-                    vue.classifierStatus = "ist noch nicht klassifiziert";
-                    $(this).find("textarea").val('');
-                });
-            }
         },
         updated: function () {
             this.updateHashtags();

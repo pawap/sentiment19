@@ -1,5 +1,6 @@
 package sentiments.domain.model;
 
+import net.sf.json.JSONObject;
 import org.springframework.data.mongodb.core.index.Indexed;
 
 import javax.persistence.Entity;
@@ -56,5 +57,12 @@ public class Language {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public Object toJSONObject() {
+        JSONObject o = new JSONObject();
+        o.put("iso",this.iso);
+        o.put("name",this.name);
+        return o;
     }
 }

@@ -60,7 +60,7 @@ public class ScheduledTasks {
         }
         System.out.println("new call");
             classifying = true;
-            Iterable<Language> langs = languageService.getActiveLanguages();
+            Iterable<Language> langs = languageService.getAvailableLanguages();
             for (Language lang : langs) {
                 log.info("begin classifying " + lang.getIso() + " tweets");
                 Classifier classifier = classifierService.getClassifier(lang);

@@ -185,7 +185,7 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
         }
 
         //languages
-        if (tweetFilter.getLanguages() != null) {
+        if (tweetFilter.getLanguages() != null && !tweetFilter.getLanguages().isEmpty() ) {
             list.add(Aggregation.match(Criteria.where("language").in(tweetFilter.getLanguages())));
         }
         if (tweetFilter.getClassified() != null) {
