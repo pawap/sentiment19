@@ -157,6 +157,7 @@ public class W2VTweetClassifier implements Classifier{
 			System.out.println("No model.");
 			return null;
 		}
+
 		INDArray features = loadFeaturesFromString(tweet, 300);
 		Classification classification = new Classification();
 		if (features == null) {

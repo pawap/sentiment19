@@ -59,11 +59,5 @@ public class Tweet extends AbstractTweet {
         this.classified = classified;
     }
 
-    public ObjectId get_id() {
-        return _id;
-    }
 
-    public void set_id(ObjectId _id) {
-        this._id = _id;
-    }
 }

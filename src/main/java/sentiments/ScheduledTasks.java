@@ -88,13 +88,17 @@ public class ScheduledTasks {
 
                     // --- bulkOps  multiBatch just multiplies batchSize to get effective batchSize
                     BulkOperations ops = tweetRepository.getBulkOps();
+                    long time = System.currentTimeMillis();
                     for (Tweet tweet : tweetList) {
+
                         Classification classification = classifier.classifyTweet(tweet.getText());
+
                         Update update = new Update();
                         update.addToSet("offenisve", classification.isOffensive());
                         update.addToSet("classified", runDate);
                         ops.updateOne(query(where("_id").is(tweet.get_id())), update);
                     }
+                    System.out.println(System.currentTimeMillis() - time);
                     ops.execute();
 
                     // single batch multiBatch needs to be set to one
