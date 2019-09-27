@@ -18,8 +18,7 @@ import sentiments.domain.model.Language;
 import sentiments.domain.repository.TweetRepository;
 import sentiments.domain.service.ClassifierService;
 import sentiments.domain.service.LanguageService;
-import sentiments.ml.Classifier;
-import sentiments.ml.W2VTweetClassifier;
+import sentiments.domain.service.TaskService;
 import sentiments.ml.WordVectorBuilder;
 import sentiments.ml.WordVectorsService;
 
@@ -45,6 +44,9 @@ public class BackendController {
     @Autowired
     LanguageService languageService;
 
+    @Autowired
+    TaskService taskService;
+
     @RequestMapping("/backend")
     public ResponseEntity<String> backend() {
         String response = "";
@@ -57,6 +59,18 @@ public class BackendController {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("Access-Control-Allow-Origin", "*");
+
+        return new ResponseEntity<String>(response, responseHeaders,HttpStatus.CREATED);
+    }
+
+    @RequestMapping("/backend/setClassificationEnabled")
+    public ResponseEntity<String> setClassificationEnabled(@RequestParam( value = "enabled", defaultValue = "true") boolean enabled) {
+        String response = "setting classification to " + enabled;
+
+        taskService.setClassificationEnabled(enabled);
 
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");

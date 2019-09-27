@@ -1,6 +1,5 @@
 package sentiments;
 
-import java.util.LinkedList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +15,7 @@ import sentiments.domain.model.Tweet;
 import sentiments.domain.repository.TweetRepository;
 import sentiments.domain.service.ClassifierService;
 import sentiments.domain.service.LanguageService;
+import sentiments.domain.service.TaskService;
 import sentiments.ml.Classifier;
 
 import java.text.SimpleDateFormat;
@@ -46,6 +46,9 @@ public class ScheduledTasks {
     @Autowired
     private LanguageService languageService;
 
+    @Autowired
+    private TaskService taskService;
+
     private static final Logger log = LoggerFactory.getLogger(ScheduledTasks.class);
 
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
@@ -60,15 +63,15 @@ public class ScheduledTasks {
 
     @Scheduled(cron = "*/5 * * * * *")
     public void classifyNextBatch() {
-        if (classifying) {
-            System.out.println("already classifying");
+        if (!taskService.isClassificationEnabled() || classifying) {
+            System.out.println("no new classification task possible");
             return;
         }
         System.out.println("new call");
             classifying = true;
             Iterable<Language> langs = languageService.getAvailableLanguages();
             for (Language lang : langs) {
-                log.info("begin classifying " + lang.getIso() + " tweets");
+                log.info("try classifying " + lang.getIso() + " tweets");
                 Classifier classifier = classifierService.getClassifier(lang);
                 if (classifier == null) {
                 continue;
@@ -84,7 +87,7 @@ public class ScheduledTasks {
                         .sorted(Map.Entry.comparingByKey()).map(Map.Entry::getValue);
 
                 // remove .parallel() for serial
-                stream.parallel().forEach(tweetList -> {
+                stream.forEach(tweetList -> {
 
                     // --- bulkOps  multiBatch just multiplies batchSize to get effective batchSize
                     BulkOperations ops = tweetRepository.getBulkOps();
@@ -151,7 +154,7 @@ public class ScheduledTasks {
 //                    currentBatch.clear();
                 //}
             }
-        log.info("done classifying language");
+        log.info("classification done");
             classifying = false;
     }
 
