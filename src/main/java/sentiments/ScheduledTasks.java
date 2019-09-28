@@ -1,16 +1,12 @@
 package sentiments;
 
-import java.util.LinkedList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.BulkOperations;
-import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import sentiments.data.ImportManager;
-import sentiments.domain.model.Classification;
 import sentiments.domain.model.Language;
 import sentiments.domain.model.Tweet;
 import sentiments.domain.repository.TweetRepository;
@@ -27,9 +23,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static org.springframework.data.mongodb.core.query.Criteria.where;
-import static org.springframework.data.mongodb.core.query.Query.query;
 
 @Component
 public class ScheduledTasks {
@@ -67,7 +60,10 @@ public class ScheduledTasks {
         System.out.println("new call");
             classifying = true;
             Iterable<Language> langs = languageService.getAvailableLanguages();
-            for (Language lang : langs) {
+        long time = System.currentTimeMillis();
+        AtomicInteger tweetCount = new AtomicInteger();
+
+        for (Language lang : langs) {
                 log.info("begin classifying " + lang.getIso() + " tweets");
                 Classifier classifier = classifierService.getClassifier(lang);
                 if (classifier == null) {
@@ -77,29 +73,30 @@ public class ScheduledTasks {
                 Stream<Tweet> tweets = tweetRepository.findAllByClassifiedAndLanguage(null, lang.getIso());
                 AtomicInteger index = new AtomicInteger(0);
 
-                int batchSize = 1048;
+                int batchSize = 512;
                 int multiBatch = 1;
                 Stream<List<Tweet>> stream = tweets.collect(Collectors.groupingBy(x -> index.getAndIncrement() / batchSize ))
                         .entrySet().stream()
                         .sorted(Map.Entry.comparingByKey()).map(Map.Entry::getValue);
-
                 // remove .parallel() for serial
                 stream.parallel().forEach(tweetList -> {
-
+                    tweetCount.addAndGet(tweetList.size());
+                    classifier.classifyTweets(tweetList,runDate);
+                    tweetRepository.saveAll(tweetList);
                     // --- bulkOps  multiBatch just multiplies batchSize to get effective batchSize
-                    BulkOperations ops = tweetRepository.getBulkOps();
-                    long time = System.currentTimeMillis();
-                    for (Tweet tweet : tweetList) {
-
-                        Classification classification = classifier.classifyTweet(tweet.getText());
-
-                        Update update = new Update();
-                        update.addToSet("offenisve", classification.isOffensive());
-                        update.addToSet("classified", runDate);
-                        ops.updateOne(query(where("_id").is(tweet.get_id())), update);
-                    }
-                    System.out.println(System.currentTimeMillis() - time);
-                    ops.execute();
+//                    BulkOperations ops = tweetRepository.getBulkOps();
+//                    long time = System.currentTimeMillis();
+//                    for (Tweet tweet : tweetList) {
+//
+//                        Classification classification = classifier.classifyTweet(tweet.getText());
+//
+//                        Update update = new Update();
+//                        update.addToSet("offenisve", true);//classification.isOffensive());
+//                        update.addToSet("classified", runDate);
+//                        ops.updateOne(query(where("_id").is(tweet.get_id())), update);
+//                    }
+//                    System.out.println(System.currentTimeMillis() - time);
+//                    ops.execute();
 
                     // single batch multiBatch needs to be set to one
 //                    for(Tweet tweet: tweetList) {
@@ -126,33 +123,15 @@ public class ScheduledTasks {
 //                            batch.clear();
 //                        }
 //                    }
-                    System.out.println("finished a list of size " + tweetList.size());
-//                    tweetRepository.saveAll(tweetList);
                 });
-//          old stuff
-//                    List<Tweet> currentBatch = new LinkedList<>();
-//                    for (int i = 0; i < batchSize && split.tryAdvance(tweet -> {
-//
-//                        Classification classification = classifier.classifyTweet(tweet.getText());
-//                        tweet.setOffensive(classification.isOffensive());
-//                        tweet.setClassified(new Date());
-//                        currentBatch.add(tweet);
-//                        System.out.println(currentBatch.size() + " in batch");
-//
-//                    }); i++) {
-//                    }
-//                    if (currentBatch.isEmpty()) {
-//                        System.out.println("break");
-//                        break;
-//
-//                    }
-//                    tweetRepository.saveAll(currentBatch);
-//                    log.info("batch of " + currentBatch.size() + " classified");
-//                    currentBatch.clear();
-                //}
             }
-        log.info("done classifying language");
-            classifying = false;
+        long timeOverall = (System.currentTimeMillis() - time);
+        String report;
+        report = "##CLASSIFYING## Overall Time: " + timeOverall + "ms" + System.lineSeparator();
+        report += "##CLASSIFYING## ~ " + tweetCount.get() * 1000 / timeOverall + " tweets per sec" + System.lineSeparator();
+        report += "##CLASSIFYING## Tried to classify " + tweetCount.get() + "tweets. Done.";
+        log.info(report);
+        classifying = false;
     }
 
 
