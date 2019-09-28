@@ -12,6 +12,7 @@ import sentiments.domain.model.Tweet;
 import sentiments.domain.repository.TweetRepository;
 import sentiments.domain.service.ClassifierService;
 import sentiments.domain.service.LanguageService;
+import sentiments.domain.service.TaskService;
 import sentiments.ml.Classifier;
 
 import java.text.SimpleDateFormat;
@@ -39,6 +40,9 @@ public class ScheduledTasks {
     @Autowired
     private LanguageService languageService;
 
+    @Autowired
+    private TaskService taskService;
+
     private static final Logger log = LoggerFactory.getLogger(ScheduledTasks.class);
 
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
@@ -53,18 +57,20 @@ public class ScheduledTasks {
 
     @Scheduled(cron = "*/5 * * * * *")
     public void classifyNextBatch() {
-        if (classifying) {
-            System.out.println("already classifying");
+        if (!taskService.isClassificationEnabled() || classifying) {
+            System.out.println("no new classification task possible");
             return;
         }
         System.out.println("new call");
             classifying = true;
             Iterable<Language> langs = languageService.getAvailableLanguages();
+
         long time = System.currentTimeMillis();
         AtomicInteger tweetCount = new AtomicInteger();
 
         for (Language lang : langs) {
-                log.info("begin classifying " + lang.getIso() + " tweets");
+                log.info("try classifying " + lang.getIso() + " tweets");
+
                 Classifier classifier = classifierService.getClassifier(lang);
                 if (classifier == null) {
                 continue;
@@ -79,10 +85,12 @@ public class ScheduledTasks {
                         .entrySet().stream()
                         .sorted(Map.Entry.comparingByKey()).map(Map.Entry::getValue);
                 // remove .parallel() for serial
+
                 stream.parallel().forEach(tweetList -> {
                     tweetCount.addAndGet(tweetList.size());
                     classifier.classifyTweets(tweetList,runDate);
                     tweetRepository.saveAll(tweetList);
+
                     // --- bulkOps  multiBatch just multiplies batchSize to get effective batchSize
 //                    BulkOperations ops = tweetRepository.getBulkOps();
 //                    long time = System.currentTimeMillis();
@@ -125,6 +133,7 @@ public class ScheduledTasks {
 //                    }
                 });
             }
+
         long timeOverall = (System.currentTimeMillis() - time);
         String report;
         report = "##CLASSIFYING## Overall Time: " + timeOverall + "ms" + System.lineSeparator();
@@ -132,6 +141,7 @@ public class ScheduledTasks {
         report += "##CLASSIFYING## Tried to classify " + tweetCount.get() + "tweets. Done.";
         log.info(report);
         classifying = false;
+
     }
 
 
