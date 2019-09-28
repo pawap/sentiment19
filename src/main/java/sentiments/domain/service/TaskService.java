@@ -2,16 +2,30 @@ package sentiments.domain.service;
 
 import org.springframework.stereotype.Service;
 
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
 @Service
 public class TaskService {
 
-    public boolean isClassificationEnabled() {
-        return classificationEnabled;
+
+    private ConcurrentMap<String,Boolean> tasks;
+
+    public TaskService() {
+        this.tasks = new ConcurrentHashMap<>();
     }
 
-    public void setClassificationEnabled(boolean classificationEnabled) {
-        this.classificationEnabled = classificationEnabled;
+    public boolean checkTaskExecution(String task, boolean activeByDefault) {
+        if (this.tasks.get(task) == null) {
+            this.tasks.put(task,activeByDefault);
+        }
+        return this.tasks.get(task);
+    }
+    public boolean checkTaskExecution(String task) {
+        return this.checkTaskExecution(task,false);
     }
 
-    private boolean classificationEnabled = false;
+    public void setTaskStatus(String task, boolean active) {
+        this.tasks.put(task,active);
+    }
 }

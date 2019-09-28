@@ -57,8 +57,8 @@ public class ScheduledTasks {
 
     @Scheduled(cron = "*/5 * * * * *")
     public void classifyNextBatch() {
-        if (!taskService.isClassificationEnabled() || classifying) {
-            System.out.println("no new classification task possible");
+        boolean execute = taskService.checkTaskExecution("classify");
+        if (!execute || classifying) {
             return;
         }
         System.out.println("new call");
@@ -138,7 +138,7 @@ public class ScheduledTasks {
         String report;
         report = "##CLASSIFYING## Overall Time: " + timeOverall + "ms" + System.lineSeparator();
         report += "##CLASSIFYING## ~ " + tweetCount.get() * 1000 / timeOverall + " tweets per sec" + System.lineSeparator();
-        report += "##CLASSIFYING## Tried to classify " + tweetCount.get() + "tweets. Done.";
+        report += "##CLASSIFYING## Tried to classify " + tweetCount.get() + " tweets. Done.";
         log.info(report);
         classifying = false;
 
@@ -146,9 +146,10 @@ public class ScheduledTasks {
 
 
     @Async
-    //   @Scheduled(cron = "*/5 * * * * *")
+    @Scheduled(cron = "*/5 * * * * *")
     public void crawlDataServer() throws InterruptedException {
-        if (threadCount < maxThreadCount) {
+        boolean execute = taskService.checkTaskExecution("import");
+        if (execute && threadCount < maxThreadCount) {
             int mycount = ++threadCount;
             log.info("Starting crawl (" + mycount + ") at {}", dateFormat.format(new Date()));
             CompletableFuture completableFuture = importManager.importTweets();

@@ -22,12 +22,11 @@ import sentiments.domain.service.TaskService;
 import sentiments.ml.WordVectorBuilder;
 import sentiments.ml.WordVectorsService;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 
 @RestController
 public class BackendController {
@@ -48,12 +47,15 @@ public class BackendController {
     TaskService taskService;
 
     @RequestMapping("/backend")
-    public ResponseEntity<String> backend() {
+    public ResponseEntity<String> backend(String message, HttpStatus status) {
+        message = message == null ? "" : message;
+        status = status == null ? HttpStatus.OK : status;
         String response = "";
         try {
             File file = ResourceUtils.getFile(
                     "classpath:frontend/sentiment-backend.html");
             response = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+            response = response.replaceAll("###MESSAGE###",message);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -63,19 +65,19 @@ public class BackendController {
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");
 
-        return new ResponseEntity<String>(response, responseHeaders,HttpStatus.CREATED);
+        return new ResponseEntity<>(response, responseHeaders, status);
     }
 
-    @RequestMapping("/backend/setClassificationEnabled")
-    public ResponseEntity<String> setClassificationEnabled(@RequestParam( value = "enabled", defaultValue = "true") boolean enabled) {
-        String response = "setting classification to " + enabled;
+    @RequestMapping("/backend/setTaskStatus")
+    public ResponseEntity<String> setTaskStatus(@RequestParam( value = "task", defaultValue = "") String task,
+                                                           @RequestParam( value = "enabled", defaultValue = "false") boolean enabled) {
+        if (task == "") {
+            return backend("", HttpStatus.NOT_FOUND);
+        }
+        String response = "setting task '" + task  + "' to " + (enabled ? "active" : "not active");
+        taskService.setTaskStatus(task, enabled);
 
-        taskService.setClassificationEnabled(enabled);
-
-        HttpHeaders responseHeaders = new HttpHeaders();
-        responseHeaders.set("Access-Control-Allow-Origin", "*");
-
-        return new ResponseEntity<String>(response, responseHeaders,HttpStatus.CREATED);
+        return backend(response, HttpStatus.ACCEPTED); //new ResponseEntity<String>(response, responseHeaders,HttpStatus.CREATED);
     }
 
     @RequestMapping("/backend/import")
@@ -91,12 +93,12 @@ public class BackendController {
 
     @RequestMapping("/backend/import/testandtrain")
     public ResponseEntity<String> testAndTrainimport(@RequestParam( value = "lang", defaultValue = "en") String lang) {
-System.out.println("testAndTrainimport was called with " + lang);
+        System.out.println("testAndTrainimport was called with " + lang);
         this.basicDataImporter.importTsvTestAndTrain(languageService.getLanguage(lang));
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");
 
-        return new ResponseEntity<String>("finished", responseHeaders,HttpStatus.CREATED);
+        return new ResponseEntity<String>("finished", responseHeaders,HttpStatus.OK);
     }
 
     @RequestMapping("/backend/ml/w2vtraining")
@@ -184,27 +186,49 @@ System.out.println("testAndTrainimport was called with " + lang);
     }
 
     @PostMapping("backend/upload")
-    public ResponseEntity<String> singleFileUpload(@RequestParam("file") MultipartFile file,
-                                                   RedirectAttributes redirectAttributes) {
-        HttpHeaders responseHeaders = new HttpHeaders();
-        System.out.println("upload");
+    public ResponseEntity<String> singleFileUpload(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
-            redirectAttributes.addFlashAttribute("message", "Please select a file to upload");
-            System.out.println("empty");
-            return new ResponseEntity<String>("uploadStatus: empty", responseHeaders, HttpStatus.CREATED);
+            return  backend("No File found. Please select a file to upload.", HttpStatus.BAD_REQUEST);
         }
-
         try {
-            InputStream stream = file.getInputStream();
-            basicDataImporter.importFromStream(stream);
-
-            redirectAttributes.addFlashAttribute("message",
-                    "You successfully uploaded '" + file.getOriginalFilename() + "'");
-
+            File target = new File("resources/"+file.getOriginalFilename());
+            target.setWritable(true);
+            FileUtils.copyInputStreamToFile(file.getInputStream(), target);
         } catch (IOException e) {
             e.printStackTrace();
+            return backend("Woahh... it ain't all good. INTERNAL ERROR.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        return new ResponseEntity<String>("uploadStatus: postitve", responseHeaders,HttpStatus.CREATED);
+        return backend("You successfully uploaded '" + file.getOriginalFilename() + "'", HttpStatus.CREATED);
+    }
+
+    @PostMapping("backend/import/training")
+    public ResponseEntity<String> testAndTrainImport(@RequestParam("traindata") MultipartFile trainData,
+                                                     @RequestParam("testdata") MultipartFile testData,
+                                                     @RequestParam("lang") String lang) {
+        Language language = languageService.getLanguage(lang);
+        if (language == null) {
+            backend("language not supported", HttpStatus.NOT_FOUND);
+        }
+        MultipartFile[] files = {trainData, testData};
+        List<File> targetFiles = new LinkedList<>();
+        for (MultipartFile file : files) {
+            if (file.isEmpty()) {
+                targetFiles.add(null);
+                break;
+            }
+            try {
+                File target = new File("resources/training/upload/"+file.getOriginalFilename());
+                target.setWritable(true);
+                FileUtils.copyInputStreamToFile(file.getInputStream(), target);
+                targetFiles.add(target);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return backend("Woahh... it ain't all good. INTERNAL ERROR.", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }
+
+        basicDataImporter.importTsvTestAndTrain(language, targetFiles.get(0).getPath(), targetFiles.get(1).getPath());
+        return backend("success", HttpStatus.OK);
     }
 }

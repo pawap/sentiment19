@@ -12,6 +12,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.stringtemplate.v4.ST;
 import sentiments.domain.model.AbstractTweet;
 import sentiments.domain.model.Language;
 import sentiments.domain.model.TrainingTweet;
@@ -218,26 +219,37 @@ public class BasicDataImporter {
 				, tweetRepository);
 	}
 
-	public void importTsvTestAndTrain(Language lang) {
+	public void importTsvTestAndTrain(Language lang, String filenameTrain, String filenameTest) {
 		TweetPreProcessor preproc = new ImportTweetPreProcessor();
 		String iso = lang.getIso();
-		System.out.println("importTsvTestAndTrain was called with " + lang + " and extracted the following iso: " + iso);
-		importFromTsv(this.env.getProperty("localTweetTsv.train." + iso), new TweetProvider<TrainingTweet>() {
-			@Override
-			public TrainingTweet createTweet() {
-				return new TrainingTweet();
-			}
-		}, trainingTweetRepository, preproc, iso);
-		importFromTsv(this.env.getProperty("localTweetTsv.test." + iso),new TweetProvider<TrainingTweet>()
-		{
-			@Override
-			public TrainingTweet createTweet() {
-				TrainingTweet tweet = new TrainingTweet();
-				tweet.setTest(true);
-				return tweet;
-			}
+		if (filenameTrain != null) {
+			importFromTsv(filenameTrain, new TweetProvider<>() {
+				@Override
+				public TrainingTweet createTweet() {
+					return new TrainingTweet();
+				}
+			}, trainingTweetRepository, preproc, iso);
+		}
+		if (filenameTest != null) {
+			importFromTsv(filenameTest,new TweetProvider<TrainingTweet>()
+			{
+				@Override
+				public TrainingTweet createTweet() {
+					TrainingTweet tweet = new TrainingTweet();
+					tweet.setTest(true);
+					return tweet;
+				}
 
-		}, trainingTweetRepository, preproc, iso);
+			}, trainingTweetRepository, preproc, iso);
+		}
+	}
+
+	public void importTsvTestAndTrain(Language lang) {
+		importTsvTestAndTrain(lang,
+				this.env.getProperty("localTweetTsv.train." + lang.getIso()),
+				this.env.getProperty("localTweetTsv.test." + lang.getIso())
+						);
+
 	}
 }
 
