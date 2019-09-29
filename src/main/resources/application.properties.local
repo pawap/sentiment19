@@ -1,0 +1,17 @@
+server.port=8080
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.properties.hibernate.jdbc.batch_size=1024
+spring.data.mongodb.database=hash
+spring.data.mongodb.host=localhost
+spring.data.mongodb.port=27017
+server.servlet.context-path=/sentiment19
+localTweetJson = resources/tweets2.json
+spring.servlet.multipart.maxFileSize=4GB
+spring.servlet.multipart.maxRequestSize=4GB
+TweetHost = XXX,
+TweetHostUsername = XXX
+TweetHostPW = XXX
+localTweetTsv.test.de = resources/offenseval-trial-DE.tsv
+localTweetTsv.train.de = resources/offenseval-train-DE.tsv
+localTweetTsv.test.en = resources/offenseval-trial-EN.tsv
+localTweetTsv.train.en = resources/offenseval-train-EN.tsv

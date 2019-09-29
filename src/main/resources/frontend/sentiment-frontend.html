@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+	<head>
+		<meta charset='utf-8'>
+		<!--Bootstrap settings/import-->
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+		<!-- Optional theme -->
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap-theme.min.css" integrity="sha384-6pzBo3FDv/PJ8r2KRkGHifhEocL+1X2rVCTTkUfGk7/0pbek5mMa1upzvWbrUbOZ" crossorigin="anonymous">
+		<!-- fontawesome for icons-->
+		<script src="https://kit.fontawesome.com/7417487b74.js" crossorigin="anonymous"></script>		<!--Vue.js import-->
+
+		<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+		<!--VCalender import-->
+		<link rel='stylesheet' href='https://unpkg.com/v-calendar/lib/v-calendar.min.css'>
+		<script src='https://unpkg.com/v-calendar'></script>
+		<!--Moment.js import-->
+		<script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js'></script>
+		<!--Chart.js import-->
+		<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+		<!--Axios import-->
+		<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+		<!--Twitter import-->
+		<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+		<!--Own Script-->
+		<script src="/sentiment19/js/sentiment-script.js"></script>
+	</head>
+	<!--CSS Styling-->
+	<style>
+		.main{
+			text-align: center;
+		}
+
+		select{
+			padding: 1px 0px;
+			min-width: 150px;
+		}
+
+		textarea{
+			max-width: 600px;
+		}
+		.content{
+			border-left: 2px solid grey;
+		}
+		
+		.offensive{
+			color: rgb(255, 99, 132)
+		}
+
+		.nonOffensive{
+			color: rgb(0,255,0)
+		}
+
+		.btn:focus{
+			box-shadow: none;
+		}
+		.checkbox label:after {
+			content: '';
+			display: table;
+			clear: both;
+		}
+
+		.checkbox .cr {
+			position: relative;
+			display: inline-block;
+			border: 1px solid #a9a9a9;
+			border-radius: .25em;
+			width: 1.3em;
+			height: 1.3em;
+			float: left;
+			margin-right: .5em;
+		}
+
+		.checkbox .cr .cr-icon {
+			position: absolute;
+			font-size: .8em;
+			line-height: 0;
+			top: 50%;
+			left: 15%;
+		}
+
+		.checkbox label input[type="checkbox"] {
+			display: none;
+		}
+
+		.checkbox label input[type="checkbox"]+.cr>.cr-icon {
+			opacity: 0;
+		}
+
+		.checkbox label input[type="checkbox"]:checked+.cr>.cr-icon {
+			opacity: 1;
+		}
+
+		.checkbox label input[type="checkbox"]:disabled+.cr {
+			opacity: .5;
+		}
+	</style>
+	<template id="modal-classifier">
+		<div>
+			<button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#modal-classifier-modal-content">
+				Classifier
+			</button>
+			<!-- Modal for classifier -->
+			<div class="modal fade" id="modal-classifier-modal-content" tabindex="-1">
+				<div class="modal-dialog modal-dialog-centered">
+					<div class="modal-content">
+						<div class="modal-header">
+							<h4 class="modal-title" id="exampleModalLongTitle">Classify custom input</h4>
+							<button type="button" class="close" data-dismiss="modal">
+								<span aria-hidden="true">&times;</span>
+							</button>
+						</div>
+						<div class="modal-body">
+							<div class="form-group">
+								<textarea v-model="input" placeholder="Enter input here" class="form-control" id="classifierInput" rows="5"></textarea>
+							</div>
+							Classification of your input: {{status}}
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancle</button>
+							<button type="button" @click="classifyInput()" class="btn btn-primary">Classify</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</template>
+	<template id="popular-hashtags">
+		<div>
+			<h5>popular</h5>
+			<div class="row p-3">
+				<span class="badge badge-primary small m-1 btn has-tooltip"
+					  v-for="(hashtag, key) in popularHashtags"
+					  v-if="hashtag.hidden == 0"
+					  @click="hashtag.hidden = 1, $emit('new-hashtag', hashtag)"
+					  data-toggle="tooltip"
+					  data-placement="top"
+					  :id="'Hashtag-'+hashtag.value"
+					  :data-original-title="hashtag.count+'<br>'+hashtag.percent"
+					  :data-title="hashtag.count+'<br>'+hashtag.percent"
+					  :title="hashtag.count+'<br>'+hashtag.percent">
+					{{hashtag.value}}
+				</span>
+			</div>
+		</div>
+	</template>
+	<template id="tweet-filter">
+		<div class="row">
+			<div class="col-sm-3">
+				<h5>Hashtags</h5>
+				<div class="row p-3">
+					<span
+						:class="{'badge-primary': (hashtag.popular == 1), 'badge-secondary': (hashtag.popular != 1)}" class="badge small m-1 btn"
+				    	@click="filterUpdated(); $delete(value.hashtags, key); if (hashtag.popular == 1) {hashtag.hidden = 0}"
+						v-for="(hashtag, key) in value.hashtags">
+						{{hashtag.value}}
+					</span>
+				</div>
+				<div class="input-group">
+					<input class="form-control form-control-sm" type="text" @keydown.space.prevent id="newhashtag">
+					<button class="btn btn-sm btn-secondary input-group-btn" @click="addHashtag">Add Hashtag</button>
+				</div>
+			</div>
+
+			<div class="col-sm-3">
+				<popular-hashtags ref="popularhashtags" v-on:new-hashtag="addHashtag($event)"></popular-hashtags>
+			</div>
+			<div class="col-sm-3">
+				<div class="row p-3">
+					<v-date-picker
+							popover-align="center"
+							:max-date='new Date()'
+							mode='range'
+							value="value.selectedDate"
+							v-model="value.selectedDate"
+							v-on:change="filterUpdated"
+							:input-props='{ "class": "form-control", "id":"selectedDate" }'
+							day-format="YYYY-MM-DD">
+					</v-date-picker>
+				</div>
+
+					<div class="btn-group btn-group-toggle">
+						<template v-for="time in times">
+							<label class="btn btn-secondary green btn-sm" :class="{'active': time.start == value.selectedDate.start && time.end == value.selectedDate.end}" :for="'radio-' + time.value">
+								<input type="radio"
+									   :id="'radio-' + time.value"
+									   v-model="value.selectedDate"
+									   :value="{'start': time.start, 'end': time.end}"
+									   :checked="time.start == value.selectedDate.start && time.end == value.selectedDate.end"
+									    @change="filterUpdated"/>
+								{{time.text}}
+							</label>
+						</template>
+					</div>
+			</div>
+			<div class="col-sm-3">
+				<div class="row p-3">
+					<template v-for="lang in availableLanguages">
+						<div class="checkbox m-1">
+							<label :for="'checkbox-' + lang.iso">
+								<input class="checkbox"
+									   type="checkbox"
+									   :id="'checkbox-' + lang.iso"
+									   v-model="selectedLanguages"
+									   :value="lang.iso"
+									   checked="checked"
+									   @change="filterUpdated"/>
+								<span class="cr"><i class="cr-icon fas fa-check"></i></span>
+								{{lang.name}}
+							</label>
+						</div>
+					</template>
+				</div>
+			</div>
+		</div>
+	</template>
+		<div class="container-fluid main" id="app">
+			<div class="row">
+				<div class="col-sm-12">
+					<h1>Sentiment Analysis</h1>
+					<h2>BA-Projekt base.camp</h2>
+					<div class="mx-auto">
+						<modal-classifier></modal-classifier>
+					</div>
+
+				</div>
+			</div>
+			<hr>
+			<div class=row>
+				<div class="col-sm-12">
+					<h3>Anzahl Tweets: {{offensive + nonOffensive}}</h3>
+					<h3 class="offensive">Anzahl offensive Tweets: {{offensive}}</h3>
+					<h3 class="nonOffensive">Anzahl non-offensive Tweets: {{nonOffensive}}</h3>
+				</div>
+			</div>
+			<tweet-filter ref="tweetfilter" v-model="tweetFilter"></tweet-filter>
+			<div class="row my-3">
+				<div class="col-sm-4">
+					<div class="content p-2">
+						<h4>Anzahl offensive vs. non-offensive Tweets</h4>
+						<div>
+							<canvas id="pieChart"></canvas>
+						</div>
+					</div>
+					<h4>Top Hashtags</h4>
+					<div class="content p-2">
+						<div>
+							<canvas id="barChartNonOff"></canvas>
+						</div>
+					</div>
+					<div class="content p-2">
+						<div>
+							<canvas id="barChartOff"></canvas>
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-8">
+					<div class="content p-2">
+						<h4>Verlauf offensive & non-offensive Tweets</h4>
+						<div>
+							<canvas id="lineChart"></canvas>
+						</div>		
+					</div>
+				</div>
+			</div>
+			<hr>
+			<div class="row my-3">
+				<div class="col-sm-6">
+					<div class="content p-2">
+						<h4>Zufälliger als offensive eingestufter Tweet:</h4>		
+						<div id=offTweet></div>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<div class="content p-2">
+						<h4>Zufälliger als non-offensive eingestufter Tweet:</h4>
+						<div id=nonOffTweet></div>
+					</div>
+				</div>
+			</div>			
+
+		</div>	
+		<!--Bootstrap imports-->
+		<script
+				src="https://code.jquery.com/jquery-3.4.1.min.js"
+				integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+				crossorigin="anonymous"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+		<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+	</body>
+</html>

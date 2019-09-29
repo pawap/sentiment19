@@ -10,3 +10,5 @@
 /target/
 /bin/
 /.settings/
+/resources/
+*.log
