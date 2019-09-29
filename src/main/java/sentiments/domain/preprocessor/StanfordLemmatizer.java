@@ -17,8 +17,7 @@ public class StanfordLemmatizer {
     public StanfordLemmatizer() {
         // Create StanfordCoreNLP object properties, with POS tagging
         // (required for lemmatization), and lemmatization
-        Properties props;
-        props = new Properties();
+        Properties props = new Properties();
         props.put("annotators", "tokenize, ssplit, pos, lemma");
 
         // StanfordCoreNLP loads a lot of models, so you probably
