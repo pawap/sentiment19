@@ -2,6 +2,7 @@ package sentiments.domain.repository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
@@ -54,7 +55,7 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
         if (tweetFilter.getStart() != null) {
             start = tweetFilter.getStart().toLocalDateTime().toLocalDate();
         } else {
-            start = getFirsrDate();
+            start = getFirstDate();
         }
 
         // init EndDate
@@ -90,7 +91,7 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
     }
 
     @Override
-    public LocalDate getFirsrDate() {
+    public LocalDate getFirstDate() {
         Tweet first = mongoTemplate.aggregate(Aggregation.newAggregation(
                 Aggregation.sort(Sort.Direction.ASC, "crdate"),
                 Aggregation.limit(1)
@@ -157,6 +158,11 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
 
     }
 
+    @Override
+    public BulkOperations getBulkOps() {
+        return mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED, Tweet.class);
+    }
+
     private List<AggregationOperation> getWhereOperations(TweetFilter tweetFilter) {
         List<AggregationOperation> list = new LinkedList<>();
 
@@ -187,6 +193,9 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
         //languages
         if (tweetFilter.getLanguages() != null && !tweetFilter.getLanguages().isEmpty() ) {
             list.add(Aggregation.match(Criteria.where("language").in(tweetFilter.getLanguages())));
+        }
+        if (tweetFilter.getClassified() != null) {
+            list.add(Aggregation.match(Criteria.where("classified").is(tweetFilter.isOffensive())));
         }
 
         return list;

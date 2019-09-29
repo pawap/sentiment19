@@ -52,6 +52,7 @@ public class LanguageService {
     }
 
     public Iterable<Language> getAvailableLanguages() {
-        return languageRepository.findAllByActive(true);
+            return langs.values();
+
     }
 }

@@ -1,69 +1,110 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset='utf-8'>
-		<!--Bootstrap settings/import-->
-		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-		<!-- Optional theme -->
-		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap-theme.min.css" integrity="sha384-6pzBo3FDv/PJ8r2KRkGHifhEocL+1X2rVCTTkUfGk7/0pbek5mMa1upzvWbrUbOZ" crossorigin="anonymous">
-		<!--Vue.js import-->
-		<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<head>
+    <meta charset='utf-8'>
+    <!--Bootstrap settings/import-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+          integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap-theme.min.css"
+          integrity="sha384-6pzBo3FDv/PJ8r2KRkGHifhEocL+1X2rVCTTkUfGk7/0pbek5mMa1upzvWbrUbOZ" crossorigin="anonymous">
+    <!--Vue.js import-->
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
 
-		<!--VCalender import-->
-		<link rel='stylesheet' href='https://unpkg.com/v-calendar/lib/v-calendar.min.css'>
-		<script src='https://unpkg.com/v-calendar'></script>
-		<!--Moment.js import-->
-		<script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js'></script>
-		<!--Chart.js import-->
-		<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
-		<!--Axios import-->
-		<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-		<!--Twitter import-->
-		<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
-		<!--Own Script-->
-		<script src="/sentiment19/js/sentiment-script.js"></script>
-	</head>
-	<!--CSS Styling-->
-	<style>
-		.main{
-			text-align: center;
-		}
+    <!--VCalender import-->
+    <link rel='stylesheet' href='https://unpkg.com/v-calendar/lib/v-calendar.min.css'>
+    <script src='https://unpkg.com/v-calendar'></script>
 
-		select{
-			padding: 1px 0px;
-			min-width: 150px;
-		}
+    <!--Axios import-->
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 
-		.content{
-			border-left: 2px solid grey;
-		}
-		
-		.offensive{
-			color: rgb(255, 99, 132)
-		}
 
-		.nonOffensive{
-			color: rgb(0,255,0)
-		}
-	</style>
-	<body>
-		<div class="container-fluid main" id="app">
-			<div class="row">
-				<div class="col-sm-12">
-					<form method="post" action="/sentiment19/backend/upload" enctype="multipart/form-data">
-						<input type="file" name="file"/>
-						<button type="submit">Upload</button>
-					</form>
-				</div>
-			</div>
-		</div>	
-		<!--Bootstrap imports-->
-		<script
-				src="https://code.jquery.com/jquery-3.4.1.min.js"
-				integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
-				crossorigin="anonymous"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-		<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-	</body>
+</head>
+<!--CSS Styling-->
+<style>
+    .main {
+        text-align: center;
+    }
+
+    select {
+        padding: 1px 0px;
+        min-width: 150px;
+    }
+
+    .content {
+        border-left: 2px solid grey;
+    }
+
+    .offensive {
+        color: rgb(255, 99, 132)
+    }
+
+    .nonOffensive {
+        color: rgb(0, 255, 0)
+    }
+
+    .row {
+        border-top: solid 3px black;
+        padding: 5px;
+
+    }
+</style>
+<body>
+<div class="container" id="app">
+    <div class="row">
+        <div class="col-10">
+            <h1>Sentiment 19 - Web-Backend</h1>
+        </div>
+    </div>
+    <form method="post" action="/sentiment19/backend/upload" enctype="multipart/form-data">
+        <div class="row">
+            <div class="col-sm-2">
+                <button type="submit">Upload</button>
+            </div>
+            <div class="col-sm-8">
+                <input class="input-medium" type="file" name="file"/>
+            </div>
+        </div>
+    </form>
+    <form method="post" action="/sentiment19/backend/import/training" enctype="multipart/form-data">
+        <div class="row">
+            <div class="col-sm-2">
+                <button type="submit">Import</button>
+            </div>
+            <div class="col-sm-8">
+                <label>train:&nbsp;<input class="input-medium" type="file" name="traindata"/></label>
+                <label>test:&nbsp;<input class="input-medium" type="file" name="testdata"/></label>
+                <label>lang:&nbsp;<input class="input-medium" type="text" name="lang"/></label>
+            </div>
+        </div>
+    </form>
+    <form method="post" action="/sentiment19/backend/setTaskStatus" enctype="multipart/form-data">
+        <div class="row">
+            <div class="col-sm-2">
+                <button type="submit">SET</button>
+            </div>
+            <div class="col-sm-8">
+                <label>Task:&nbsp;<input type="text" name="task"/></label>
+                <label>Enabled:&nbsp;<input type="checkbox" value="1" name="enabled"></label>
+            </div>
+        </div>
+    </form>
+    <div class="row">
+        <div class="col-sm-12">
+            <p class="alert-info">###MESSAGE###</p>
+        </div>
+    </div>
+    <!--Bootstrap imports-->
+    <script
+            src="https://code.jquery.com/jquery-3.4.1.min.js"
+            integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+            crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+            integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+            crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+            integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+            crossorigin="anonymous"></script>
+</body>
 </html>

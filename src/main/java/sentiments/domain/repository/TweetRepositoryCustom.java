@@ -1,5 +1,6 @@
 package sentiments.domain.repository;
 
+import org.springframework.data.mongodb.core.BulkOperations;
 import sentiments.domain.model.HashtagCount;
 import sentiments.domain.model.Timeline;
 import sentiments.domain.model.TweetFilter;
@@ -13,7 +14,7 @@ import java.util.List;
 public interface TweetRepositoryCustom {
     Timeline countByOffensiveAndDayInInterval(TweetFilter tweetFilter);
 
-    LocalDate getFirsrDate();
+    LocalDate getFirstDate();
 
     LocalDate getLastDate();
 
@@ -22,4 +23,6 @@ public interface TweetRepositoryCustom {
     int countByOffensiveAndDate(TweetFilter tweetFilter);
 
     List<HashtagCount> getMostPopularHashtags(TweetFilter tweetFilter, int limit);
+
+    BulkOperations getBulkOps();
 }

@@ -1,10 +1,13 @@
 package sentiments.domain.repository;
 
-import java.sql.Timestamp;
-
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
+import sentiments.domain.model.Language;
 import sentiments.domain.model.Tweet;
+
+import java.sql.Timestamp;
+import java.util.Date;
+import java.util.stream.Stream;
 
 /**
  * @author Paw
@@ -25,4 +28,6 @@ public interface TweetRepository extends MongoRepository<Tweet, Integer>, TweetR
 	public int countfindAllByDateBetween(Timestamp startdate, Timestamp enddate);
 
     Iterable<Tweet> findAllByLanguage(String language);
+
+	Stream<Tweet> findAllByClassifiedAndLanguage(Date classified, String language);
 }

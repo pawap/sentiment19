@@ -16,10 +16,11 @@ public class CrawlService {
 
     public LocalDateTime getLastStart() {
         Crawl crawl = crawlRepository.findTopByOrderByDateDesc();
-        System.out.println(crawl.getDate());
+
         if (crawl == null) {
             return LocalDateTime.of(2018, Month.JANUARY,1, 0, 0);
         }
+        System.out.println("looking for files dated after " + crawl.getDate());
         return crawl.getDate();
     }
 
