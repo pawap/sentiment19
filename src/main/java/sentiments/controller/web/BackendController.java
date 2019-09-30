@@ -14,17 +14,19 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import sentiments.data.BasicDataImporter;
 import sentiments.domain.model.Language;
 import sentiments.domain.repository.TweetRepository;
 import sentiments.domain.service.ClassifierService;
+import sentiments.domain.service.ExceptionService;
 import sentiments.domain.service.LanguageService;
 import sentiments.domain.service.TaskService;
 import sentiments.ml.WordVectorBuilder;
 import sentiments.ml.WordVectorsService;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -51,6 +53,9 @@ public class BackendController {
     @Autowired
     TaskService taskService;
 
+    @Autowired
+    ExceptionService exceptionService;
+
     @RequestMapping("/backend")
     public ResponseEntity<String> backend(String message, HttpStatus status) {
         message = message == null ? "" : message;
@@ -63,8 +68,12 @@ public class BackendController {
             response = response.replaceAll("###MESSAGE###",message + taskService.getLogContent());
         } catch (FileNotFoundException e) {
             e.printStackTrace();
+            String eString = exceptionService.exceptionToString(e);
+            log.warn(eString);
         } catch (IOException e) {
             e.printStackTrace();
+            String eString = exceptionService.exceptionToString(e);
+            log.warn(eString);
         }
 
         HttpHeaders responseHeaders = new HttpHeaders();
@@ -120,6 +129,8 @@ public class BackendController {
             System.out.println("finished training");
         } catch (IOException e) {
             e.printStackTrace();
+            String eString = exceptionService.exceptionToString(e);
+            log.warn(eString);
             return new ResponseEntity<String>("Request failed", responseHeaders,HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return new ResponseEntity<String>("finished training", responseHeaders,HttpStatus.CREATED);
@@ -201,9 +212,9 @@ public class BackendController {
             FileUtils.copyInputStreamToFile(file.getInputStream(), target);
         } catch (IOException e) {
             e.printStackTrace();
-            log.warn("Exception during Fileupload: " + e.getMessage());
-            log.warn("stacktrace: "+ e.getStackTrace());
-            return backend("Woahh... it ain't all good. INTERNAL ERROR." + e.getStackTrace(), HttpStatus.INTERNAL_SERVER_ERROR);
+            String eString = exceptionService.exceptionToString(e);
+            log.warn("Exception during Fileupload: " + eString);
+            return backend("Woahh... it ain't all good. INTERNAL ERROR." + eString, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         return backend("You successfully uploaded '" + file.getOriginalFilename() + "'", HttpStatus.CREATED);
@@ -231,10 +242,11 @@ public class BackendController {
                 targetFiles.add(target);
             } catch (IOException e) {
                 e.printStackTrace();
-                log.warn("Exception during Fileupload: " + e.getMessage());
-                log.warn("stacktrace: "+ e.getStackTrace());
+                String eString = exceptionService.exceptionToString(e);
+                log.warn(eString);
+                log.warn("Exception during Fileupload: " + eString);
 
-                return backend("Woahh... it ain't all good. INTERNAL ERROR." + e.getStackTrace(), HttpStatus.INTERNAL_SERVER_ERROR);
+                return backend("Woahh... it ain't all good. INTERNAL ERROR." + eString, HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
 

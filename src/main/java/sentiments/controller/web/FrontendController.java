@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import sentiments.domain.model.*;
 import sentiments.domain.repository.TweetRepository;
 import sentiments.domain.service.ClassifierService;
+import sentiments.domain.service.ExceptionService;
 import sentiments.domain.service.LanguageService;
 import sentiments.domain.service.ResponseService;
 import sentiments.ml.Classifier;
@@ -52,6 +53,9 @@ public class FrontendController extends BasicWebController {
     @Autowired
     ResponseService responseService;
 
+    @Autowired
+    ExceptionService exceptionService;
+
     @RequestMapping("/")
     public ResponseEntity<String> html() {
         String response = "";
@@ -60,8 +64,12 @@ public class FrontendController extends BasicWebController {
                     "classpath:frontend/sentiment-frontend.html");
             response = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
         } catch (FileNotFoundException e) {
+            String eString = exceptionService.exceptionToString(e);
+            log.warn(eString);
             e.printStackTrace();
         } catch (IOException e) {
+            String eString = exceptionService.exceptionToString(e);
+            log.warn(eString);
             e.printStackTrace();
         }
 
@@ -128,9 +136,9 @@ public class FrontendController extends BasicWebController {
             Classifier tweetClassifier = classifierService.getClassifier(languageService.getLanguage("en"));
             classification = tweetClassifier.classifyTweet(cleanTweet);
         } catch (Exception e) {
-            log.warn("Exception during classification: " + e.getMessage());
-            log.warn("stacktrace: "+ e.getStackTrace());
-            return new ResponseEntity<>("Internal Error." + e.getStackTrace(), responseHeaders,HttpStatus.INTERNAL_SERVER_ERROR);
+            String eString = exceptionService.exceptionToString(e);
+            log.warn("Exception during classification: " + eString);
+            return new ResponseEntity<>("Internal Error." + eString, responseHeaders,HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         JSONObject out = new JSONObject();
