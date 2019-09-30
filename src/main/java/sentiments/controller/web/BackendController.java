@@ -2,6 +2,8 @@ package sentiments.controller.web;
 
 import org.apache.commons.io.FileUtils;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -31,6 +33,9 @@ import java.util.List;
 @RestController
 public class BackendController {
 
+    private static final Logger log = LoggerFactory.getLogger(BackendController.class);
+
+
     @Autowired
     BasicDataImporter basicDataImporter;
 
@@ -55,7 +60,7 @@ public class BackendController {
             File file = ResourceUtils.getFile(
                     "classpath:frontend/sentiment-backend.html");
             response = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
-            response = response.replaceAll("###MESSAGE###",message);
+            response = response.replaceAll("###MESSAGE###",message + taskService.getLogContent());
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -191,12 +196,14 @@ public class BackendController {
             return  backend("No File found. Please select a file to upload.", HttpStatus.BAD_REQUEST);
         }
         try {
-            File target = new File("resources/"+file.getOriginalFilename());
+            File target = ResourceUtils.getFile("classpath:"+file.getOriginalFilename());
             target.setWritable(true);
             FileUtils.copyInputStreamToFile(file.getInputStream(), target);
         } catch (IOException e) {
             e.printStackTrace();
-            return backend("Woahh... it ain't all good. INTERNAL ERROR.", HttpStatus.INTERNAL_SERVER_ERROR);
+            log.warn("Exception during Fileupload: " + e.getMessage());
+            log.warn("stacktrace: "+ e.getStackTrace());
+            return backend("Woahh... it ain't all good. INTERNAL ERROR." + e.getStackTrace(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         return backend("You successfully uploaded '" + file.getOriginalFilename() + "'", HttpStatus.CREATED);
@@ -205,7 +212,7 @@ public class BackendController {
     @PostMapping("backend/import/training")
     public ResponseEntity<String> testAndTrainImport(@RequestParam("traindata") MultipartFile trainData,
                                                      @RequestParam("testdata") MultipartFile testData,
-                                                     @RequestParam("lang") String lang) {
+                                                     @RequestParam( value = "lang", defaultValue = "") String lang) {
         Language language = languageService.getLanguage(lang);
         if (language == null) {
             backend("language not supported", HttpStatus.NOT_FOUND);
@@ -224,7 +231,10 @@ public class BackendController {
                 targetFiles.add(target);
             } catch (IOException e) {
                 e.printStackTrace();
-                return backend("Woahh... it ain't all good. INTERNAL ERROR.", HttpStatus.INTERNAL_SERVER_ERROR);
+                log.warn("Exception during Fileupload: " + e.getMessage());
+                log.warn("stacktrace: "+ e.getStackTrace());
+
+                return backend("Woahh... it ain't all good. INTERNAL ERROR." + e.getStackTrace(), HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
 

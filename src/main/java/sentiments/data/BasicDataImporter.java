@@ -7,6 +7,8 @@ import com.joestelmach.natty.DateGroup;
 import com.joestelmach.natty.Parser;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.data.mongodb.repository.MongoRepository;
@@ -42,6 +44,8 @@ import java.util.Locale;
 @Service
 public class BasicDataImporter {
 
+	private static final Logger log = LoggerFactory.getLogger(BasicDataImporter.class);
+
 	private static final int BATCH_SIZE = 512;
 
 	@Autowired
@@ -66,7 +70,8 @@ public class BasicDataImporter {
 			InputStream stream = new FileInputStream(jsonPath);
 			importFromStream(stream, tweetProvider, processor, repo);
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+			log.warn("Exception during Import: " + e.getMessage());
+			log.warn("stacktrace: "+ e.getStackTrace());
 		}
 	}
 
@@ -113,8 +118,8 @@ public class BasicDataImporter {
 			processor.destroy();
 			System.gc();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.warn("Exception during Import: " + e.getMessage());
+			log.warn("stacktrace: "+ e.getStackTrace());
 		}
 	}
 
@@ -155,11 +160,11 @@ public class BasicDataImporter {
 				repo.saveAll(tweets);
 			}
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.warn("Exception during Import: " + e.getMessage());
+			log.warn("stacktrace: "+ e.getStackTrace());
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.warn("Exception during Import: " + e.getMessage());
+			log.warn("stacktrace: "+ e.getStackTrace());
 		}
 		// persist tweets in batch (256 per insert)
 //		entityManager.flush();

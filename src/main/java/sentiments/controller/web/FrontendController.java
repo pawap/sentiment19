@@ -6,6 +6,8 @@ import com.google.gson.stream.JsonReader;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
@@ -32,6 +34,8 @@ import java.util.stream.Collectors;
 
 @RestController
 public class FrontendController extends BasicWebController {
+
+    private static final Logger log = LoggerFactory.getLogger(FrontendController.class);
 
     @Autowired
     Environment env;
@@ -119,8 +123,16 @@ public class FrontendController extends BasicWebController {
         String cleanTweet = tweet.replace("\r", " ").replace("\n", " ").trim();
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");
-        Classifier tweetClassifier = classifierService.getClassifier(languageService.getLanguage("en"));
-        Classification classification = tweetClassifier.classifyTweet(cleanTweet);
+        Classification classification;
+        try {
+            Classifier tweetClassifier = classifierService.getClassifier(languageService.getLanguage("en"));
+            classification = tweetClassifier.classifyTweet(cleanTweet);
+        } catch (Exception e) {
+            log.warn("Exception during classification: " + e.getMessage());
+            log.warn("stacktrace: "+ e.getStackTrace());
+            return new ResponseEntity<>("Internal Error." + e.getStackTrace(), responseHeaders,HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
         JSONObject out = new JSONObject();
         out.put("offensive", classification.isOffensive());
         out.put("probability", classification.getProbability());

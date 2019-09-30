@@ -140,6 +140,7 @@ public class ScheduledTasks {
         report += "##CLASSIFYING## ~ " + tweetCount.get() * 1000 / timeOverall + " tweets per sec" + System.lineSeparator();
         report += "##CLASSIFYING## Tried to classify " + tweetCount.get() + " tweets. Done.";
         log.info(report);
+        taskService.log(report);
         classifying = false;
 
     }
@@ -152,13 +153,19 @@ public class ScheduledTasks {
         if (execute && threadCount < maxThreadCount) {
             int mycount = ++threadCount;
             log.info("Starting crawl (" + mycount + ") at {}", dateFormat.format(new Date()));
+            taskService.log("Starting crawl (" + mycount + ") at " + dateFormat.format(new Date()));
             CompletableFuture completableFuture = importManager.importTweets();
             try {
                 System.out.println(completableFuture.get());
             } catch (ExecutionException e) {
                 e.printStackTrace();
+                log.info("Crawl Exception: " + e.getStackTrace());
+                taskService.log("Crawl Exception: " + e.getStackTrace());
+
             }
             log.info("Ending crawl (" + mycount + ")  at {}", dateFormat.format(new Date()));
+            taskService.log("Starting crawl (" + mycount + ") at " + dateFormat.format(new Date()));
+
             threadCount--;
         }
     }
