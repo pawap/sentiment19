@@ -17,28 +17,28 @@ import org.deeplearning4j.ui.storage.InMemoryStatsStorage;
 import org.deeplearning4j.util.ModelSerializer;
 import org.nd4j.evaluation.classification.Evaluation;
 import org.nd4j.linalg.activations.Activation;
-import org.nd4j.linalg.api.buffer.DataBuffer;
 import org.nd4j.linalg.api.iter.FirstAxisIterator;
 import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.dataset.DataSet;
-import org.nd4j.linalg.dataset.api.DataSetPreProcessor;
-import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.indexing.INDArrayIndex;
 import org.nd4j.linalg.indexing.NDArrayIndex;
 import org.nd4j.linalg.learning.config.Adam;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.ResourceUtils;
+import sentiments.controller.web.BackendController;
 import sentiments.domain.model.Classification;
 import sentiments.domain.model.Language;
 import sentiments.domain.model.Tweet;
 import sentiments.domain.repository.TrainingTweetRepository;
+import sentiments.domain.service.ExceptionService;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -46,9 +46,13 @@ import java.util.List;
  *
  */
 public class W2VTweetClassifier implements Classifier{
-	
-	private MultiLayerNetwork net;
 
+	@Autowired
+	ExceptionService exceptionService;
+
+	private static final Logger log = LoggerFactory.getLogger(BackendController.class);
+
+	private MultiLayerNetwork net;
 	private Language language;
 	private DefaultTokenizerFactory tokenizerFactory;
 
@@ -62,6 +66,8 @@ public class W2VTweetClassifier implements Classifier{
 			try {
 				net = ModelSerializer.restoreMultiLayerNetwork(netFile);
 			} catch (IOException e) {
+				String eString = exceptionService.exceptionToString(e);
+				log.warn(eString);
 				e.printStackTrace();
 			}
 		}
@@ -120,6 +126,8 @@ public class W2VTweetClassifier implements Classifier{
 	    try {
 			ModelSerializer.writeModel(net, ResourceUtils.getFile(language.getClassifierFilename()), true);
 		} catch (IOException e) {
+			String eString = exceptionService.exceptionToString(e);
+			log.warn(eString);
 			e.printStackTrace();
 		}
 	    

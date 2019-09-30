@@ -14,7 +14,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.stringtemplate.v4.ST;
 import sentiments.domain.model.AbstractTweet;
 import sentiments.domain.model.Language;
 import sentiments.domain.model.TrainingTweet;
@@ -23,6 +22,7 @@ import sentiments.domain.preprocessor.ImportTweetPreProcessor;
 import sentiments.domain.preprocessor.TweetPreProcessor;
 import sentiments.domain.repository.TrainingTweetRepository;
 import sentiments.domain.repository.TweetRepository;
+import sentiments.domain.service.ExceptionService;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -57,6 +57,9 @@ public class BasicDataImporter {
 	@Autowired
 	TrainingTweetRepository trainingTweetRepository;
 
+	@Autowired
+	ExceptionService exceptionService;
+
 	DateTimeFormatter dateTimeFormatter;
 
 	public BasicDataImporter() {
@@ -70,8 +73,8 @@ public class BasicDataImporter {
 			InputStream stream = new FileInputStream(jsonPath);
 			importFromStream(stream, tweetProvider, processor, repo);
 		} catch (FileNotFoundException e) {
-			log.warn("Exception during Import: " + e.getMessage());
-			log.warn("stacktrace: "+ e.getStackTrace());
+			String eString = exceptionService.exceptionToString(e);
+			log.warn("Exception during Import: " + eString);
 		}
 	}
 
@@ -118,8 +121,8 @@ public class BasicDataImporter {
 			processor.destroy();
 			System.gc();
 		} catch (IOException e) {
-			log.warn("Exception during Import: " + e.getMessage());
-			log.warn("stacktrace: "+ e.getStackTrace());
+			String eString = exceptionService.exceptionToString(e);
+			log.warn("Exception during Import: " + eString);
 		}
 	}
 
@@ -160,11 +163,11 @@ public class BasicDataImporter {
 				repo.saveAll(tweets);
 			}
 		} catch (FileNotFoundException e) {
-			log.warn("Exception during Import: " + e.getMessage());
-			log.warn("stacktrace: "+ e.getStackTrace());
+			String eString = exceptionService.exceptionToString(e);
+			log.warn("Exception during Import: " + eString);
 		} catch (IOException e) {
-			log.warn("Exception during Import: " + e.getMessage());
-			log.warn("stacktrace: "+ e.getStackTrace());
+			String eString = exceptionService.exceptionToString(e);
+			log.warn("Exception during Import: " + eString);
 		}
 		// persist tweets in batch (256 per insert)
 //		entityManager.flush();

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sentiments.ScheduledTasks;
 import sentiments.domain.service.CrawlService;
+import sentiments.domain.service.ExceptionService;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,6 +42,9 @@ public class ImportManager {
 
     @Autowired
     CrawlService crawlService;
+
+    @Autowired
+    ExceptionService exceptionService;
 
     /**
      * Transfers tweets from the location specified in application.properties to the Database specified in application.properties
@@ -108,6 +112,8 @@ public class ImportManager {
             crawlService.finishCrawl(filenameToDateTime(filename));
 
         } catch (JSchException | SftpException | IOException e) {
+            String eString = exceptionService.exceptionToString(e);
+            log.warn(eString);
             e.printStackTrace();
         }
         completableFuture.complete(true);

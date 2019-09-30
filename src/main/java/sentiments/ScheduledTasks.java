@@ -11,6 +11,7 @@ import sentiments.domain.model.Language;
 import sentiments.domain.model.Tweet;
 import sentiments.domain.repository.TweetRepository;
 import sentiments.domain.service.ClassifierService;
+import sentiments.domain.service.ExceptionService;
 import sentiments.domain.service.LanguageService;
 import sentiments.domain.service.TaskService;
 import sentiments.ml.Classifier;
@@ -42,6 +43,9 @@ public class ScheduledTasks {
 
     @Autowired
     private TaskService taskService;
+
+    @Autowired
+    private ExceptionService exceptionService;
 
     private static final Logger log = LoggerFactory.getLogger(ScheduledTasks.class);
 
@@ -158,9 +162,13 @@ public class ScheduledTasks {
             try {
                 System.out.println(completableFuture.get());
             } catch (ExecutionException e) {
+
                 e.printStackTrace();
-                log.info("Crawl Exception: " + e.getStackTrace());
-                taskService.log("Crawl Exception: " + e.getStackTrace());
+
+                String exceptionAsString = exceptionService.exceptionToString(e);
+
+                log.warn("Crawl Exception: " + exceptionAsString);
+                taskService.log("Crawl Exception: " + exceptionAsString);
 
             }
             log.info("Ending crawl (" + mycount + ")  at {}", dateFormat.format(new Date()));
