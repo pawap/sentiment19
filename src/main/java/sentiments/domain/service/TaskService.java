@@ -16,7 +16,7 @@ public class TaskService {
     public TaskService() {
         this.tasks = new ConcurrentHashMap<>();
         this.logs = new ConcurrentArrayList<>();
-        logs.add("Task Logs");
+        logs.add("Task Logs" + System.lineSeparator());
     }
 
     public boolean checkTaskExecution(String task, boolean activeByDefault) {
@@ -42,7 +42,6 @@ public class TaskService {
         for (String log: logs) {
             content += log + System.lineSeparator();
         }
-
         return content;
     }
 }

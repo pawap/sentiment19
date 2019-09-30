@@ -14,12 +14,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import sentiments.data.BasicDataImporter;
 import sentiments.domain.model.Language;
 import sentiments.domain.repository.TweetRepository;
 import sentiments.domain.service.ClassifierService;
 import sentiments.domain.service.LanguageService;
+import sentiments.domain.service.StorageService;
 import sentiments.domain.service.TaskService;
 import sentiments.ml.WordVectorBuilder;
 import sentiments.ml.WordVectorsService;
@@ -51,6 +51,9 @@ public class BackendController {
     @Autowired
     TaskService taskService;
 
+    @Autowired
+    StorageService storageService;
+
     @RequestMapping("/backend")
     public ResponseEntity<String> backend(String message, HttpStatus status) {
         message = message == null ? "" : message;
@@ -60,7 +63,9 @@ public class BackendController {
             File file = ResourceUtils.getFile(
                     "classpath:frontend/sentiment-backend.html");
             response = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
-            response = response.replaceAll("###MESSAGE###",message + taskService.getLogContent());
+            response = response.replaceAll("###MESSAGE###",message + System.lineSeparator()
+                    + storageService.getReport() + System.lineSeparator()
+                    + taskService.getLogContent());
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -71,6 +76,14 @@ public class BackendController {
         responseHeaders.set("Access-Control-Allow-Origin", "*");
 
         return new ResponseEntity<>(response, responseHeaders, status);
+    }
+
+    @RequestMapping("/backend/setBaseDir")
+    public ResponseEntity<String> setBaseDir(@RequestParam( value = "dir", defaultValue = "") String dir) {
+
+        storageService.setStorageDir(dir);
+
+        return backend("done.", HttpStatus.ACCEPTED); //new ResponseEntity<String>(response, responseHeaders,HttpStatus.CREATED);
     }
 
     @RequestMapping("/backend/setTaskStatus")
@@ -196,7 +209,7 @@ public class BackendController {
             return  backend("No File found. Please select a file to upload.", HttpStatus.BAD_REQUEST);
         }
         try {
-            File target = ResourceUtils.getFile("classpath:"+file.getOriginalFilename());
+            File target = storageService.getFile(file.getOriginalFilename());
             target.setWritable(true);
             FileUtils.copyInputStreamToFile(file.getInputStream(), target);
         } catch (IOException e) {
