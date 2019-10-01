@@ -14,7 +14,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication
 @EnableScheduling
 @EnableAsync
-public class Application extends SpringBootServletInitializer {
+public class Application {
 
     /**
      * runs the application
