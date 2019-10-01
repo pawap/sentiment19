@@ -96,6 +96,9 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
                 Aggregation.sort(Sort.Direction.ASC, "crdate"),
                 Aggregation.limit(1)
         ), Tweet.class, Tweet.class).getUniqueMappedResult();
+        if (first == null){
+            return null;
+        }
         return first.getCrdate().toInstant()
                 .atZone(ZoneId.systemDefault())
                 .toLocalDate();
@@ -107,6 +110,9 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
                 Aggregation.sort(Sort.Direction.DESC, "crdate"),
                 Aggregation.limit(1)
         ), Tweet.class, Tweet.class).getUniqueMappedResult();
+        if (last == null){
+            return null;
+        }
         return last.getCrdate().toInstant()
                 .atZone(ZoneId.systemDefault())
                 .toLocalDate();

@@ -251,7 +251,7 @@ public class BackendController {
                 break;
             }
             try {
-                File target = new File("resources/training/upload/"+file.getOriginalFilename());
+                File target = storageService.getFile("resources/training/upload/" + file.getOriginalFilename());
                 target.setWritable(true);
                 FileUtils.copyInputStreamToFile(file.getInputStream(), target);
                 targetFiles.add(target);
