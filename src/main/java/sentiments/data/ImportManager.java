@@ -69,13 +69,13 @@ public class ImportManager {
 
         try {
             session = jsch.getSession(remoteUsername, remoteHost);
-
+            session.setConfig("PreferredAuthentications", "password");
             session.setPassword(remotePassword);
 
-            session.connect(5000);
+            session.connect(20000);
 
             Channel channel = session.openChannel("sftp");
-            channel.connect(5000);
+            channel.connect(20000);
 
             ChannelSftp sftpChannel = (ChannelSftp) channel;
 
@@ -139,7 +139,6 @@ public class ImportManager {
         }
         return null;
     }
-
 
     /*
      * Extracts a LocalDateTime from a filename that follows the pattern tweetyyyyMMDDmm:HH*
