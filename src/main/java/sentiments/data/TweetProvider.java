@@ -1,6 +1,6 @@
 package sentiments.data;
 
-import sentiments.domain.model.AbstractTweet;
+import sentiments.domain.model.tweet.AbstractTweet;
 
 import java.util.LinkedList;
 import java.util.List;

@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sentiments.ScheduledTasks;
 import sentiments.domain.service.CrawlService;
-import sentiments.domain.service.ExceptionService;
+import sentiments.service.ExceptionService;
 
 import java.io.IOException;
 import java.io.InputStream;
