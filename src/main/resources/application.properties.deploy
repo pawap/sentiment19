@@ -1,23 +1,26 @@
 server.port=8080
+
 spring.jpa.hibernate.ddl-auto=update
-spring.jpa.generate-ddl=true
-spring.jpa.database-platform=org.hibernate.dialect.MySQL5InnoDBDialect
-spring.jpa.properties.hibernate.jdbc.batch_size=0124
-spring.datasource.url = jdbc:mysql://127.0.0.1:3306/sentiment19?ssl=false&serverTimezone=Europe/Amsterdam
-spring.datasource.username = sentiment19
-spring.datasource.password = 6Ra$_Fr0tH
-spring.datasource.testOnBorrow = true
-spring.datasource.testWhileIdle = true
-spring.datasource.timeBetweenEvictionRunsMillis = 60000
-spring.datasource.minEvictableIdleTimeMillis = 30000
-spring.datasource.validationQuery = SELECT 1
-spring.datasource.max-active = 15
-spring.datasource.max-idle = 10
-spring.datasource.max-wait = 8000
-spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.jpa.properties.hibernate.jdbc.batch_size=1024
+spring.data.mongodb.database=<db>
+spring.data.mongodb.host=<host>
+spring.data.mongodb.port=<port>
+spring.data.mongodb.uri=mongodb://<host>/<db>
+spring.main.allow-bean-definition-overriding=true
+
+TweetHost=<host>
+TweetHostUsername=<user>
+TweetHostPW=<pass>
+TweetParentDir =<dir>
+
 localTweetJson = resources/tweet.json
-localTweetTsv.test.de = resources/offenseval-trial-DE.tsv
-localTweetTsv.train.de = resources/offenseval-train-DE.tsv
-localTweetTsv.test.en = resources/offenseval-trial-EN.tsv
-localTweetTsv.train.en = resources/offenseval-train-EN.tsv
+localTweetTsv.test = resources/test.tsv
+localTweetTsv.train = resources/training.tsv
+
+spring.servlet.multipart.maxFileSize=4GB
+spring.servlet.multipart.maxRequestSize=4GB
+
+logging.file=<path-to-logfile>/sentiment19.log
 logging.level.root=INFO
+logging.level.org.springframework.web=trace
+logging.level.org.apache=trace
