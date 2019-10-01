@@ -3,8 +3,8 @@ package sentiments.domain.preprocessor;
 import com.github.pemistahl.lingua.api.Language;
 import com.github.pemistahl.lingua.api.LanguageDetector;
 import com.github.pemistahl.lingua.api.LanguageDetectorBuilder;
-import sentiments.domain.model.AbstractTweet;
-import sentiments.domain.model.Tweet;
+import sentiments.domain.model.tweet.AbstractTweet;
+import sentiments.domain.model.tweet.Tweet;
 
 import java.util.Set;
 import java.util.regex.MatchResult;

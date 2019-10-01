@@ -8,12 +8,13 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import sentiments.data.ImportManager;
 import sentiments.domain.model.Language;
-import sentiments.domain.model.Tweet;
-import sentiments.domain.repository.TweetRepository;
-import sentiments.domain.service.ClassifierService;
+import sentiments.domain.model.tweet.Tweet;
+import sentiments.domain.repository.tweet.TweetRepository;
+import sentiments.ml.service.ClassifierService;
+import sentiments.service.ExceptionService;
 import sentiments.domain.service.LanguageService;
-import sentiments.domain.service.TaskService;
-import sentiments.ml.Classifier;
+import sentiments.service.TaskService;
+import sentiments.ml.classifier.Classifier;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -42,6 +43,9 @@ public class ScheduledTasks {
 
     @Autowired
     private TaskService taskService;
+
+    @Autowired
+    private ExceptionService exceptionService;
 
     private static final Logger log = LoggerFactory.getLogger(ScheduledTasks.class);
 
@@ -140,6 +144,7 @@ public class ScheduledTasks {
         report += "##CLASSIFYING## ~ " + tweetCount.get() * 1000 / timeOverall + " tweets per sec" + System.lineSeparator();
         report += "##CLASSIFYING## Tried to classify " + tweetCount.get() + " tweets. Done.";
         log.info(report);
+        taskService.log(report);
         classifying = false;
 
     }
@@ -152,13 +157,23 @@ public class ScheduledTasks {
         if (execute && threadCount < maxThreadCount) {
             int mycount = ++threadCount;
             log.info("Starting crawl (" + mycount + ") at {}", dateFormat.format(new Date()));
+            taskService.log("Starting crawl (" + mycount + ") at " + dateFormat.format(new Date()));
             CompletableFuture completableFuture = importManager.importTweets();
             try {
                 System.out.println(completableFuture.get());
             } catch (ExecutionException e) {
+
                 e.printStackTrace();
+
+                String exceptionAsString = exceptionService.exceptionToString(e);
+
+                log.warn("Crawl Exception: " + exceptionAsString);
+                taskService.log("Crawl Exception: " + exceptionAsString);
+
             }
             log.info("Ending crawl (" + mycount + ")  at {}", dateFormat.format(new Date()));
+            taskService.log("Starting crawl (" + mycount + ") at " + dateFormat.format(new Date()));
+
             threadCount--;
         }
     }

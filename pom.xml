@@ -196,7 +196,7 @@
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
-                            <mainClass>sentiment.ApplicationController</mainClass>
+                            <mainClass>sentiments.Application</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

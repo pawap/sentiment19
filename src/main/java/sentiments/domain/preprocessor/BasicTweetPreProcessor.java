@@ -1,6 +1,6 @@
 package sentiments.domain.preprocessor;
 
-import sentiments.domain.model.AbstractTweet;
+import sentiments.domain.model.tweet.AbstractTweet;
 
 public class BasicTweetPreProcessor implements TweetPreProcessor {
 

@@ -2,6 +2,8 @@ package sentiments.controller.web;
 
 import org.apache.commons.io.FileUtils;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -12,17 +14,20 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import sentiments.data.BasicDataImporter;
 import sentiments.domain.model.Language;
-import sentiments.domain.repository.TweetRepository;
-import sentiments.domain.service.ClassifierService;
+import sentiments.domain.repository.tweet.TweetRepository;
+import sentiments.ml.service.ClassifierService;
+import sentiments.service.ExceptionService;
 import sentiments.domain.service.LanguageService;
-import sentiments.domain.service.TaskService;
-import sentiments.ml.WordVectorBuilder;
-import sentiments.ml.WordVectorsService;
+import sentiments.service.StorageService;
+import sentiments.service.TaskService;
+import sentiments.ml.service.WordVectorBuilder;
+import sentiments.ml.service.WordVectorsService;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -30,6 +35,9 @@ import java.util.List;
 
 @RestController
 public class BackendController {
+
+    private static final Logger log = LoggerFactory.getLogger(BackendController.class);
+
 
     @Autowired
     BasicDataImporter basicDataImporter;
@@ -46,6 +54,13 @@ public class BackendController {
     @Autowired
     TaskService taskService;
 
+    @Autowired
+    StorageService storageService;
+
+    @Autowired
+    ExceptionService exceptionService;
+
+
     @RequestMapping("/backend")
     public ResponseEntity<String> backend(String message, HttpStatus status) {
         message = message == null ? "" : message;
@@ -55,17 +70,31 @@ public class BackendController {
             File file = ResourceUtils.getFile(
                     "classpath:frontend/sentiment-backend.html");
             response = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
-            response = response.replaceAll("###MESSAGE###",message);
+            response = response.replaceAll("###MESSAGE###",message + System.lineSeparator()
+                    + storageService.getReport() + System.lineSeparator()
+                    + taskService.getLogContent());
         } catch (FileNotFoundException e) {
             e.printStackTrace();
+            String eString = exceptionService.exceptionToString(e);
+            log.warn(eString);
         } catch (IOException e) {
             e.printStackTrace();
+            String eString = exceptionService.exceptionToString(e);
+            log.warn(eString);
         }
 
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");
 
         return new ResponseEntity<>(response, responseHeaders, status);
+    }
+
+    @RequestMapping("/backend/setBaseDir")
+    public ResponseEntity<String> setBaseDir(@RequestParam( value = "dir", defaultValue = "") String dir) {
+
+        storageService.setStorageDir(dir);
+
+        return backend("done.", HttpStatus.ACCEPTED); //new ResponseEntity<String>(response, responseHeaders,HttpStatus.CREATED);
     }
 
     @RequestMapping("/backend/setTaskStatus")
@@ -115,6 +144,8 @@ public class BackendController {
             System.out.println("finished training");
         } catch (IOException e) {
             e.printStackTrace();
+            String eString = exceptionService.exceptionToString(e);
+            log.warn(eString);
             return new ResponseEntity<String>("Request failed", responseHeaders,HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return new ResponseEntity<String>("finished training", responseHeaders,HttpStatus.CREATED);
@@ -191,12 +222,14 @@ public class BackendController {
             return  backend("No File found. Please select a file to upload.", HttpStatus.BAD_REQUEST);
         }
         try {
-            File target = new File("resources/"+file.getOriginalFilename());
+            File target = storageService.getFile(file.getOriginalFilename());
             target.setWritable(true);
             FileUtils.copyInputStreamToFile(file.getInputStream(), target);
         } catch (IOException e) {
             e.printStackTrace();
-            return backend("Woahh... it ain't all good. INTERNAL ERROR.", HttpStatus.INTERNAL_SERVER_ERROR);
+            String eString = exceptionService.exceptionToString(e);
+            log.warn("Exception during Fileupload: " + eString);
+            return backend("Woahh... it ain't all good. INTERNAL ERROR." + eString, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         return backend("You successfully uploaded '" + file.getOriginalFilename() + "'", HttpStatus.CREATED);
@@ -205,7 +238,7 @@ public class BackendController {
     @PostMapping("backend/import/training")
     public ResponseEntity<String> testAndTrainImport(@RequestParam("traindata") MultipartFile trainData,
                                                      @RequestParam("testdata") MultipartFile testData,
-                                                     @RequestParam("lang") String lang) {
+                                                     @RequestParam( value = "lang", defaultValue = "") String lang) {
         Language language = languageService.getLanguage(lang);
         if (language == null) {
             backend("language not supported", HttpStatus.NOT_FOUND);
@@ -218,13 +251,17 @@ public class BackendController {
                 break;
             }
             try {
-                File target = new File("resources/training/upload/"+file.getOriginalFilename());
+                File target = storageService.getFile("resources/training/upload/" + file.getOriginalFilename());
                 target.setWritable(true);
                 FileUtils.copyInputStreamToFile(file.getInputStream(), target);
                 targetFiles.add(target);
             } catch (IOException e) {
                 e.printStackTrace();
-                return backend("Woahh... it ain't all good. INTERNAL ERROR.", HttpStatus.INTERNAL_SERVER_ERROR);
+                String eString = exceptionService.exceptionToString(e);
+                log.warn(eString);
+                log.warn("Exception during Fileupload: " + eString);
+
+                return backend("Woahh... it ain't all good. INTERNAL ERROR." + eString, HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
 

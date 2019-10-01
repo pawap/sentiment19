@@ -6,6 +6,8 @@ import com.google.gson.stream.JsonReader;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
@@ -14,11 +16,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.annotation.*;
 import sentiments.domain.model.*;
-import sentiments.domain.repository.TweetRepository;
-import sentiments.domain.service.ClassifierService;
+import sentiments.domain.model.query.HashtagCount;
+import sentiments.domain.model.query.Timeline;
+import sentiments.domain.model.query.TweetFilter;
+import sentiments.domain.repository.tweet.TweetRepository;
+import sentiments.ml.classifier.Classification;
+import sentiments.ml.service.ClassifierService;
+import sentiments.service.ExceptionService;
 import sentiments.domain.service.LanguageService;
-import sentiments.domain.service.ResponseService;
-import sentiments.ml.Classifier;
+import sentiments.service.ResponseService;
+import sentiments.ml.classifier.Classifier;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -32,6 +39,8 @@ import java.util.stream.Collectors;
 
 @RestController
 public class FrontendController extends BasicWebController {
+
+    private static final Logger log = LoggerFactory.getLogger(FrontendController.class);
 
     @Autowired
     Environment env;
@@ -48,6 +57,9 @@ public class FrontendController extends BasicWebController {
     @Autowired
     ResponseService responseService;
 
+    @Autowired
+    ExceptionService exceptionService;
+
     @RequestMapping("/")
     public ResponseEntity<String> html() {
         String response = "";
@@ -56,8 +68,12 @@ public class FrontendController extends BasicWebController {
                     "classpath:frontend/sentiment-frontend.html");
             response = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
         } catch (FileNotFoundException e) {
+            String eString = exceptionService.exceptionToString(e);
+            log.warn(eString);
             e.printStackTrace();
         } catch (IOException e) {
+            String eString = exceptionService.exceptionToString(e);
+            log.warn(eString);
             e.printStackTrace();
         }
 
@@ -119,8 +135,16 @@ public class FrontendController extends BasicWebController {
         String cleanTweet = tweet.replace("\r", " ").replace("\n", " ").trim();
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");
-        Classifier tweetClassifier = classifierService.getClassifier(languageService.getLanguage("en"));
-        Classification classification = tweetClassifier.classifyTweet(cleanTweet);
+        Classification classification;
+        try {
+            Classifier tweetClassifier = classifierService.getClassifier(languageService.getLanguage("en"));
+            classification = tweetClassifier.classifyTweet(cleanTweet);
+        } catch (Exception e) {
+            String eString = exceptionService.exceptionToString(e);
+            log.warn("Exception during classification: " + eString);
+            return new ResponseEntity<>("Internal Error." + eString, responseHeaders,HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
         JSONObject out = new JSONObject();
         out.put("offensive", classification.isOffensive());
         out.put("probability", classification.getProbability());

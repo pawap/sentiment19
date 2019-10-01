@@ -1,6 +1,6 @@
 package sentiments.domain.service;
 
-import sentiments.domain.model.TweetFilter;
+import sentiments.domain.model.query.TweetFilter;
 
 import java.sql.Timestamp;
 import java.util.List;

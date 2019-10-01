@@ -7,20 +7,22 @@ import com.joestelmach.natty.DateGroup;
 import com.joestelmach.natty.Parser;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.stringtemplate.v4.ST;
-import sentiments.domain.model.AbstractTweet;
+import sentiments.domain.model.tweet.AbstractTweet;
 import sentiments.domain.model.Language;
-import sentiments.domain.model.TrainingTweet;
-import sentiments.domain.model.Tweet;
+import sentiments.domain.model.tweet.TrainingTweet;
+import sentiments.domain.model.tweet.Tweet;
 import sentiments.domain.preprocessor.ImportTweetPreProcessor;
 import sentiments.domain.preprocessor.TweetPreProcessor;
-import sentiments.domain.repository.TrainingTweetRepository;
-import sentiments.domain.repository.TweetRepository;
+import sentiments.domain.repository.tweet.TrainingTweetRepository;
+import sentiments.domain.repository.tweet.TweetRepository;
+import sentiments.service.ExceptionService;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -42,6 +44,8 @@ import java.util.Locale;
 @Service
 public class BasicDataImporter {
 
+	private static final Logger log = LoggerFactory.getLogger(BasicDataImporter.class);
+
 	private static final int BATCH_SIZE = 512;
 
 	@Autowired
@@ -52,6 +56,9 @@ public class BasicDataImporter {
 
 	@Autowired
 	TrainingTweetRepository trainingTweetRepository;
+
+	@Autowired
+	ExceptionService exceptionService;
 
 	DateTimeFormatter dateTimeFormatter;
 
@@ -66,7 +73,8 @@ public class BasicDataImporter {
 			InputStream stream = new FileInputStream(jsonPath);
 			importFromStream(stream, tweetProvider, processor, repo);
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+			String eString = exceptionService.exceptionToString(e);
+			log.warn("Exception during Import: " + eString);
 		}
 	}
 
@@ -113,8 +121,8 @@ public class BasicDataImporter {
 			processor.destroy();
 			System.gc();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			String eString = exceptionService.exceptionToString(e);
+			log.warn("Exception during Import: " + eString);
 		}
 	}
 
@@ -155,11 +163,11 @@ public class BasicDataImporter {
 				repo.saveAll(tweets);
 			}
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			String eString = exceptionService.exceptionToString(e);
+			log.warn("Exception during Import: " + eString);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			String eString = exceptionService.exceptionToString(e);
+			log.warn("Exception during Import: " + eString);
 		}
 		// persist tweets in batch (256 per insert)
 //		entityManager.flush();

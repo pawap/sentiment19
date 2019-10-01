@@ -90,11 +90,22 @@
             </div>
         </div>
     </form>
+    <form method="post" action="/sentiment19/backend/setBaseDir" enctype="multipart/form-data">
+        <div class="row">
+            <div class="col-sm-2">
+                <button type="submit">SET</button>
+            </div>
+            <div class="col-sm-8">
+                <label>Task:&nbsp;<input type="text" name="dir"/></label>
+            </div>
+        </div>
+    </form>
     <div class="row">
         <div class="col-sm-12">
             <p class="alert-info">###MESSAGE###</p>
         </div>
     </div>
+</div>
     <!--Bootstrap imports-->
     <script
             src="https://code.jquery.com/jquery-3.4.1.min.js"
