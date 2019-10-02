@@ -9,7 +9,7 @@ import java.util.Date;
 import java.util.stream.Stream;
 
 /**
- * @author Paw
+ * @author Paw, 5malfa
  *
  */
 public interface TweetRepository extends MongoRepository<Tweet, Integer>, TweetRepositoryCustom {
@@ -26,7 +26,7 @@ public interface TweetRepository extends MongoRepository<Tweet, Integer>, TweetR
 	@Query(value = "{ 'tmstamp' : { $gte: ?0, $lte: ?1} }", count = true)
 	public int countfindAllByDateBetween(Timestamp startdate, Timestamp enddate);
 
-    Iterable<Tweet> findAllByLanguage(String language);
+    Stream<Tweet> findAllByLanguage(String language);
 
 	Stream<Tweet> findAllByClassifiedAndLanguage(Date classified, String language);
 }

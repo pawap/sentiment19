@@ -5,6 +5,9 @@ import org.springframework.data.mongodb.core.index.Indexed;
 
 import javax.persistence.Entity;
 
+/**
+ * @author Paw
+ */
 @Entity
 public class User {
 

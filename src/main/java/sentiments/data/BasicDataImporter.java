@@ -37,8 +37,7 @@ import java.util.Locale;
 
 
 /**
- * @author Paw
- *
+ * @author Paw, 6runge
  */
 @Transactional
 @Service
@@ -169,9 +168,6 @@ public class BasicDataImporter {
 			String eString = exceptionService.exceptionToString(e);
 			log.warn("Exception during Import: " + eString);
 		}
-		// persist tweets in batch (256 per insert)
-//		entityManager.flush();
-//		entityManager.clear();
 	}
 
 	private void mapTsvToTweet(CSVRecord record, AbstractTweet tweet, String lang) {

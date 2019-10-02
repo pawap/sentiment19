@@ -6,6 +6,9 @@ import org.springframework.data.mongodb.repository.Query;
 import sentiments.domain.model.tweet.TrainingTweet;
 import sentiments.domain.model.tweet.Tweet;
 
+/**
+ * @author Paw, 5malfa
+ */
 public interface TrainingTweetRepository extends MongoRepository<TrainingTweet,Integer> {
 
 	//returns an Iterable of all tweets that are labled as test/training and (non-) offensive

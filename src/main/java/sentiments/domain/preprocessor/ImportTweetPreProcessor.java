@@ -11,10 +11,12 @@ import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-
+/**
+ * @author Paw
+ */
 public class ImportTweetPreProcessor implements TweetPreProcessor {
 
-    private LanguageDetector detector = LanguageDetectorBuilder.fromAllBuiltInSpokenLanguages().build();
+    private static LanguageDetector detector = LanguageDetectorBuilder.fromAllBuiltInSpokenLanguages().build();
     final private Pattern pattern = Pattern.compile("#[\\w_-]+[:]?");
 
     @Override

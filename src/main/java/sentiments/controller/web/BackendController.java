@@ -33,6 +33,9 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * @author Paw, 6runge
+ */
 @RestController
 public class BackendController {
 

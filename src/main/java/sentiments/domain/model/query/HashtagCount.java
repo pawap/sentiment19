@@ -2,6 +2,9 @@ package sentiments.domain.model.query;
 
 import net.sf.json.JSONObject;
 
+/**
+ * @author Paw
+ */
 public class HashtagCount extends Count{
 
     public String hashtag;

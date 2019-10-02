@@ -3,6 +3,9 @@ package sentiments.domain.model.tweet;
 import javax.persistence.*;
 import java.util.Date;
 
+/**
+ * @author Paw
+ */
 @MappedSuperclass
 public class AbstractTweet {
 

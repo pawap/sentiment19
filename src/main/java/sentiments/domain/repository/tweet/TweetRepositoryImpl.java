@@ -173,9 +173,13 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
     private List<AggregationOperation> getWhereOperations(TweetFilter tweetFilter) {
         List<AggregationOperation> list = new LinkedList<>();
 
+        //return only classified tweets
+        list.add(Aggregation.match(Criteria.where("classified").exists(true)));
+
         //offensive?
-        //TODO what if null?
-        list.add(Aggregation.match(Criteria.where("offensive").is(tweetFilter.isOffensive())));
+        if (tweetFilter.isOffensive() != null) {
+            list.add(Aggregation.match(Criteria.where("offensive").is(tweetFilter.isOffensive())));
+        }
         //timeframe
         Criteria c = Criteria.where("crdate");
         boolean addTimeQuery = false;

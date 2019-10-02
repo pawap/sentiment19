@@ -14,6 +14,9 @@ import sentiments.domain.repository.tweet.TweetRepository;
 import java.sql.Timestamp;
 import java.util.Date;
 
+/**
+ * @author 5malfa , Paw
+ */
 @RestController
 public class TestController extends BasicWebController{
 

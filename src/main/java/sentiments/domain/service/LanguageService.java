@@ -8,6 +8,9 @@ import sentiments.domain.repository.LanguageRepository;
 import java.util.HashMap;
 import java.util.List;
 
+/**
+ * @author Paw
+ */
 @Service
 public class LanguageService {
 
