@@ -7,10 +7,11 @@ import sentiments.domain.model.tweet.Tweet;
 import sentiments.domain.repository.tweet.TweetRepository;
 
 import java.util.Iterator;
+import java.util.stream.Stream;
 
 /**
  * Implementation of the dl4j sentenceIterator interface. used to iterate over the texts of all available tweets
- * in agiven {@link TweetRepository}.
+ * in a given {@link TweetRepository}.
  *
  * @author 6runge
  */
@@ -19,6 +20,7 @@ public class TweetSentenceIterator implements SentenceIterator {
     private SentencePreProcessor preProcessor;
     private TweetRepository tweetRepository;
     private Iterator<Tweet> tweets;
+    private long count;
 
     /**
      * Constructor
@@ -30,8 +32,8 @@ public class TweetSentenceIterator implements SentenceIterator {
         this.preProcessor = sentencePreProcessor;
         this.tweetRepository = tweetRepository;
         this.language = language.getIso();
-        this.tweets = tweetRepository.findAllByLanguage(this.language).iterator();
-
+        this.tweets = tweetRepository.findAllByLanguage(this.language).limit(4000).iterator();
+        count = 0;
     }
 
     /**
@@ -50,6 +52,7 @@ public class TweetSentenceIterator implements SentenceIterator {
 
     @Override
     public String nextSentence() {
+        if (count++ % (1024*64) == 0) System.out.println(count);
         String text = tweets.next().getText();
         if (preProcessor != null) {
             text = preProcessor.preProcess(text);
@@ -65,6 +68,7 @@ public class TweetSentenceIterator implements SentenceIterator {
     @Override
     public void reset() {
         this.tweets = tweetRepository.findAll().iterator();
+        count = 0;
     }
 
     @Override
