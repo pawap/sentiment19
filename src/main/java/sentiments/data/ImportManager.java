@@ -69,13 +69,12 @@ public class ImportManager {
 
         try {
             session = jsch.getSession(remoteUsername, remoteHost);
-            session.setConfig("PreferredAuthentications", "password");
             session.setPassword(remotePassword);
 
-            session.connect(20000);
+            session.connect(40000);
 
             Channel channel = session.openChannel("sftp");
-            channel.connect(20000);
+            channel.connect(40000);
 
             ChannelSftp sftpChannel = (ChannelSftp) channel;
 
