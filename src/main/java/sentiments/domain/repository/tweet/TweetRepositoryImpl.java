@@ -20,6 +20,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Stream;
 
 /**
  * @author paw, 6runge
@@ -163,6 +164,28 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
 
         return output.getMappedResults();
 
+    }
+
+    @Override
+    public Stream<Tweet> find500kByLanguageStartingFrom(String language, LocalDateTime date) {
+        List<AggregationOperation> list = new LinkedList<>();
+
+        //timeframe
+        Criteria c = Criteria.where("crdate");
+        boolean addTimeQuery = false;
+        if (date != null) {
+            c = c.gte(date.toInstant(ZoneOffset.UTC));
+            list.add(Aggregation.match(c));
+        }
+
+        list.add(Aggregation.limit(500000));
+        list.add(Aggregation.project("count").andExclude("_id"));
+        Aggregation aggregation = Aggregation.newAggregation(list);
+
+        AggregationResults<Tweet> output = mongoTemplate.aggregate(aggregation, Tweet.class, Tweet.class);
+        List<Tweet> mappedOutput = output.getMappedResults();
+
+        return mappedOutput.stream();
     }
 
     @Override

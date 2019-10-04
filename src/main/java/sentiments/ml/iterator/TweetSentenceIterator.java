@@ -6,6 +6,8 @@ import sentiments.domain.model.Language;
 import sentiments.domain.model.tweet.Tweet;
 import sentiments.domain.repository.tweet.TweetRepository;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Iterator;
 import java.util.stream.Stream;
 
@@ -32,8 +34,7 @@ public class TweetSentenceIterator implements SentenceIterator {
         this.preProcessor = sentencePreProcessor;
         this.tweetRepository = tweetRepository;
         this.language = language.getIso();
-        this.tweets = tweetRepository.findAllByLanguage(this.language).limit(4000).iterator();
-        count = 0;
+        reset();
     }
 
     /**
@@ -53,7 +54,12 @@ public class TweetSentenceIterator implements SentenceIterator {
     @Override
     public String nextSentence() {
         if (count++ % (1024*64) == 0) System.out.println(count);
-        String text = tweets.next().getText();
+        Tweet t = tweets.next();
+        if (count % 499998 == 0) {
+            LocalDateTime time = LocalDateTime.ofInstant(t.getCrdate().toInstant(), ZoneId.of("UTC"));
+            tweets = tweetRepository.find500kByLanguageStartingFrom(language, time).iterator();
+        }
+        String text = t.getText();
         if (preProcessor != null) {
             text = preProcessor.preProcess(text);
         }
@@ -67,7 +73,8 @@ public class TweetSentenceIterator implements SentenceIterator {
 
     @Override
     public void reset() {
-        this.tweets = tweetRepository.findAll().iterator();
+        LocalDateTime start = LocalDateTime.of(2000,1,1,1,1,1,1);
+        this.tweets = tweetRepository.find500kByLanguageStartingFrom(this.language, start).iterator();
         count = 0;
     }
 

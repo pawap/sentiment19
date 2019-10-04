@@ -26,7 +26,5 @@ public interface TweetRepository extends MongoRepository<Tweet, Integer>, TweetR
 	@Query(value = "{ 'tmstamp' : { $gte: ?0, $lte: ?1} }", count = true)
 	public int countfindAllByDateBetween(Timestamp startdate, Timestamp enddate);
 
-    Stream<Tweet> findAllByLanguage(String language);
-
 	Stream<Tweet> findAllByClassifiedAndLanguage(Date classified, String language);
 }
