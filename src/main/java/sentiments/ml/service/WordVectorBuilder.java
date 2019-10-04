@@ -6,7 +6,6 @@ import org.deeplearning4j.models.sequencevectors.interfaces.VectorsListener;
 import org.deeplearning4j.models.sequencevectors.listeners.ScoreListener;
 import org.deeplearning4j.models.word2vec.VocabWord;
 import org.deeplearning4j.models.word2vec.Word2Vec;
-import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
 import org.deeplearning4j.text.sentenceiterator.SentenceIterator;
 import org.deeplearning4j.text.tokenization.tokenizer.preprocessor.CommonPreprocessor;
 import org.deeplearning4j.text.tokenization.tokenizerfactory.DefaultTokenizerFactory;
@@ -57,7 +56,7 @@ public class WordVectorBuilder {
                 .windowSize(4)
                 .seed(42)
                 .epochs(5)
-                .elementsLearningAlgorithm(new SkipGram<VocabWord>())
+                .elementsLearningAlgorithm(new SkipGram<>())
                 .iterate(sentenceIterator)
                 .tokenizerFactory(tokenizerFactory)
                 .build();

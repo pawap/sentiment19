@@ -133,7 +133,7 @@ public class BackendController {
         return new ResponseEntity<String>("finished", responseHeaders,HttpStatus.OK);
     }
 
-    @RequestMapping("/backend/ml/w2vtraining")
+    @RequestMapping("/w2vtraining")
     public ResponseEntity<String> w2vtraining(@RequestParam( value = "lang", defaultValue = "en") String lang) {
         WordVectorBuilder w2vb = new WordVectorBuilder(tweetRepository);
         HttpHeaders responseHeaders = new HttpHeaders();

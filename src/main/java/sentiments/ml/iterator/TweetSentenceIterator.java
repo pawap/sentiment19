@@ -9,7 +9,6 @@ import sentiments.domain.repository.tweet.TweetRepository;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Iterator;
-import java.util.stream.Stream;
 
 /**
  * Implementation of the dl4j sentenceIterator interface. used to iterate over the texts of all available tweets
