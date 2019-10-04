@@ -8,6 +8,7 @@ import sentiments.domain.model.tweet.Tweet;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -28,6 +29,9 @@ public interface TweetRepositoryCustom {
     List<HashtagCount> getMostPopularHashtags(TweetFilter tweetFilter, int limit);
 
     Stream<Tweet> find500kByLanguageStartingFrom(String language, LocalDateTime date);
+
+    Stream<Tweet> find100kByClassifiedAndLanguage(Date classified, String language);
+
 
     BulkOperations getBulkOps();
 }

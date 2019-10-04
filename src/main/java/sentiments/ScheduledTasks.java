@@ -17,6 +17,7 @@ import sentiments.service.TaskService;
 import sentiments.ml.classifier.Classifier;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -83,22 +84,24 @@ public class ScheduledTasks {
                 continue;
                 }
                 Date runDate = new Date();
-                Stream<Tweet> tweets = tweetRepository.findAllByClassifiedAndLanguage(null, lang.getIso());
-                AtomicInteger index = new AtomicInteger(0);
 
-                int batchSize = 512;
-                int multiBatch = 1;
-                Stream<List<Tweet>> stream = tweets.collect(Collectors.groupingBy(x -> index.getAndIncrement() / batchSize ))
-                        .entrySet().stream()
-                        .sorted(Map.Entry.comparingByKey()).map(Map.Entry::getValue);
-                // remove .parallel() for serial
+            while (true) {
+                    Stream<Tweet> tweets = tweetRepository.find100kByClassifiedAndLanguage(null, lang.getIso());
+                    AtomicInteger index = new AtomicInteger(0);
+                    if (tweets.count() == 0) break;
+                    int batchSize = 512;
+                    int multiBatch = 1;
+                    Stream<List<Tweet>> stream = tweets.collect(Collectors.groupingBy(x -> index.getAndIncrement() / batchSize ))
+                            .entrySet().stream()
+                            .sorted(Map.Entry.comparingByKey()).map(Map.Entry::getValue);
+                    // remove .parallel() for serial
 
-                stream.parallel().forEach(tweetList -> {
-                    tweetCount.addAndGet(tweetList.size());
-                    classifier.classifyTweets(tweetList,runDate);
-                    tweetRepository.saveAll(tweetList);
+                    stream.parallel().forEach(tweetList -> {
+                        tweetCount.addAndGet(tweetList.size());
+                        classifier.classifyTweets(tweetList,runDate);
+                        tweetRepository.saveAll(tweetList);
 
-                    // --- bulkOps  multiBatch just multiplies batchSize to get effective batchSize
+                        // --- bulkOps  multiBatch just multiplies batchSize to get effective batchSize
 //                    BulkOperations ops = tweetRepository.getBulkOps();
 //                    long time = System.currentTimeMillis();
 //                    for (Tweet tweet : tweetList) {
@@ -113,7 +116,7 @@ public class ScheduledTasks {
 //                    System.out.println(System.currentTimeMillis() - time);
 //                    ops.execute();
 
-                    // single batch multiBatch needs to be set to one
+                        // single batch multiBatch needs to be set to one
 //                    for(Tweet tweet: tweetList) {
 //                        Classification classification = classifier.classifyTweet(tweet.getText());
 //                        tweet.setOffensive(classification.isOffensive());
@@ -126,7 +129,7 @@ public class ScheduledTasks {
 //                    }
 //                    tweetRepository.saveAll(tweetList);
 
-                    // multi batch need to set multiBatch > 1
+                        // multi batch need to set multiBatch > 1
 //                    List<Tweet> batch = new LinkedList<>();
 //                    for(Tweet tweet: tweetList) {
 //                        Classification classification = classifier.classifyTweet(tweet.getText());
@@ -138,7 +141,10 @@ public class ScheduledTasks {
 //                            batch.clear();
 //                        }
 //                    }
-                });
+                    });
+                    stream.close();
+                }
+
             }
 
         long timeOverall = (System.currentTimeMillis() - time);
