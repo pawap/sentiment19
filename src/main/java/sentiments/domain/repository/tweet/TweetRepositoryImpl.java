@@ -169,8 +169,8 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
     @Override
     public Stream<Tweet> find500kByLanguageStartingFrom(String language, LocalDateTime date) {
         List<AggregationOperation> list = new LinkedList<>();
+        list.add(Aggregation.match(Criteria.where("language").is(language)));
 
-        //timeframe
         Criteria c = Criteria.where("crdate");
         boolean addTimeQuery = false;
         if (date != null) {
