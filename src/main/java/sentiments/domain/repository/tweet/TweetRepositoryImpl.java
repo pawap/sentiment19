@@ -179,7 +179,6 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
         }
 
         list.add(Aggregation.limit(500000));
-        list.add(Aggregation.project("count").andExclude("_id"));
         Aggregation aggregation = Aggregation.newAggregation(list);
 
         AggregationResults<Tweet> output = mongoTemplate.aggregate(aggregation, Tweet.class, Tweet.class);

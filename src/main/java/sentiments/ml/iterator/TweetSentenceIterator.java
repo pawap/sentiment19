@@ -22,6 +22,7 @@ public class TweetSentenceIterator implements SentenceIterator {
     private SentencePreProcessor preProcessor;
     private TweetRepository tweetRepository;
     private Iterator<Tweet> tweets;
+    private Stream<Tweet> stream;
     private long count;
 
     /**
@@ -57,7 +58,9 @@ public class TweetSentenceIterator implements SentenceIterator {
         Tweet t = tweets.next();
         if (count % 499998 == 0) {
             LocalDateTime time = LocalDateTime.ofInstant(t.getCrdate().toInstant(), ZoneId.of("UTC"));
-            tweets = tweetRepository.find500kByLanguageStartingFrom(language, time).iterator();
+            stream.close();
+            stream = tweetRepository.find500kByLanguageStartingFrom(language, time);
+            tweets = stream.iterator();
         }
         String text = t.getText();
         if (preProcessor != null) {
@@ -73,8 +76,12 @@ public class TweetSentenceIterator implements SentenceIterator {
 
     @Override
     public void reset() {
+        if (stream != null) {
+            stream.close();
+        }
         LocalDateTime start = LocalDateTime.of(2000,1,1,1,1,1,1);
-        this.tweets = tweetRepository.find500kByLanguageStartingFrom(this.language, start).iterator();
+        this.stream = tweetRepository.find500kByLanguageStartingFrom(this.language, start);
+        this.tweets = stream.iterator();
         count = 0;
     }
 
