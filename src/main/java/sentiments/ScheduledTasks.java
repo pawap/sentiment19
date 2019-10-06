@@ -17,12 +17,12 @@ import sentiments.service.TaskService;
 import sentiments.ml.classifier.Classifier;
 
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -88,15 +88,15 @@ public class ScheduledTasks {
             while (true) {
                     Stream<Tweet> tweets = tweetRepository.find100kByClassifiedAndLanguage(null, lang.getIso());
                     AtomicInteger index = new AtomicInteger(0);
-                    if (tweets.count() == 0) break;
-                    int batchSize = 512;
+                    int batchSize = 2048;
                     int multiBatch = 1;
                     Stream<List<Tweet>> stream = tweets.collect(Collectors.groupingBy(x -> index.getAndIncrement() / batchSize ))
                             .entrySet().stream()
                             .sorted(Map.Entry.comparingByKey()).map(Map.Entry::getValue);
                     // remove .parallel() for serial
-
+                    AtomicInteger classified = new AtomicInteger(0);
                     stream.parallel().forEach(tweetList -> {
+                        classified.addAndGet(1);
                         tweetCount.addAndGet(tweetList.size());
                         classifier.classifyTweets(tweetList,runDate);
                         tweetRepository.saveAll(tweetList);
@@ -143,6 +143,7 @@ public class ScheduledTasks {
 //                    }
                     });
                     stream.close();
+                    if (classified.get() <= 1) break;
                 }
 
             }
