@@ -194,7 +194,7 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
         list.add(Aggregation.match(Criteria.where("language").is(language)));
         list.add(Aggregation.match(Criteria.where("classified").is(null)));
         Criteria c = Criteria.where("crdate");
-        list.add(Aggregation.limit(100000));
+        list.add(Aggregation.limit(8192));
         Aggregation aggregation = Aggregation.newAggregation(list);
 
         AggregationResults<Tweet> output = mongoTemplate.aggregate(aggregation, Tweet.class, Tweet.class);
