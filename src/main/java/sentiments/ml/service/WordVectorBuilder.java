@@ -1,9 +1,7 @@
 package sentiments.ml.service;
 
 import org.deeplearning4j.models.embeddings.learning.impl.elements.SkipGram;
-import org.deeplearning4j.models.sequencevectors.enums.ListenerEvent;
 import org.deeplearning4j.models.sequencevectors.interfaces.VectorsListener;
-import org.deeplearning4j.models.sequencevectors.listeners.ScoreListener;
 import org.deeplearning4j.models.word2vec.VocabWord;
 import org.deeplearning4j.models.word2vec.Word2Vec;
 import org.deeplearning4j.text.sentenceiterator.SentenceIterator;
@@ -61,7 +59,7 @@ public class WordVectorBuilder {
                 .tokenizerFactory(tokenizerFactory)
                 .build();
         Set<VectorsListener<VocabWord>> set = new HashSet<>();
-        set.add(new ScoreListener<>(ListenerEvent.ITERATION, 1));
+        //set.add(new ScoreListener<>(ListenerEvent.ITERATION, 1));
         vec.setEventListeners(set);
         vec.fit();
         WordVectorsService.saveWordVectors(vec, language);

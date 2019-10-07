@@ -27,7 +27,7 @@ public interface TweetRepositoryCustom {
 
     List<HashtagCount> getMostPopularHashtags(TweetFilter tweetFilter, int limit);
 
-    Stream<Tweet> find500kByLanguageStartingFrom(String language, LocalDateTime date);
+    Stream<Tweet> find100kByLanguageStartingFrom(String language, LocalDateTime date);
 
     BulkOperations getBulkOps();
 }

@@ -9,6 +9,7 @@ import sentiments.domain.repository.tweet.TweetRepository;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Iterator;
+import java.util.stream.Stream;
 
 /**
  * Implementation of the dl4j sentenceIterator interface. used to iterate over the texts of all available tweets
@@ -43,22 +44,21 @@ public class TweetSentenceIterator implements SentenceIterator {
      * @param language
      */
     public TweetSentenceIterator(TweetRepository tweetRepository, Language language) {
-        this(new SentencePreProcessor() {
-            @Override
-            public String preProcess(String sentence) {
-                return sentence.replaceAll("[^a-zA-Z ]", "").toLowerCase();
-            }
-        }, tweetRepository, language);
+        this((SentencePreProcessor) sentence -> sentence.replaceAll("(((RT )?@[\\w_-]+[:]?)|((https?:\\/\\/)[\\w\\d.-\\/]*))","")
+                .replaceAll("[^a-zA-Z ]", "")
+                .toLowerCase(), tweetRepository, language);
     }
 
     @Override
     public String nextSentence() {
-        if (count++ % (1024*64) == 0) System.out.println(count);
+        //if (count % (1024*64) == 0) System.out.println(count);
+        count++;
         Tweet t = tweets.next();
-        if (count % 499998 == 0) {
+        if (count % 99998 == 0 ) { //&& count < 7500000
+            System.out.println(count);
             LocalDateTime time = LocalDateTime.ofInstant(t.getCrdate().toInstant(), ZoneId.of("UTC"));
             stream.close();
-            stream = tweetRepository.find500kByLanguageStartingFrom(language, time);
+            stream = tweetRepository.find100kByLanguageStartingFrom(language, time);
             tweets = stream.iterator();
         }
         String text = t.getText();
@@ -79,7 +79,7 @@ public class TweetSentenceIterator implements SentenceIterator {
             stream.close();
         }
         LocalDateTime start = LocalDateTime.of(2000,1,1,1,1,1,1);
-        this.stream = tweetRepository.find500kByLanguageStartingFrom(this.language, start);
+        this.stream = tweetRepository.find100kByLanguageStartingFrom(this.language, start);
         this.tweets = stream.iterator();
         count = 0;
     }

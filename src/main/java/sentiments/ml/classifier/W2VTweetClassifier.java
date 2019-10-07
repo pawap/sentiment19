@@ -79,7 +79,7 @@ public class W2VTweetClassifier implements Classifier {
 	public void train(TrainingTweetRepository tweetRepository) {
 		int batchSize = 64;     //Number of examples in each minibatch
 	    int vectorSize = 300;   //Size of the word vectors. 300 in the Google News model
-	    int nEpochs = 5;        //Number of epochs (full passes of training data) to train on
+	    int nEpochs = 4;        //Number of epochs (full passes of training data) to train on
 	    int truncateReviewsToLength = 256;  //Truncate reviews with length (# words) greater than this
 	    final int seed = 0;     //Seed for reproducibility
 		MultiLayerNetwork net;
