@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -178,6 +179,21 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
             list.add(Aggregation.match(c));
         }
 
+        list.add(Aggregation.limit(100000));
+        Aggregation aggregation = Aggregation.newAggregation(list);
+
+        AggregationResults<Tweet> output = mongoTemplate.aggregate(aggregation, Tweet.class, Tweet.class);
+        List<Tweet> mappedOutput = output.getMappedResults();
+
+        return mappedOutput.stream();
+    }
+
+    @Override
+    public Stream<Tweet> find100kByClassifiedAndLanguage(Date classified, String language) {
+        List<AggregationOperation> list = new LinkedList<>();
+        list.add(Aggregation.match(Criteria.where("language").is(language)));
+        list.add(Aggregation.match(Criteria.where("classified").is(null)));
+        Criteria c = Criteria.where("crdate");
         list.add(Aggregation.limit(100000));
         Aggregation aggregation = Aggregation.newAggregation(list);
 

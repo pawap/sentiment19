@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -83,22 +84,24 @@ public class ScheduledTasks {
                 continue;
                 }
                 Date runDate = new Date();
-                Stream<Tweet> tweets = tweetRepository.findAllByClassifiedAndLanguage(null, lang.getIso());
-                AtomicInteger index = new AtomicInteger(0);
 
-                int batchSize = 512;
-                int multiBatch = 1;
-                Stream<List<Tweet>> stream = tweets.collect(Collectors.groupingBy(x -> index.getAndIncrement() / batchSize ))
-                        .entrySet().stream()
-                        .sorted(Map.Entry.comparingByKey()).map(Map.Entry::getValue);
-                // remove .parallel() for serial
+            while (true) {
+                    Stream<Tweet> tweets = tweetRepository.find100kByClassifiedAndLanguage(null, lang.getIso());
+                    AtomicInteger index = new AtomicInteger(0);
+                    int batchSize = 2048;
+                    int multiBatch = 1;
+                    Stream<List<Tweet>> stream = tweets.collect(Collectors.groupingBy(x -> index.getAndIncrement() / batchSize ))
+                            .entrySet().stream()
+                            .sorted(Map.Entry.comparingByKey()).map(Map.Entry::getValue);
+                    // remove .parallel() for serial
+                    AtomicInteger classified = new AtomicInteger(0);
+                    stream.parallel().forEach(tweetList -> {
+                        classified.addAndGet(1);
+                        tweetCount.addAndGet(tweetList.size());
+                        classifier.classifyTweets(tweetList,runDate);
+                        tweetRepository.saveAll(tweetList);
 
-                stream.parallel().forEach(tweetList -> {
-                    tweetCount.addAndGet(tweetList.size());
-                    classifier.classifyTweets(tweetList,runDate);
-                    tweetRepository.saveAll(tweetList);
-
-                    // --- bulkOps  multiBatch just multiplies batchSize to get effective batchSize
+                        // --- bulkOps  multiBatch just multiplies batchSize to get effective batchSize
 //                    BulkOperations ops = tweetRepository.getBulkOps();
 //                    long time = System.currentTimeMillis();
 //                    for (Tweet tweet : tweetList) {
@@ -113,7 +116,7 @@ public class ScheduledTasks {
 //                    System.out.println(System.currentTimeMillis() - time);
 //                    ops.execute();
 
-                    // single batch multiBatch needs to be set to one
+                        // single batch multiBatch needs to be set to one
 //                    for(Tweet tweet: tweetList) {
 //                        Classification classification = classifier.classifyTweet(tweet.getText());
 //                        tweet.setOffensive(classification.isOffensive());
@@ -126,7 +129,7 @@ public class ScheduledTasks {
 //                    }
 //                    tweetRepository.saveAll(tweetList);
 
-                    // multi batch need to set multiBatch > 1
+                        // multi batch need to set multiBatch > 1
 //                    List<Tweet> batch = new LinkedList<>();
 //                    for(Tweet tweet: tweetList) {
 //                        Classification classification = classifier.classifyTweet(tweet.getText());
@@ -138,7 +141,11 @@ public class ScheduledTasks {
 //                            batch.clear();
 //                        }
 //                    }
-                });
+                    });
+                    stream.close();
+                    if (classified.get() <= 1) break;
+                }
+
             }
 
         long timeOverall = (System.currentTimeMillis() - time);
