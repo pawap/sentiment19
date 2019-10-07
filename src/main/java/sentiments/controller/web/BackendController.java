@@ -133,7 +133,17 @@ public class BackendController {
         return new ResponseEntity<String>("finished", responseHeaders,HttpStatus.OK);
     }
 
-    @RequestMapping("/w2vtraining")
+    @RequestMapping("/backend/import/traintwothirdsnonoff")
+    public ResponseEntity<String> trainImportWithRatio(@RequestParam( value = "lang", defaultValue = "en") String lang) {
+        System.out.println("testAndTrainimportWithRatio was called with " + lang);
+        this.basicDataImporter.importFromTsvTwoThirdsOff(lang);
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("Access-Control-Allow-Origin", "*");
+
+        return new ResponseEntity<String>("finished", responseHeaders,HttpStatus.OK);
+    }
+
+    @RequestMapping("/backend/ml/w2vtraining")
     public ResponseEntity<String> w2vtraining(@RequestParam( value = "lang", defaultValue = "en") String lang) {
         WordVectorBuilder w2vb = new WordVectorBuilder(tweetRepository);
         HttpHeaders responseHeaders = new HttpHeaders();
@@ -163,6 +173,7 @@ public class BackendController {
         if (language == null) {
             return new ResponseEntity<String>("language not supported", responseHeaders,HttpStatus.NOT_FOUND);
         }
+
         WordVectors word2VecModel = WordVectorsService.getWordVectors(language);
 
         String examples = "Some words with their closest neighbours: \n";
@@ -219,7 +230,7 @@ public class BackendController {
         return new ResponseEntity<String>("training done", responseHeaders,HttpStatus.CREATED);
     }
 
-    @PostMapping("backend/upload")
+    @PostMapping("/backend/upload")
     public ResponseEntity<String> singleFileUpload(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
             return  backend("No File found. Please select a file to upload.", HttpStatus.BAD_REQUEST);
@@ -238,7 +249,7 @@ public class BackendController {
         return backend("You successfully uploaded '" + file.getOriginalFilename() + "'", HttpStatus.CREATED);
     }
 
-    @PostMapping("backend/import/training")
+    @PostMapping("/backend/import/training")
     public ResponseEntity<String> testAndTrainImport(@RequestParam("traindata") MultipartFile trainData,
                                                      @RequestParam("testdata") MultipartFile testData,
                                                      @RequestParam( value = "lang", defaultValue = "") String lang) {
