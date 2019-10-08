@@ -20,5 +20,5 @@ public interface DayStatsRepository extends MongoRepository<DayStats, Integer> {
 
     DayStats findAllByDateEquals(LocalDate date);
 
-    Iterable<DayStats> findByDateBetweenAndLanguage(LocalDate start, LocalDate end, String language);
+    Iterable<DayStats> findByDateBetweenAndLanguageOrderByDateAsc(LocalDate start, LocalDate end, String language);
 }
