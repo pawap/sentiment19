@@ -59,10 +59,10 @@ window.addEventListener('load', function(){
         data: function() {
             return {
                 times: [
-                    {text: "Letzter Tag", value: "day", start: getDate(-1), end: getDate(0)},
-                    {text: "Letzte Woche", value: "week", start: getDate(-7), end: getDate(0)},
-                    {text: "Letzter Monat", value: "month", start: getDate(-30), end: getDate(0)},
-                    {text: "Gesamter Zeitraum", value: "range", start: null, end: getDate(0)},
+                    {text: "Last day", value: "day", start: getDate(-1), end: getDate(0)},
+                    {text: "Last week", value: "week", start: getDate(-7), end: getDate(0)},
+                    {text: "Last month", value: "month", start: getDate(-30), end: getDate(0)},
+                    {text: "Entire range", value: "range", start: null, end: getDate(0)},
                 ],
                 availableLanguages: [],
                 selectedLanguages: []
