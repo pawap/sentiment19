@@ -1,6 +1,7 @@
 package sentiments.domain.repository;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -22,6 +23,7 @@ public class DayStatsRepositoryImpl implements DayStatsRepositoryCustom {
     @Override
     public Iterable<DayStats> findByDateBetweenAndLanguageInOrderBy(LocalDate start, LocalDate end, Collection<String> language) {
         Query query =Query.query(Criteria.where("date").gte(start).lte(end).and("language").in(language));
+        query.with(new Sort(Sort.Direction.ASC, "date"));
         return mongoTemplate.find(query, DayStats.class);
     }
 
