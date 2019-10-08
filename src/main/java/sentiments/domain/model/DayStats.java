@@ -6,6 +6,7 @@ import javax.persistence.Entity;
 import java.time.LocalDate;
 
 /**
+ * A DayStats holds the number of offensive/nonoffensive {@link sentiments.domain.model.tweet.Tweet}s of its {@link Language} at its date.
  * @author 6runge
  */
 @Entity

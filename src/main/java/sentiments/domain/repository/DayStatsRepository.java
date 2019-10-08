@@ -6,9 +6,10 @@ import sentiments.domain.model.DayStats;
 import java.time.LocalDate;
 
 /**
+ * MongoRepository for {@link DayStats}
  * @author 6runge
  */
-public interface DayStatsRepository extends MongoRepository<DayStats, Integer> {
+public interface DayStatsRepository extends MongoRepository<DayStats, Integer>, DayStatsRepositoryCustom {
 
     int findOffensiveByDateEquals(LocalDate date);
 
@@ -20,5 +21,4 @@ public interface DayStatsRepository extends MongoRepository<DayStats, Integer> {
 
     DayStats findAllByDateEquals(LocalDate date);
 
-    Iterable<DayStats> findByDateBetweenAndLanguageOrderByDateAsc(LocalDate start, LocalDate end, String language);
 }

@@ -32,6 +32,7 @@ import static org.springframework.data.mongodb.core.query.Criteria.where;
 import static org.springframework.data.mongodb.core.query.Query.query;
 
 /**
+ * Regularily queries {@link sentiments.service.TaskService}  for tasks and executes them if needed.
  * @author Paw , 6runge
  */
 @Component
@@ -64,8 +65,6 @@ public class ScheduledTasks {
     private static int threadCount = 0;
 
     private static boolean classifying = false;
-
-   // private static int batchSize = 1048;
 
     @Scheduled(cron = "*/5 * * * * *")
     public void classifyNextBatch() {

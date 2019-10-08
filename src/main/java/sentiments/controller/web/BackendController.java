@@ -33,7 +33,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.*;
 
 /**
@@ -295,10 +297,11 @@ public class BackendController {
             TweetFilterBuilder tweetFilterBuilder = new TweetFilterBuilder();
             List<String> langList = new ArrayList<>();
             langList.add(language.getIso());
-            Timeline offensiveTimeline = tweetRepository.countByOffensiveAndDayInInterval(tweetFilterBuilder.setLanguages(langList).setOffensive(true).build());
-            Timeline nonoffensiveTimeline = tweetRepository.countByOffensiveAndDayInInterval(tweetFilterBuilder.setLanguages(langList).setOffensive(false).build());
+            Timestamp start = Timestamp.valueOf(tweetRepository.getFirstDate().atTime(LocalTime.MIDNIGHT));
+            Timestamp end = Timestamp.valueOf(tweetRepository.getLastDate().atTime(LocalTime.MIDNIGHT));
+            Timeline offensiveTimeline = tweetRepository.countByOffensiveAndDayInInterval(tweetFilterBuilder.setStart(start).setEnd(end).setLanguages(langList).setOffensive(true).build());
+            Timeline nonoffensiveTimeline = tweetRepository.countByOffensiveAndDayInInterval(tweetFilterBuilder.setStart(start).setEnd(end).setLanguages(langList).setOffensive(false).build());
             LocalDate current = offensiveTimeline.start;
-            LocalDate end = offensiveTimeline.end;
             Iterator<Integer> nonoffensiveIterator = nonoffensiveTimeline.timeline.iterator();
             Iterator<Integer> offensiveIterator = offensiveTimeline.timeline.iterator();
             while (offensiveIterator.hasNext()) {
@@ -307,7 +310,7 @@ public class BackendController {
                 dayStats.setLanguage(language.getIso());
                 dayStats.setNonoffensive(nonoffensiveIterator.next());
                 dayStats.setOffensive(offensiveIterator.next());
-                current.plusDays(1);
+                current = current.plusDays(1);
                 dayStatsRepository.save(dayStats);
             }
         }
