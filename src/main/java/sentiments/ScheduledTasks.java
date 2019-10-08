@@ -73,7 +73,6 @@ public class ScheduledTasks {
         if (!execute || classifying) {
             return;
         }
-        System.out.println("new call");
             classifying = true;
             Iterable<Language> langs = languageService.getAvailableLanguages();
 
