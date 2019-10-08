@@ -34,6 +34,8 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 /**
@@ -134,7 +136,7 @@ public class FrontendController extends BasicWebController {
         log.debug("#calls: " + i + "; Success:" + ((obj != null)? "true" : "false") + ";");
         
         out.addProperty("html", str);
-        return new ResponseEntity<>(out.getAsString(), responseHeaders, HttpStatus.CREATED);
+        return new ResponseEntity<>(out.toString(), responseHeaders, HttpStatus.CREATED);
     }
 
     @RequestMapping("/classify")
@@ -188,7 +190,6 @@ public class FrontendController extends BasicWebController {
 
     @RequestMapping(value="/timeline", method = RequestMethod.POST, consumes = "application/json")
     public ResponseEntity<String> timeline(@RequestBody TweetFilter tf) {
-
         Timeline timeline = tweetRepository.countByOffensiveAndDayInInterval(tf);
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");

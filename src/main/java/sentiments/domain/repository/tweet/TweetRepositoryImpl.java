@@ -213,7 +213,10 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
 
         //return only classified tweets
         list.add(Aggregation.match(Criteria.where("classified").exists(true)));
-
+        //languages
+        if (tweetFilter.getLanguages() != null && !tweetFilter.getLanguages().isEmpty() ) {
+            list.add(Aggregation.match(Criteria.where("language").in(tweetFilter.getLanguages())));
+        }
         //offensive?
         if (tweetFilter.isOffensive() != null) {
             list.add(Aggregation.match(Criteria.where("offensive").is(tweetFilter.isOffensive())));
@@ -239,10 +242,7 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
             list.add(Aggregation.match(Criteria.where("hashtags").all(tweetFilter.getHashtags())));
         }
 
-        //languages
-        if (tweetFilter.getLanguages() != null && !tweetFilter.getLanguages().isEmpty() ) {
-            list.add(Aggregation.match(Criteria.where("language").in(tweetFilter.getLanguages())));
-        }
+
         if (tweetFilter.getClassified() != null) {
             list.add(Aggregation.match(Criteria.where("classified").is(tweetFilter.isOffensive())));
         }

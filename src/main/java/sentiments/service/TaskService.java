@@ -20,7 +20,7 @@ public class TaskService {
         this.tasks = new ConcurrentHashMap<>();
         this.logs = new ConcurrentArrayList<>();
         logs.add("Task Logs" + System.lineSeparator());
-        this.tasks.putIfAbsent("classify", true);
+        //this.tasks.putIfAbsent("classify", true);
     }
 
     public boolean checkTaskExecution(String task, boolean activeByDefault) {
