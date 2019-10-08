@@ -15,7 +15,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.annotation.*;
-import sentiments.domain.model.DayStats;
 import sentiments.domain.model.Language;
 import sentiments.domain.model.query.HashtagCount;
 import sentiments.domain.model.query.Timeline;
@@ -28,6 +27,7 @@ import sentiments.ml.classifier.Classifier;
 import sentiments.ml.service.ClassifierService;
 import sentiments.service.ExceptionService;
 import sentiments.service.ResponseService;
+import sentiments.service.TimelineService;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -36,8 +36,6 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 /**
@@ -68,6 +66,9 @@ public class FrontendController extends BasicWebController {
 
     @Autowired
     DayStatsRepository dayStatsRepository;
+
+    @Autowired
+    private TimelineService timelineService;
 
     @RequestMapping("/")
     public ResponseEntity<String> html() {
@@ -196,30 +197,7 @@ public class FrontendController extends BasicWebController {
     @RequestMapping(value="/timeline", method = RequestMethod.POST, consumes = "application/json")
     public ResponseEntity<String> timeline(@RequestBody TweetFilter tf) {
 
-        Timeline timeline = new Timeline(); // tweetRepository.countByOffensiveAndDayInInterval(tf);
-        timeline.timeline = new LinkedList<>();
-        timeline.start = tf.getStart() != null? tf.getStart().toLocalDateTime().toLocalDate() : tweetRepository.getFirstDate();
-        timeline.end = tf.getEnd() != null? tf.getEnd().toLocalDateTime().toLocalDate() : tweetRepository.getLastDate();
-        LocalDate current = LocalDate.from(timeline.start);
-        List<String> list = new LinkedList<>();
-        for (Language l:languageService.getAvailableLanguages()) {
-            list.add(l.getIso());
-        }
-        Iterable<DayStats> dayStats = dayStatsRepository.findByDateBetweenAndLanguageInOrderBy(timeline.start,timeline.end , tf.getLanguages().isEmpty()? list : tf.getLanguages());
-        for (DayStats ds: dayStats) {
-            LocalDate currentDate = ds.getDate();
-            while (current.compareTo(currentDate) < 0) {
-                timeline.timeline.add(0);
-                current = current.plusDays(1);
-            }
-            current = current.plusDays(1);
-            timeline.timeline.add(tf.isOffensive()? ds.getOffensive() : ds.getNonoffensive());
-
-        }
-        while (current.compareTo(timeline.end) < 0) {
-            timeline.timeline.add(0);
-            current = current.plusDays(1);
-        }
+        Timeline timeline = timelineService.getTimeline(tf);
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");
         JSONObject out = new JSONObject();

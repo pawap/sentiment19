@@ -28,6 +28,7 @@ import sentiments.ml.service.WordVectorsService;
 import sentiments.service.ExceptionService;
 import sentiments.service.StorageService;
 import sentiments.service.TaskService;
+import sentiments.service.TimelineService;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -70,6 +71,9 @@ public class BackendController {
 
     @Autowired
     DayStatsRepository dayStatsRepository;
+
+    @Autowired
+    TimelineService timelineService;
 
 
     @RequestMapping("/backend")
@@ -315,5 +319,11 @@ public class BackendController {
             }
         }
             return backend("done!", HttpStatus.CREATED);
+    }
+
+    @RequestMapping("/backend/settimelineversion")
+    public ResponseEntity<String> setTimelineVersion(@RequestParam("version") int version) {
+        timelineService.setVersion(version);
+        return backend("version set to " + version, HttpStatus.OK);
     }
 }
