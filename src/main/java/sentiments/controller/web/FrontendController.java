@@ -15,17 +15,19 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.annotation.*;
-import sentiments.domain.model.*;
+import sentiments.domain.model.Language;
 import sentiments.domain.model.query.HashtagCount;
 import sentiments.domain.model.query.Timeline;
 import sentiments.domain.model.query.TweetFilter;
+import sentiments.domain.repository.DayStatsRepository;
 import sentiments.domain.repository.tweet.TweetRepository;
+import sentiments.domain.service.LanguageService;
 import sentiments.ml.classifier.Classification;
+import sentiments.ml.classifier.Classifier;
 import sentiments.ml.service.ClassifierService;
 import sentiments.service.ExceptionService;
-import sentiments.domain.service.LanguageService;
 import sentiments.service.ResponseService;
-import sentiments.ml.classifier.Classifier;
+import sentiments.service.TimelineService;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -63,6 +65,12 @@ public class FrontendController extends BasicWebController {
 
     @Autowired
     ExceptionService exceptionService;
+
+    @Autowired
+    DayStatsRepository dayStatsRepository;
+
+    @Autowired
+    private TimelineService timelineService;
 
     @RequestMapping("/")
     public ResponseEntity<String> html() {
@@ -190,7 +198,7 @@ public class FrontendController extends BasicWebController {
 
     @RequestMapping(value="/timeline", method = RequestMethod.POST, consumes = "application/json")
     public ResponseEntity<String> timeline(@RequestBody TweetFilter tf) {
-        Timeline timeline = tweetRepository.countByOffensiveAndDayInInterval(tf);
+        Timeline timeline = timelineService.getTimeline(tf);
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");
         JSONObject out = new JSONObject();

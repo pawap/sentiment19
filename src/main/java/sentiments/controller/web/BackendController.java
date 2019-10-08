@@ -15,23 +15,29 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import sentiments.data.BasicDataImporter;
+import sentiments.domain.model.DayStats;
 import sentiments.domain.model.Language;
+import sentiments.domain.model.query.Timeline;
+import sentiments.domain.repository.DayStatsRepository;
 import sentiments.domain.repository.tweet.TweetRepository;
-import sentiments.ml.service.ClassifierService;
-import sentiments.service.ExceptionService;
 import sentiments.domain.service.LanguageService;
-import sentiments.service.StorageService;
-import sentiments.service.TaskService;
+import sentiments.domain.service.TweetFilterBuilder;
+import sentiments.ml.service.ClassifierService;
 import sentiments.ml.service.WordVectorBuilder;
 import sentiments.ml.service.WordVectorsService;
+import sentiments.service.ExceptionService;
+import sentiments.service.StorageService;
+import sentiments.service.TaskService;
+import sentiments.service.TimelineService;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.*;
 
 /**
  * @author Paw, 6runge
@@ -62,6 +68,12 @@ public class BackendController {
 
     @Autowired
     ExceptionService exceptionService;
+
+    @Autowired
+    DayStatsRepository dayStatsRepository;
+
+    @Autowired
+    TimelineService timelineService;
 
 
     @RequestMapping("/backend")
@@ -281,5 +293,37 @@ public class BackendController {
 
         basicDataImporter.importTsvTestAndTrain(language, targetFiles.get(0).getPath(), targetFiles.get(1).getPath());
         return backend("success", HttpStatus.OK);
+    }
+
+    @RequestMapping("/backend/createdaystats")
+    public ResponseEntity<String> createDayStats() {
+        for (Language language : languageService.getAvailableLanguages()) {
+            TweetFilterBuilder tweetFilterBuilder = new TweetFilterBuilder();
+            List<String> langList = new ArrayList<>();
+            langList.add(language.getIso());
+            Timestamp start = Timestamp.valueOf(tweetRepository.getFirstDate().atTime(LocalTime.MIDNIGHT));
+            Timestamp end = Timestamp.valueOf(tweetRepository.getLastDate().atTime(LocalTime.MIDNIGHT));
+            Timeline offensiveTimeline = tweetRepository.countByOffensiveAndDayInInterval(tweetFilterBuilder.setStart(start).setEnd(end).setLanguages(langList).setOffensive(true).build());
+            Timeline nonoffensiveTimeline = tweetRepository.countByOffensiveAndDayInInterval(tweetFilterBuilder.setStart(start).setEnd(end).setLanguages(langList).setOffensive(false).build());
+            LocalDate current = offensiveTimeline.start;
+            Iterator<Integer> nonoffensiveIterator = nonoffensiveTimeline.timeline.iterator();
+            Iterator<Integer> offensiveIterator = offensiveTimeline.timeline.iterator();
+            while (offensiveIterator.hasNext()) {
+                DayStats dayStats = new DayStats();
+                dayStats.setDate(current);
+                dayStats.setLanguage(language.getIso());
+                dayStats.setNonoffensive(nonoffensiveIterator.next());
+                dayStats.setOffensive(offensiveIterator.next());
+                current = current.plusDays(1);
+                dayStatsRepository.save(dayStats);
+            }
+        }
+            return backend("done!", HttpStatus.CREATED);
+    }
+
+    @RequestMapping("/backend/settimelineversion")
+    public ResponseEntity<String> setTimelineVersion(@RequestParam("version") int version) {
+        timelineService.setVersion(version);
+        return backend("version set to " + version, HttpStatus.OK);
     }
 }
