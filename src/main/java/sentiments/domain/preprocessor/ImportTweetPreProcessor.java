@@ -30,8 +30,12 @@ public class ImportTweetPreProcessor implements TweetPreProcessor {
                     .collect(Collectors.toSet());
             ((Tweet) tweet).setHashtags(hashtags);
         }
-        Language detectedLanguage = detector.detectLanguageOf(text.replaceAll("(((RT )?@[\\w_-]+[:]?)|((https?:\\/\\/)[\\w\\d.-\\/]*))",""));
-        tweet.setLanguage(detectedLanguage.getIsoCode());
+        Language detectedLanguage = detector.detectLanguageOf(text.replaceAll("(((RT )?@[\\w_-]+[:]?)|((https?:\\/\\/)[\\w\\d.-\\/]*))", ""));
+        if (detectedLanguage != null) {
+            tweet.setLanguage(detectedLanguage.getIsoCode());
+        } else {
+            tweet.setLanguage(Language.UNKNOWN.getIsoCode());
+        }
     }
 
     @Override

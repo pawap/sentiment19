@@ -85,7 +85,7 @@ public class BackendController {
             File file = ResourceUtils.getFile(
                     "classpath:frontend/sentiment-backend.html");
             response = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
-            response = response.replaceAll("###MESSAGE###",message + System.lineSeparator()
+            response = response.replace("###MESSAGE###",message + System.lineSeparator()
                     + storageService.getReport() + System.lineSeparator()
                     + taskService.getLogContent());
         } catch (FileNotFoundException e) {
