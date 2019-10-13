@@ -14,8 +14,8 @@ public class TweetFilter {
     private List<String> languages;
     private List<String> hashtags;
 
-    /**
-     * private constructor; use builder!
+    /*
+     * Private constructor; use builder!
      */
     private TweetFilter(){}
 
@@ -114,6 +114,13 @@ public class TweetFilter {
         private List<String> hashtags;
 
         public Builder() {
+            reset();
+        }
+
+        /**
+         * Sets all parameters to null.
+         */
+        public void reset() {
             this.offensive = null;
             this.start = null;
             this.end = null;
@@ -122,37 +129,59 @@ public class TweetFilter {
             this.hashtags = null;
         }
 
-
+        /**
+         * @param offensive false/true, if the desired tweets should be (non-)offensive. null for either.
+         */
         public Builder setOffensive(boolean offensive) {
             this.offensive =offensive;
             return this;
         }
 
+        /**
+         * @param start the creation date of the earliest desired tweet
+         */
         public Builder setStart(Timestamp start) {
             this.start = start;
             return this;
         }
 
+        /**
+         * @param end the creation date of the latest desired tweet
+         */
         public Builder setEnd(Timestamp end) {
             this.end = end;
             return this;
         }
 
+        /**
+         * @param classified the time at which the desired tweets were classified as a {@link Timestamp}
+         */
         public Builder setClassified(Timestamp classified) {
             this.classified = classified;
             return this;
         }
 
+        /**
+         * @param languages a {@link List} of the {@link sentiments.domain.model.Language} of the desired tweets
+         */
         public Builder setLanguages(List<String> languages) {
             this.languages = languages;
             return this;
         }
 
+        /**
+         * @param hashtags a {@link List} of the hashtags of the desired tweets
+         */
         public Builder setHashtags(List<String> hashtags) {
             this.hashtags = hashtags;
             return this;
         }
 
+        /**
+         * Create a TweetFilter with the parameters set beforehand (preferably via method chaining).
+         * Does NOT reset the parameters.
+         * @return the desired {@link TweetFilter}
+         */
         public TweetFilter build() {
             TweetFilter tweetFilter = new TweetFilter();
             tweetFilter.setOffensive(this.offensive);
