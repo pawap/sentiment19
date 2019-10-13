@@ -15,6 +15,11 @@ public class TweetFilter {
     private List<String> hashtags;
 
     /**
+     * private constructor; use builder!
+     */
+    private TweetFilter(){}
+
+    /**
      * @return false/true, if the desired tweets should be (non-)offensive. null for either.
      */
     public Boolean isOffensive() {
@@ -96,5 +101,68 @@ public class TweetFilter {
      */
     public void setClassified(Timestamp classified) {
         this.classified = classified;
+    }
+
+    /**
+     * Use this to build {@link TweetFilter}s.
+     */
+    public static class Builder {
+
+        private Boolean offensive;
+        private Timestamp start, end, classified;
+        private List<String> languages;
+        private List<String> hashtags;
+
+        public Builder() {
+            this.offensive = null;
+            this.start = null;
+            this.end = null;
+            this.classified = null;
+            this.languages = null;
+            this.hashtags = null;
+        }
+
+
+        public Builder setOffensive(boolean offensive) {
+            this.offensive =offensive;
+            return this;
+        }
+
+        public Builder setStart(Timestamp start) {
+            this.start = start;
+            return this;
+        }
+
+        public Builder setEnd(Timestamp end) {
+            this.end = end;
+            return this;
+        }
+
+        public Builder setClassified(Timestamp classified) {
+            this.classified = classified;
+            return this;
+        }
+
+        public Builder setLanguages(List<String> languages) {
+            this.languages = languages;
+            return this;
+        }
+
+        public Builder setHashtags(List<String> hashtags) {
+            this.hashtags = hashtags;
+            return this;
+        }
+
+        public TweetFilter build() {
+            TweetFilter tweetFilter = new TweetFilter();
+            tweetFilter.setOffensive(this.offensive);
+            tweetFilter.setStart(this.start);
+            tweetFilter.setEnd(this.end);
+            tweetFilter.setClassified(this.classified);
+            tweetFilter.setLanguages(this.languages);
+            tweetFilter.setHashtags(this.hashtags);
+
+            return tweetFilter;
+        }
     }
 }
