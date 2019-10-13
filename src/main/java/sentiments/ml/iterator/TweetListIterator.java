@@ -40,7 +40,7 @@ public class TweetListIterator implements DataSetIterator{
      */
     public TweetListIterator(List<Tweet> tweets, Language language) {
         this.outputTweets = new LinkedList<>();
-        this.batchSize = 512;
+        this.batchSize = 4096;
         this.wordVectors = WordVectorsService.getWordVectors(language);
         this.vectorSize = wordVectors.getWordVector(wordVectors.vocab().wordAtIndex(0)).length;
         tokenizerFactory = new DefaultTokenizerFactory();

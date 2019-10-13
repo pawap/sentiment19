@@ -2,6 +2,9 @@ package sentiments.domain.preprocessor;
 
 import sentiments.domain.model.tweet.AbstractTweet;
 
+/**
+ * @author 6koch, Paw
+ */
 public class BasicTweetPreProcessor implements TweetPreProcessor {
 
     @Override

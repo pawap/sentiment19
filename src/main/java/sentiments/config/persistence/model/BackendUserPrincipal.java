@@ -7,6 +7,9 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * @author Paw
+ */
 public class BackendUserPrincipal implements UserDetails {
 
     private User user;

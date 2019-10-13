@@ -15,17 +15,19 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.annotation.*;
-import sentiments.domain.model.*;
+import sentiments.domain.model.Language;
 import sentiments.domain.model.query.HashtagCount;
 import sentiments.domain.model.query.Timeline;
 import sentiments.domain.model.query.TweetFilter;
+import sentiments.domain.repository.DayStatsRepository;
 import sentiments.domain.repository.tweet.TweetRepository;
+import sentiments.domain.service.LanguageService;
 import sentiments.ml.classifier.Classification;
+import sentiments.ml.classifier.Classifier;
 import sentiments.ml.service.ClassifierService;
 import sentiments.service.ExceptionService;
-import sentiments.domain.service.LanguageService;
 import sentiments.service.ResponseService;
-import sentiments.ml.classifier.Classifier;
+import sentiments.service.TimelineService;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -34,9 +36,13 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
-
+/**
+ * @author 6runge, Paw
+ */
 @RestController
 public class FrontendController extends BasicWebController {
 
@@ -59,6 +65,12 @@ public class FrontendController extends BasicWebController {
 
     @Autowired
     ExceptionService exceptionService;
+
+    @Autowired
+    DayStatsRepository dayStatsRepository;
+
+    @Autowired
+    private TimelineService timelineService;
 
     @RequestMapping("/")
     public ResponseEntity<String> html() {
@@ -87,15 +99,19 @@ public class FrontendController extends BasicWebController {
     public ResponseEntity<String> tweet(@RequestBody TweetFilter tf) {
         String base_url = "https://publish.twitter.com/oembed?url=https://twitter.com/user/status/";
         String twitterId;
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("Access-Control-Allow-Origin", "*");
+        JsonObject out = new JsonObject();
         JsonObject obj = null;
-
         int responseCode = 0;
         int i = 0;
         while (responseCode != 200 && i < 100) {
             i++;
             try {
                 twitterId = tweetRepository.getRandomTwitterId(tf);
-                if (twitterId == null) break;
+                if (twitterId == null) {
+                    break;
+                }
                 String url = base_url + twitterId + "&align=center";
                 URL urlObj = new URL(url);
                 HttpURLConnection con = (HttpURLConnection) urlObj.openConnection();
@@ -105,8 +121,10 @@ public class FrontendController extends BasicWebController {
 
                 //add request header
                 responseCode = con.getResponseCode();
-                System.out.println("\nSending 'GET' request to URL : " + url);
-                System.out.println("Response Code : " + responseCode);
+
+//                DEBUG
+//                System.out.println("\nSending 'GET' request to URL : " + url);
+//                System.out.println("Response Code : " + responseCode);
 
                 JsonReader reader = new JsonReader(new InputStreamReader(con.getInputStream()));
                 obj = new JsonParser().parse(reader).getAsJsonObject();
@@ -117,17 +135,16 @@ public class FrontendController extends BasicWebController {
             }
         }
         String str = null;
-        if (obj != null) {
+        if (obj != null && obj.get("html") != null) {
             str = obj.get("html").getAsString();
+
         } else {
             str = "<h3>Couldn't fetch tweet</h3>";
         }
-
-        HttpHeaders responseHeaders = new HttpHeaders();
-        responseHeaders.set("Access-Control-Allow-Origin", "*");
-        JSONObject out = new JSONObject();
-        out.put("html", str);
-        return new ResponseEntity<String>(out.toString(), responseHeaders, HttpStatus.CREATED);
+        log.debug("#calls: " + i + "; Success:" + ((obj != null)? "true" : "false") + ";");
+        
+        out.addProperty("html", str);
+        return new ResponseEntity<>(out.toString(), responseHeaders, HttpStatus.CREATED);
     }
 
     @RequestMapping("/classify")
@@ -148,7 +165,7 @@ public class FrontendController extends BasicWebController {
         JSONObject out = new JSONObject();
         out.put("offensive", classification.isOffensive());
         out.put("probability", classification.getProbability());
-        return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.CREATED);
+        return new ResponseEntity<>(out.toString(), responseHeaders,HttpStatus.CREATED);
     }
 
     @RequestMapping(value = "/stats",  method = RequestMethod.POST, consumes = "application/json")
@@ -159,7 +176,7 @@ public class FrontendController extends BasicWebController {
         responseHeaders.set("Access-Control-Allow-Origin", "*");
         JSONObject out = new JSONObject();
         out.put("count", count);
-        return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.CREATED);
+        return new ResponseEntity<>(out.toString(), responseHeaders,HttpStatus.CREATED);
     }
 
     @RequestMapping(value = "/popularhashtags",  method = RequestMethod.POST, consumes = "application/json")
@@ -176,13 +193,12 @@ public class FrontendController extends BasicWebController {
         JSONObject out = new JSONObject();
         out.put("hashtags", hashtags );
         out.put("total", total );
-        return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.OK);
+        return new ResponseEntity<>(out.toString(), responseHeaders,HttpStatus.OK);
     }
 
     @RequestMapping(value="/timeline", method = RequestMethod.POST, consumes = "application/json")
     public ResponseEntity<String> timeline(@RequestBody TweetFilter tf) {
-
-        Timeline timeline = tweetRepository.countByOffensiveAndDayInInterval(tf);
+        Timeline timeline = timelineService.getTimeline(tf);
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Access-Control-Allow-Origin", "*");
         JSONObject out = new JSONObject();
@@ -191,7 +207,7 @@ public class FrontendController extends BasicWebController {
         out.put("timeline", arr);
         out.put("start", timeline.start.toString());
         out.put("end", timeline.end.toString());
-        return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.OK);
+        return new ResponseEntity<>(out.toString(), responseHeaders,HttpStatus.OK);
     }
 
     @RequestMapping(value="/availablelanguages")
@@ -205,7 +221,7 @@ public class FrontendController extends BasicWebController {
             arr.add(lang.toJSONObject());
         }
         out.put("availableLanguages", arr);
-        return new ResponseEntity<String>(out.toString(), responseHeaders,HttpStatus.OK);
+        return new ResponseEntity<>(out.toString(), responseHeaders,HttpStatus.OK);
     }
 
 }

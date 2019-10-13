@@ -8,6 +8,9 @@ import sentiments.domain.repository.CrawlRepository;
 import java.time.LocalDateTime;
 import java.time.Month;
 
+/**
+ * @author Paw
+ */
 @Service
 public class CrawlService {
 

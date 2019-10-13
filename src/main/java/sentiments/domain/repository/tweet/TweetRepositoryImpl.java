@@ -17,9 +17,11 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Stream;
 
 /**
  * @author paw, 6runge
@@ -166,6 +168,42 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
     }
 
     @Override
+    public Stream<Tweet> find100kByLanguageStartingFrom(String language, LocalDateTime date) {
+        List<AggregationOperation> list = new LinkedList<>();
+        list.add(Aggregation.match(Criteria.where("language").is(language)));
+
+        Criteria c = Criteria.where("crdate");
+        boolean addTimeQuery = false;
+        if (date != null) {
+            c = c.gte(date.toInstant(ZoneOffset.UTC));
+            list.add(Aggregation.match(c));
+        }
+
+        list.add(Aggregation.limit(100000));
+        Aggregation aggregation = Aggregation.newAggregation(list);
+
+        AggregationResults<Tweet> output = mongoTemplate.aggregate(aggregation, Tweet.class, Tweet.class);
+        List<Tweet> mappedOutput = output.getMappedResults();
+
+        return mappedOutput.stream();
+    }
+
+    @Override
+    public Stream<Tweet> find100kByClassifiedAndLanguage(Date classified, String language) {
+        List<AggregationOperation> list = new LinkedList<>();
+        list.add(Aggregation.match(Criteria.where("language").is(language)));
+        list.add(Aggregation.match(Criteria.where("classified").is(null)));
+        Criteria c = Criteria.where("crdate");
+        list.add(Aggregation.limit(8192));
+        Aggregation aggregation = Aggregation.newAggregation(list);
+
+        AggregationResults<Tweet> output = mongoTemplate.aggregate(aggregation, Tweet.class, Tweet.class);
+        List<Tweet> mappedOutput = output.getMappedResults();
+
+        return mappedOutput.stream();
+    }
+
+    @Override
     public BulkOperations getBulkOps() {
         return mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED, Tweet.class);
     }
@@ -173,9 +211,16 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
     private List<AggregationOperation> getWhereOperations(TweetFilter tweetFilter) {
         List<AggregationOperation> list = new LinkedList<>();
 
+        //return only classified tweets
+        list.add(Aggregation.match(Criteria.where("classified").exists(true)));
+        //languages
+        if (tweetFilter.getLanguages() != null && !tweetFilter.getLanguages().isEmpty() ) {
+            list.add(Aggregation.match(Criteria.where("language").in(tweetFilter.getLanguages())));
+        }
         //offensive?
-        //TODO what if null?
-        list.add(Aggregation.match(Criteria.where("offensive").is(tweetFilter.isOffensive())));
+        if (tweetFilter.isOffensive() != null) {
+            list.add(Aggregation.match(Criteria.where("offensive").is(tweetFilter.isOffensive())));
+        }
         //timeframe
         Criteria c = Criteria.where("crdate");
         boolean addTimeQuery = false;
@@ -197,10 +242,7 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
             list.add(Aggregation.match(Criteria.where("hashtags").all(tweetFilter.getHashtags())));
         }
 
-        //languages
-        if (tweetFilter.getLanguages() != null && !tweetFilter.getLanguages().isEmpty() ) {
-            list.add(Aggregation.match(Criteria.where("language").in(tweetFilter.getLanguages())));
-        }
+
         if (tweetFilter.getClassified() != null) {
             list.add(Aggregation.match(Criteria.where("classified").is(tweetFilter.isOffensive())));
         }

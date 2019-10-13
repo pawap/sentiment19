@@ -9,8 +9,11 @@ import sentiments.config.persistence.model.BackendUserPrincipal;
 import sentiments.config.persistence.model.User;
 import sentiments.config.persistence.repository.UserRepository;
 
+/**
+ * @author Paw
+ */
 @Service
-public class BackendUserService  implements UserDetailsService {
+public class BackendUserService implements UserDetailsService {
 
     @Autowired
     private UserRepository userRepository;

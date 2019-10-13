@@ -1,9 +1,5 @@
 <!DOCTYPE html>
-
-
-
 <html lang="en">
-
 	<head>
 		<meta charset='utf-8'>
 		<!--Bootstrap settings/import-->
@@ -12,10 +8,9 @@
 		<!-- Optional theme -->
 		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap-theme.min.css" integrity="sha384-6pzBo3FDv/PJ8r2KRkGHifhEocL+1X2rVCTTkUfGk7/0pbek5mMa1upzvWbrUbOZ" crossorigin="anonymous">
 		<!-- fontawesome for icons-->
-		<script src="https://kit.fontawesome.com/7417487b74.js" crossorigin="anonymous"></script>		<!--Vue.js import-->
-
+<!--		<script src="https://kit.fontawesome.com/7417487b74.js" crossorigin="anonymous"></script>		-->
+		<!--Vue.js import-->
 		<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-
 		<!--VCalender import-->
 		<link rel='stylesheet' href='https://unpkg.com/v-calendar/lib/v-calendar.min.css'>
 		<script src='https://unpkg.com/v-calendar'></script>
@@ -122,13 +117,13 @@
 							Classification of your input: {{status}}
 						</div>
 						<div class="modal-footer">
-							<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancle</button>
+							<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
 							<button type="button" @click="classifyInput()" class="btn btn-primary">Classify</button>
 						</div>
 					</div>
 				</div>
 			</div>
-		</div>
+		</div> 
 	</template>
 	<template id="popular-hashtags">
 		<div>
@@ -223,7 +218,7 @@
 			<div class="row">
 				<div class="col-sm-12">
 					<h1>Sentiment Analysis</h1>
-					<h2>BA-Projekt base.camp</h2>
+					<h2>BA-Project base.camp</h2>
 					<div class="mx-auto">
 						<modal-classifier></modal-classifier>
 					</div>
@@ -233,16 +228,16 @@
 			<hr>
 			<div class=row>
 				<div class="col-sm-12">
-					<h3>Anzahl Tweets: {{offensive + nonOffensive}}</h3>
-					<h3 class="offensive">Anzahl offensive Tweets: {{offensive}}</h3>
-					<h3 class="nonOffensive">Anzahl non-offensive Tweets: {{nonOffensive}}</h3>
+					<h3>Number of Tweets: {{offensive + nonOffensive}}</h3>
+					<h3 class="offensive">Number of offensive Tweets: {{offensive}}</h3>
+					<h3 class="nonOffensive">Number of non-offensive Tweets: {{nonOffensive}}</h3>
 				</div>
 			</div>
 			<tweet-filter ref="tweetfilter" v-model="tweetFilter"></tweet-filter>
 			<div class="row my-3">
 				<div class="col-sm-4">
 					<div class="content p-2">
-						<h4>Anzahl offensive vs. non-offensive Tweets</h4>
+						<h4>Number of offensive vs. non-offensive Tweets</h4>
 						<div>
 							<canvas id="pieChart"></canvas>
 						</div>
@@ -261,7 +256,7 @@
 				</div>
 				<div class="col-sm-8">
 					<div class="content p-2">
-						<h4>Verlauf offensive & non-offensive Tweets</h4>
+						<h4>Course of offensive & non-offensive Tweets</h4>
 						<div>
 							<canvas id="lineChart"></canvas>
 						</div>		
@@ -272,18 +267,17 @@
 			<div class="row my-3">
 				<div class="col-sm-6">
 					<div class="content p-2">
-						<h4>Zufälliger als offensive eingestufter Tweet:</h4>		
+						<h4>Random Tweet classified as offensive:</h4>		
 						<div id=offTweet></div>
 					</div>
 				</div>
 				<div class="col-sm-6">
 					<div class="content p-2">
-						<h4>Zufälliger als non-offensive eingestufter Tweet:</h4>
+						<h4>Random Tweet classified as non-offensive:</h4>
 						<div id=nonOffTweet></div>
 					</div>
 				</div>
 			</div>			
-
 		</div>	
 		<!--Bootstrap imports-->
 		<script

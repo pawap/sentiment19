@@ -37,8 +37,7 @@ import java.util.Locale;
 
 
 /**
- * @author Paw
- *
+ * @author Paw, 6runge
  */
 @Transactional
 @Service
@@ -169,10 +168,82 @@ public class BasicDataImporter {
 			String eString = exceptionService.exceptionToString(e);
 			log.warn("Exception during Import: " + eString);
 		}
-		// persist tweets in batch (256 per insert)
-//		entityManager.flush();
-//		entityManager.clear();
 	}
+
+	/**
+	 * Imports training tweets from a tsv while keeping a ratio of 1/3 nonoffensive and 2/3 offensive tweets.
+	 * @param lang
+	 */
+	public void importFromTsvTwoThirdsOff(String lang) {
+		int i = 0;
+		int nonoff = 0;
+		int off = 0;
+		String tsvPath = this.env.getProperty("localTweetTsv.train." + lang);
+		TweetPreProcessor processor = new ImportTweetPreProcessor();
+		TweetProvider<TrainingTweet> tweetProvider = new TweetProvider<>() {
+			@Override
+			public TrainingTweet createTweet() {
+				return new TrainingTweet();
+			}};
+
+		try {
+			System.out.println(tsvPath);
+			FileInputStream fileInputStream = new FileInputStream(tsvPath);
+			Reader reader = new BufferedReader(new InputStreamReader(fileInputStream));
+			Iterable<CSVRecord> records = CSVFormat.TDF.withHeader().withQuote(null).parse(reader);
+			List<TrainingTweet> tweets = tweetProvider.getNewTweetList();
+			for (CSVRecord record : records) {
+				if (record.get("subtask_a").toLowerCase().startsWith("off")){
+					nonoff++;
+				} else {
+					off++;
+				}
+			}
+			int maxNonoff = Math.min(2 * nonoff, off);
+			int maxOff = Math.min(nonoff, off / 2);
+			System.out.println("maximum for offensive: " + maxOff);
+			System.out.println("maximum for nonoffensive: " + maxNonoff);
+			off = 0;
+			nonoff = 0;
+			fileInputStream = new FileInputStream(tsvPath);
+			reader = reader = new BufferedReader(new InputStreamReader(fileInputStream));
+			records = CSVFormat.TDF.withHeader().withQuote(null).parse(reader);
+			for (CSVRecord record : records) {
+				if (record.get("subtask_a").toLowerCase().startsWith("off")){
+					if (++off > maxOff) {
+						continue;
+					}
+				} else if (++nonoff > maxNonoff){
+					continue;
+				}
+				System.out.println("passed the guards");
+				TrainingTweet tweet = tweetProvider.createTweet();
+				this.mapTsvToTweet(record, tweet, lang);
+				if (tweet != null && tweet.getText() != null) {
+					i++;
+					processor.preProcess(tweet);
+					tweets.add(tweet);
+					System.out.println("persisting tweet " + i + ": " + tweet.getText());
+				}
+				System.out.println(i);
+				if (i % BATCH_SIZE == 0) {
+					trainingTweetRepository.saveAll(tweets);
+					tweets.clear();
+				}
+			}
+			if (!tweets.isEmpty()) {
+				trainingTweetRepository.saveAll(tweets);
+			}
+		} catch (FileNotFoundException e) {
+			String eString = exceptionService.exceptionToString(e);
+			log.warn("Exception during Import: " + eString);
+		} catch (IOException e) {
+			String eString = exceptionService.exceptionToString(e);
+			log.warn("Exception during Import: " + eString);
+		}
+	}
+
+
 
 	private void mapTsvToTweet(CSVRecord record, AbstractTweet tweet, String lang) {
 		tweet.setText(record.get("tweet"));

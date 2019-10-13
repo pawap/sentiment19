@@ -15,24 +15,33 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import sentiments.data.BasicDataImporter;
+import sentiments.domain.model.DayStats;
 import sentiments.domain.model.Language;
+import sentiments.domain.model.query.Timeline;
+import sentiments.domain.repository.DayStatsRepository;
 import sentiments.domain.repository.tweet.TweetRepository;
-import sentiments.ml.service.ClassifierService;
-import sentiments.service.ExceptionService;
 import sentiments.domain.service.LanguageService;
-import sentiments.service.StorageService;
-import sentiments.service.TaskService;
+import sentiments.domain.service.TweetFilterBuilder;
+import sentiments.ml.service.ClassifierService;
 import sentiments.ml.service.WordVectorBuilder;
 import sentiments.ml.service.WordVectorsService;
+import sentiments.service.ExceptionService;
+import sentiments.service.StorageService;
+import sentiments.service.TaskService;
+import sentiments.service.TimelineService;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.*;
 
+/**
+ * @author Paw, 6runge
+ */
 @RestController
 public class BackendController {
 
@@ -60,6 +69,12 @@ public class BackendController {
     @Autowired
     ExceptionService exceptionService;
 
+    @Autowired
+    DayStatsRepository dayStatsRepository;
+
+    @Autowired
+    TimelineService timelineService;
+
 
     @RequestMapping("/backend")
     public ResponseEntity<String> backend(String message, HttpStatus status) {
@@ -70,7 +85,7 @@ public class BackendController {
             File file = ResourceUtils.getFile(
                     "classpath:frontend/sentiment-backend.html");
             response = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
-            response = response.replaceAll("###MESSAGE###",message + System.lineSeparator()
+            response = response.replace("###MESSAGE###",message + System.lineSeparator()
                     + storageService.getReport() + System.lineSeparator()
                     + taskService.getLogContent());
         } catch (FileNotFoundException e) {
@@ -130,6 +145,16 @@ public class BackendController {
         return new ResponseEntity<String>("finished", responseHeaders,HttpStatus.OK);
     }
 
+    @RequestMapping("/backend/import/traintwothirdsnonoff")
+    public ResponseEntity<String> trainImportWithRatio(@RequestParam( value = "lang", defaultValue = "en") String lang) {
+        System.out.println("testAndTrainimportWithRatio was called with " + lang);
+        this.basicDataImporter.importFromTsvTwoThirdsOff(lang);
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("Access-Control-Allow-Origin", "*");
+
+        return new ResponseEntity<String>("finished", responseHeaders,HttpStatus.OK);
+    }
+
     @RequestMapping("/backend/ml/w2vtraining")
     public ResponseEntity<String> w2vtraining(@RequestParam( value = "lang", defaultValue = "en") String lang) {
         WordVectorBuilder w2vb = new WordVectorBuilder(tweetRepository);
@@ -160,6 +185,7 @@ public class BackendController {
         if (language == null) {
             return new ResponseEntity<String>("language not supported", responseHeaders,HttpStatus.NOT_FOUND);
         }
+
         WordVectors word2VecModel = WordVectorsService.getWordVectors(language);
 
         String examples = "Some words with their closest neighbours: \n";
@@ -216,7 +242,7 @@ public class BackendController {
         return new ResponseEntity<String>("training done", responseHeaders,HttpStatus.CREATED);
     }
 
-    @PostMapping("backend/upload")
+    @PostMapping("/backend/upload")
     public ResponseEntity<String> singleFileUpload(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
             return  backend("No File found. Please select a file to upload.", HttpStatus.BAD_REQUEST);
@@ -235,7 +261,7 @@ public class BackendController {
         return backend("You successfully uploaded '" + file.getOriginalFilename() + "'", HttpStatus.CREATED);
     }
 
-    @PostMapping("backend/import/training")
+    @PostMapping("/backend/import/training")
     public ResponseEntity<String> testAndTrainImport(@RequestParam("traindata") MultipartFile trainData,
                                                      @RequestParam("testdata") MultipartFile testData,
                                                      @RequestParam( value = "lang", defaultValue = "") String lang) {
@@ -251,7 +277,7 @@ public class BackendController {
                 break;
             }
             try {
-                File target = storageService.getFile("resources/training/upload/" + file.getOriginalFilename());
+                File target = storageService.getFile("training/upload/" + file.getOriginalFilename());
                 target.setWritable(true);
                 FileUtils.copyInputStreamToFile(file.getInputStream(), target);
                 targetFiles.add(target);
@@ -267,5 +293,37 @@ public class BackendController {
 
         basicDataImporter.importTsvTestAndTrain(language, targetFiles.get(0).getPath(), targetFiles.get(1).getPath());
         return backend("success", HttpStatus.OK);
+    }
+
+    @RequestMapping("/backend/createdaystats")
+    public ResponseEntity<String> createDayStats() {
+        for (Language language : languageService.getAvailableLanguages()) {
+            TweetFilterBuilder tweetFilterBuilder = new TweetFilterBuilder();
+            List<String> langList = new ArrayList<>();
+            langList.add(language.getIso());
+            Timestamp start = Timestamp.valueOf(tweetRepository.getFirstDate().atTime(LocalTime.MIDNIGHT));
+            Timestamp end = Timestamp.valueOf(tweetRepository.getLastDate().atTime(LocalTime.MIDNIGHT));
+            Timeline offensiveTimeline = tweetRepository.countByOffensiveAndDayInInterval(tweetFilterBuilder.setStart(start).setEnd(end).setLanguages(langList).setOffensive(true).build());
+            Timeline nonoffensiveTimeline = tweetRepository.countByOffensiveAndDayInInterval(tweetFilterBuilder.setStart(start).setEnd(end).setLanguages(langList).setOffensive(false).build());
+            LocalDate current = offensiveTimeline.start;
+            Iterator<Integer> nonoffensiveIterator = nonoffensiveTimeline.timeline.iterator();
+            Iterator<Integer> offensiveIterator = offensiveTimeline.timeline.iterator();
+            while (offensiveIterator.hasNext()) {
+                DayStats dayStats = new DayStats();
+                dayStats.setDate(current);
+                dayStats.setLanguage(language.getIso());
+                dayStats.setNonoffensive(nonoffensiveIterator.next());
+                dayStats.setOffensive(offensiveIterator.next());
+                current = current.plusDays(1);
+                dayStatsRepository.save(dayStats);
+            }
+        }
+            return backend("done!", HttpStatus.CREATED);
+    }
+
+    @RequestMapping("/backend/settimelineversion")
+    public ResponseEntity<String> setTimelineVersion(@RequestParam("version") int version) {
+        timelineService.setVersion(version);
+        return backend("version set to " + version, HttpStatus.OK);
     }
 }

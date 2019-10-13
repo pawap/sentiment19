@@ -2,6 +2,9 @@ package sentiments.domain.model.tweet;
 
 import javax.persistence.Entity;
 
+/**
+ * @author Paw
+ */
 @Entity
 public class TrainingTweet extends AbstractTweet{
 	

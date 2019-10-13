@@ -6,6 +6,9 @@ import org.threadly.concurrent.collections.ConcurrentArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+/**
+ * @author Paw
+ */
 @Service
 public class TaskService {
 
@@ -17,6 +20,7 @@ public class TaskService {
         this.tasks = new ConcurrentHashMap<>();
         this.logs = new ConcurrentArrayList<>();
         logs.add("Task Logs" + System.lineSeparator());
+        //this.tasks.putIfAbsent("classify", true);
     }
 
     public boolean checkTaskExecution(String task, boolean activeByDefault) {

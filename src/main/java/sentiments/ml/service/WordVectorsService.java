@@ -10,7 +10,6 @@ import java.util.HashMap;
 
 /**
  * @author Paw
- *
  */
 public class WordVectorsService {
 	
@@ -29,7 +28,6 @@ public class WordVectorsService {
 
         return INSTANCE.get(language);
     }
-
 
     synchronized public static void saveWordVectors(Word2Vec vec, Language language) {
         WordVectorSerializer.writeWord2VecModel(vec, new File(language.getWordVectorsFilename()));

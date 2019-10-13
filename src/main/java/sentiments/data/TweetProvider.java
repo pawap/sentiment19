@@ -5,6 +5,9 @@ import sentiments.domain.model.tweet.AbstractTweet;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * @author Paw
+ */
 abstract public class TweetProvider<T extends AbstractTweet> {
 
     public abstract T createTweet();

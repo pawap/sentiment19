@@ -4,6 +4,9 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 
+/**
+ * @author Paw
+ */
 @Service
 public class StorageService {
 

@@ -6,6 +6,9 @@ import sentiments.domain.repository.tweet.TrainingTweetRepository;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * @author Paw
+ */
 public interface Classifier {
 
     Classification classifyTweet(String tweet);

@@ -4,6 +4,9 @@ import javax.persistence.Entity;
 import java.time.LocalDateTime;
 import java.util.Date;
 
+/**
+ * @author Paw
+ */
 @Entity
 public class Crawl {
 

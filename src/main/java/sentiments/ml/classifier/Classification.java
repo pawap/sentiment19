@@ -1,5 +1,8 @@
 package sentiments.ml.classifier;
 
+/**
+ * @author Paw
+ */
 public class Classification
 {
     private double probability;

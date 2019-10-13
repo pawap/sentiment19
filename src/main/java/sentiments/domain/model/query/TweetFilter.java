@@ -8,16 +8,16 @@ import java.util.List;
  */
 public class TweetFilter {
 
-    private boolean offensive;
+    private Boolean offensive = null;
     private Timestamp start, end, classified;
     private List<String> languages;
     private List<String> hashtags;
 
-    public boolean isOffensive() {
+    public Boolean isOffensive() {
         return offensive;
     }
 
-    public void setOffensive(boolean offensive) {
+    public void setOffensive(Boolean offensive) {
         this.offensive = offensive;
     }
 

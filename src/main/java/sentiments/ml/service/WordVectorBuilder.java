@@ -1,6 +1,7 @@
 package sentiments.ml.service;
 
 import org.deeplearning4j.models.embeddings.learning.impl.elements.SkipGram;
+import org.deeplearning4j.models.sequencevectors.interfaces.VectorsListener;
 import org.deeplearning4j.models.word2vec.VocabWord;
 import org.deeplearning4j.models.word2vec.Word2Vec;
 import org.deeplearning4j.text.sentenceiterator.SentenceIterator;
@@ -12,6 +13,8 @@ import sentiments.domain.repository.tweet.TweetRepository;
 import sentiments.ml.iterator.TweetSentenceIterator;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Builds Wordvectors out of the Tweets in a given {@link TweetRepository}.
@@ -51,10 +54,13 @@ public class WordVectorBuilder {
                 .windowSize(4)
                 .seed(42)
                 .epochs(5)
-                .elementsLearningAlgorithm(new SkipGram<VocabWord>())
+                .elementsLearningAlgorithm(new SkipGram<>())
                 .iterate(sentenceIterator)
                 .tokenizerFactory(tokenizerFactory)
                 .build();
+        Set<VectorsListener<VocabWord>> set = new HashSet<>();
+        //set.add(new ScoreListener<>(ListenerEvent.ITERATION, 1));
+        vec.setEventListeners(set);
         vec.fit();
         WordVectorsService.saveWordVectors(vec, language);
 

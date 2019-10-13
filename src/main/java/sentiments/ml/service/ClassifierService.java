@@ -9,6 +9,9 @@ import sentiments.ml.classifier.W2VTweetClassifier;
 
 import java.util.HashMap;
 
+/**
+ * @author Paw
+ */
 @Service
 public class ClassifierService {
 

@@ -5,6 +5,9 @@ import org.springframework.stereotype.Service;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+/**
+ * @author 6runge
+ */
 @Service
 public class ExceptionService {
 
