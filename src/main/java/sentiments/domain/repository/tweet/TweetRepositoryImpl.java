@@ -38,14 +38,11 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
     @Override
     public Timeline countByOffensiveAndDayInInterval(TweetFilter tweetFilter) {
         List<AggregationOperation> list = getWhereOperations(tweetFilter);
-        list.add(Aggregation.project()
-                .andExpression("year(crdate)").as("year")
-                .andExpression("month(crdate)").as("month")
-                .andExpression("dayOfMonth(crdate)").as("day1"));
-        list.add(Aggregation.group(Aggregation.fields().and("year").and("month").and("day1"))
+        list.add(Aggregation.sort(Sort.Direction.ASC, "year", "month", "day"));
+        list.add(Aggregation.group(Aggregation.fields().and("year").and("month").and("day"))
                 .count().as("count"));
-        list.add(Aggregation.sort(Sort.Direction.ASC, "year", "month", "day1"));
-        list.add(Aggregation.project("count").andExpression("concat(substr(year,0,-1),'-',substr(month,0,-1),'-',substr(day1,0,-1))").as("day"));
+        list.add(Aggregation.sort(Sort.Direction.ASC, "year", "month", "day"));
+        list.add(Aggregation.project("count").andExpression("concat(substr(year,0,-1),'-',substr(month+1,0,-1),'-',substr(day,0,-1))").as("date"));
 
         Aggregation agg = Aggregation.newAggregation(list);
 
@@ -74,7 +71,7 @@ public class TweetRepositoryImpl implements TweetRepositoryCustom {
         LocalDate current = start;
 
         for (DayCount i : mongoTemplate.aggregate(agg, Tweet.class, DayCount.class)) {
-            LocalDate currentDate = LocalDate.parse(i.day, f);
+            LocalDate currentDate = LocalDate.parse(i.date, f);
             while (current.compareTo(currentDate) < 0) {
                 result.add(0);
                 current = current.plusDays(1);
