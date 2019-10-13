@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
  */
 public interface CrawlRepository extends MongoRepository<Crawl, Integer> {
 
-    public Crawl findTopByOrderByDateDesc();
+    Crawl findTopByOrderByDateDesc();
 
-    public Crawl findByDate(LocalDateTime date);
+    Crawl findByDate(LocalDateTime date);
 }
