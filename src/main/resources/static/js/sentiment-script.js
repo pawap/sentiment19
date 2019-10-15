@@ -90,12 +90,18 @@ window.addEventListener('load', function(){
             setPopularHashtags: function (tags) {
                 this.$refs.popularhashtags.setTags(tags);
             },
+            disableLoading: function () {
+                $('#overlay').fadeOut();
+                $('.tweetfilter-content').removeClass('disabled');
+            },
             filterUpdated: function () {
                 let languages = (this.selectedLanguages.length > 0) ?
                     this.selectedLanguages :
                     this.availableLanguages.map(lang => lang.iso);
 
                 console.log(languages);
+                $('#overlay').css("display","flex").hide().fadeIn();
+                $('.tweetfilter-content').addClass('disabled');
                 this.$emit('input', {
                     selectedDate: this.value.selectedDate,
                     hashtags: this.value.hashtags,
@@ -135,10 +141,18 @@ window.addEventListener('load', function(){
                 }
             }
         },
-
-
         methods:{
+            registerUpdate : function () {
+                console.log(this.updateCounter++);
+            },
+            finishUpdate : function () {
+                console.log(this.updateCounter--);
+                if (this.updateCounter == 0) {
+                    this.$refs.tweetfilter.disableLoading();
+                }
+            },
             updateHashtags: function () {
+                this.registerUpdate();
                 axios.post('/sentiment19/popularhashtags?limit=8',this.getCurrentFilter())
                     .then(response => {
                         let popularHashtags = response.data.hashtags.map(function (tag, index) {
@@ -152,8 +166,8 @@ window.addEventListener('load', function(){
                             if (vue.tweetFilter.hashtags.filter(tag => (tag.value === e.value)).length > 0) {
                                 e.hidden = 1;
                             }
-                        })
-                        console.log(popularHashtags);
+                        });
+                        this.finishUpdate();
                         this.$refs.tweetfilter.setPopularHashtags(popularHashtags);
                     })
 
@@ -164,7 +178,7 @@ window.addEventListener('load', function(){
              * Updates the main offensive and nonOffensive tweet amount counters
              */
             updateCounters: function(){
-
+                this.registerUpdate();
                 axios.all([
                     axios.post('/sentiment19/stats',this.getCurrentFilterByOffensive(1)),
                     axios.post('/sentiment19/stats',this.getCurrentFilterByOffensive(0))
@@ -172,6 +186,7 @@ window.addEventListener('load', function(){
                   .then(axios.spread((off, nonOff) => {
                     this.offensive = off.data.count
                     this.nonOffensive = nonOff.data.count
+                    this.finishUpdate();
                   }));
                 
             },
@@ -179,7 +194,7 @@ window.addEventListener('load', function(){
              * Updates bar chart, based on selected filter
              */
             updateBarChart: function(){
-
+                this.registerUpdate();
                 axios.post('/sentiment19/popularhashtags?limit=5',this.getCurrentFilterByOffensive(0))
                     .then(response => {
                         barChartNonOff.data.labels = response.data.hashtags.map(function (tag, index) {
@@ -192,8 +207,9 @@ window.addEventListener('load', function(){
                             return 'rgb(108,117,125)';
                         })
                         barChartNonOff.update()
-
+                        this.finishUpdate();
                     })
+                this.registerUpdate();
                 axios.post('/sentiment19/popularhashtags?limit=5',this.getCurrentFilterByOffensive(1))
                     .then(response => {
                         barChartOff.data.labels = response.data.hashtags.map(function (tag, index) {
@@ -206,14 +222,14 @@ window.addEventListener('load', function(){
                             return 'rgb(108,117,125)';
                         })
                         barChartOff.update()
-
+                        this.finishUpdate();
                     })
             },
             /**
              * Updates pie chart
              */
             updatePieChart: function(){
-
+                this.registerUpdate();
                 axios.all([
                     axios.post('/sentiment19/stats',
                         this.getCurrentFilterByOffensive(1)),
@@ -224,14 +240,15 @@ window.addEventListener('load', function(){
                     data =  [off.data.count, nonOff.data.count]
                     pieChart.data.datasets[0].data = data
                     pieChart.update()
-                }));
+                    this.finishUpdate();
+                  }));
 
             },
             /**
              * Updates offensive and non-offensive example tweets
              */
             updateTweets: function(){
-
+                this.registerUpdate();
                 axios.all([
                     axios.post('/sentiment19/tweet',
                         this.getCurrentFilterByOffensive(1)),
@@ -242,6 +259,7 @@ window.addEventListener('load', function(){
                         document.getElementById("offTweet").innerHTML = offTweet.data.html
                         document.getElementById("nonOffTweet").innerHTML = nonOffTweet.data.html
                         twttr.widgets.load()
+                        this.finishUpdate();
                     }));
             },
 
@@ -249,6 +267,7 @@ window.addEventListener('load', function(){
              * Updates the line chart (labels and data)
              */
             updateLineChart: function(){
+                this.registerUpdate();
                 axios.all([
                     axios.post('/sentiment19/timeline', this.getCurrentFilterByOffensive(1)),
                     axios.post('/sentiment19/timeline', this.getCurrentFilterByOffensive(0))
@@ -259,7 +278,8 @@ window.addEventListener('load', function(){
                         lineChart.data.labels = dateRange
                         lineChart.data.datasets[0].data = off.data.timeline
                         lineChart.data.datasets[1].data = nonOff.data.timeline
-                        lineChart.update()
+                        lineChart.update();
+                        this.finishUpdate();
                     }));
 
             },
@@ -296,6 +316,7 @@ window.addEventListener('load', function(){
          * Updates the view, when data is changed
          */
         updated: function () {
+            this.updateCounter = 0;
             this.updateHashtags();
             this.updatePieChart();
             this.updateLineChart();
@@ -509,11 +530,11 @@ window.addEventListener('load', function(){
         vue.updateHashtags()
         vue.updateBarChart()
 
-    $(document).on('load', function () {
-        $(function(){
-            $('[data-toggle="tooltip"]').tooltip({ trigger: "hover", html:true});
+        $(document).on('load', function () {
+            $(function(){
+                $('[data-toggle="tooltip"]').tooltip({ trigger: "hover", html:true});
+            })
         })
-    })
     }
     
    //run init function
