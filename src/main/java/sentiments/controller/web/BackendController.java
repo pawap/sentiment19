@@ -18,10 +18,10 @@ import sentiments.data.BasicDataImporter;
 import sentiments.domain.model.DayStats;
 import sentiments.domain.model.Language;
 import sentiments.domain.model.query.Timeline;
+import sentiments.domain.model.query.TweetFilter;
 import sentiments.domain.repository.DayStatsRepository;
 import sentiments.domain.repository.tweet.TweetRepository;
 import sentiments.domain.service.LanguageService;
-import sentiments.domain.service.TweetFilterBuilder;
 import sentiments.ml.service.ClassifierService;
 import sentiments.ml.service.WordVectorBuilder;
 import sentiments.ml.service.WordVectorsService;
@@ -298,7 +298,7 @@ public class BackendController {
     @RequestMapping("/backend/createdaystats")
     public ResponseEntity<String> createDayStats() {
         for (Language language : languageService.getAvailableLanguages()) {
-            TweetFilterBuilder tweetFilterBuilder = new TweetFilterBuilder();
+            TweetFilter.Builder tweetFilterBuilder = new TweetFilter.Builder();
             List<String> langList = new ArrayList<>();
             langList.add(language.getIso());
             Timestamp start = Timestamp.valueOf(tweetRepository.getFirstDate().atTime(LocalTime.MIDNIGHT));

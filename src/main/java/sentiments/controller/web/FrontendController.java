@@ -26,7 +26,6 @@ import sentiments.ml.classifier.Classification;
 import sentiments.ml.classifier.Classifier;
 import sentiments.ml.service.ClassifierService;
 import sentiments.service.ExceptionService;
-import sentiments.service.ResponseService;
 import sentiments.service.TimelineService;
 
 import java.io.File;
@@ -36,8 +35,6 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 /**
@@ -59,9 +56,6 @@ public class FrontendController extends BasicWebController {
 
     @Autowired
     LanguageService languageService;
-
-    @Autowired
-    ResponseService responseService;
 
     @Autowired
     ExceptionService exceptionService;
