@@ -19,7 +19,7 @@ window.addEventListener('load', function(){
                 axios
                     .get("/sentiment19/classify?tweet=" + this.input)
                     .then(response => {
-                        this.status = response.data.offensive ? "offensive" : "nonoffensive"
+                        this.status = (response.data.offensive ? "offensive" : "nonoffensive")
                             + " (" + response.data.probability + ")"
                     })
             },
