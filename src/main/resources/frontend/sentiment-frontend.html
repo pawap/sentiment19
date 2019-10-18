@@ -7,8 +7,10 @@
 		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 		<!-- Optional theme -->
 		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap-theme.min.css" integrity="sha384-6pzBo3FDv/PJ8r2KRkGHifhEocL+1X2rVCTTkUfGk7/0pbek5mMa1upzvWbrUbOZ" crossorigin="anonymous">
-		<!-- fontawesome for icons-->
-<!--		<script src="https://kit.fontawesome.com/7417487b74.js" crossorigin="anonymous"></script>		-->
+		<!-- Google Fonts Montserrat -->
+		<link href="https://fonts.googleapis.com/css?family=Montserrat:400,400i,700,700i&display=swap" rel="stylesheet">
+		<!-- Google Material Icons -->
+		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 		<!--Vue.js import-->
 		<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
 		<!--VCalender import-->
@@ -22,11 +24,37 @@
 		<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 		<!--Twitter import-->
 		<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+		<!-- fontawesome for icons-->
+		<script src="https://kit.fontawesome.com/7417487b74.js" crossorigin="anonymous"></script>
 		<!--Own Script-->
 		<script src="/sentiment19/js/sentiment-script.js"></script>
 	</head>
 	<!--CSS Styling-->
 	<style>
+		@keyframes sentiment {
+			0%   {color: rgb(255, 255, 253);}
+			25%  {color: rgb(253, 51, 53);}
+			50%  {color: rgb(111, 157, 60);}
+			100% {color: rgb(253, 251, 253);}
+		}
+
+		@keyframes buttonrotate {
+			0%   {transform: rotate(0deg);}
+			25%  {transform: rotate(0deg);}
+			30%  {transform: rotate(10deg);}
+			35%  {transform: rotate(0deg);}
+			40%  {transform: rotate(350deg);}
+			45%  {transform: rotate(0deg);}
+			50%  {transform: rotate(-10deg);}
+			55%  {transform: rotate(0deg);}
+			60%  {transform: rotate(10deg);}
+			65%  {transform: rotate(0deg);}
+			70%  {transform: rotate(-5deg);}
+			75%  {transform: rotate(0deg);}
+			80%  {transform: rotate(5deg);}
+			85%  {transform: rotate(0deg);}
+			100%  {transform: rotate(0deg);}
+		}
 		.main{
 			text-align: center;
 		}
@@ -94,32 +122,236 @@
 		.checkbox label input[type="checkbox"]:disabled+.cr {
 			opacity: .5;
 		}
+		#overlay {
+			display: none;
+			align-items: center;
+			flex-direction: column;
+			justify-content: space-around;
+			position: absolute;
+			z-index: 2;
+			opacity: 80;
+			background: rgba(39, 42, 43, 0.8);
+			border-radius: 4px;
+			margin: -15px 0 0 -15px;
+			height: 100%;
+			width: 100%;
+			top: 0;
+			left: 0;
+		}
+		.disabled {
+			pointer-events: none;
+			opacity: 0.8;
+		}
+		*{
+			font-family: Montserrat, sans-serif;
+			text-shadow: 0 0px 0;
+		}
+
+		* :hover{
+			text-shadow: 0 0px 0;
+		}
+
+		body{
+			background-color: #333;
+			color: #fff;
+		}
+
+		.main{
+			text-align: center;
+		}
+
+		select{
+			padding: 1px 0px;
+			min-width: 150px;
+		}
+
+		textarea{
+			max-width: 600px;
+		}
+
+		.offensive{
+			color: rgb(255, 99, 132)
+		}
+
+		.nonOffensive{
+			color: rgb(0,255,0)
+		}
+
+		.btn:focus{
+			box-shadow: none;
+		}
+		.checkbox label:after {
+			content: '';
+			display: table;
+			clear: both;
+		}
+
+		.checkbox .cr {
+			position: relative;
+			display: inline-block;
+			border: 1px solid #a9a9a9;
+			border-radius: .25em;
+			width: 1.3em;
+			height: 1.3em;
+			float: left;
+			margin-right: .5em;
+		}
+
+		.checkbox .cr .cr-icon {
+			position: absolute;
+			font-size: .8em;
+			line-height: 0;
+			top: 50%;
+			left: 15%;
+		}
+
+		.checkbox label input[type="checkbox"] {
+			display: none;
+		}
+
+		.checkbox label input[type="checkbox"]+.cr>.cr-icon {
+			opacity: 0;
+		}
+
+		.checkbox label input[type="checkbox"]:checked+.cr>.cr-icon {
+			opacity: 1;
+		}
+
+		.checkbox label input[type="checkbox"]:disabled+.cr {
+			opacity: .5;
+		}
+
+		.navbar{
+			background-color: #222;
+		}
+
+		.navbar-brand{
+			color: #fff;
+			letter-spacing: 0.2px;
+		}
+
+		.bold{
+			font-weight: bold;
+		}
+
+		.red{
+			color: #fd3335;
+		}
+
+		.green{
+			color: #6f9d3c;
+		}
+
+		.nav-item{
+			color: #fff;
+		}
+
+		a{
+			color: #fff;
+		}
+
+		a:hover {
+			color: #aaa;
+			text-decoration: none;
+		}
+
+		.counter{
+			font-size: 2.5em;
+			margin-top: 0.5em;
+			margin-bottom: 1em;
+		}
+
+		.twitter-tweet{
+			text-align: center;
+			margin: auto;
+		}
+
+		h5{
+			margin: 16px 0px;
+		}
+
+
+
+		.modal-window {
+			position: fixed;
+			background-color: rgba(0, 0, 0, 0.75);
+			top: 0;
+			right: 0;
+			bottom: 0;
+			left: 0;
+			z-index: 999;
+			opacity: 0;
+			pointer-events: none;
+			-webkit-transition: all 0.3s;
+			-moz-transition: all 0.3s;
+			transition: all 0.3s;
+		}
+
+		.modal-window:target {
+			opacity: 1;
+			pointer-events: auto;
+		}
+
+		.modal-window>div {
+			position: relative;
+			margin: 3rem;
+			padding: 3rem;
+			background: #fff;
+			color: #000;
+		}
+
+		.modal-window header {
+			font-weight: bold;
+		}
+
+		.modal-close {
+			position: absolute;
+			right: 0;
+			top: 0;
+			margin: 20px;
+			color: #000;
+		}
+
+		.modal-close:hover {
+			color: #666;
+		}
+
+		.modal-window h1 {
+			font-size: 150%;
+			margin: 0 0 15px;
+		}
+
+		.about-content{
+			max-width: 45rem;
+		}
+		.badge-primary {
+			background-color: rgb(143, 127, 4);
+		}
+		.btn-primary {
+			background-image: none;
+			background-color: rgb(143, 127, 4);
+		}
 	</style>
 	<template id="modal-classifier">
-		<div>
-			<button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#modal-classifier-modal-content">
+		<div class="mt-5">
+
+			<a type="button" style="animation-name: buttonrotate; animation-duration: 16s; animation-iteration-count: infinite" class="btn btn-lg btn-secondary" href="#modal-classifier-modal-content">
 				Classifier
-			</button>
+			</a>
 			<!-- Modal for classifier -->
-			<div class="modal fade" id="modal-classifier-modal-content" tabindex="-1">
-				<div class="modal-dialog modal-dialog-centered">
-					<div class="modal-content">
-						<div class="modal-header">
-							<h4 class="modal-title" id="exampleModalLongTitle">Classify custom input</h4>
-							<button type="button" class="close" data-dismiss="modal">
-								<span aria-hidden="true">&times;</span>
-							</button>
+			<div class="modal-window fade" id="modal-classifier-modal-content" tabindex="-1" style="width:auto; height: auto;">
+				<div>
+					<a href="#modal-close" title="Close" class="modal-close"><i class="material-icons md-24">close</i></a>
+					<h1><b>Classify custom input</b></h1>
+					<div class="modal-body about-content">
+						<div class="form-group">
+							<textarea v-model="input" placeholder="Enter input here" class="form-control" id="classifierInput" rows="5"></textarea>
 						</div>
-						<div class="modal-body">
-							<div class="form-group">
-								<textarea v-model="input" placeholder="Enter input here" class="form-control" id="classifierInput" rows="5"></textarea>
-							</div>
-							Classification of your input: {{status}}
-						</div>
-						<div class="modal-footer">
-							<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-							<button type="button" @click="classifyInput()" class="btn btn-primary">Classify</button>
-						</div>
+						Classification of your input: {{status}}
+					</div>
+					<div class="modal-footer about-content">
+						<a type="button" class="btn btn-secondary"href="#modal-close">Cancel</a>
+						<button type="button" @click="classifyInput()" class="btn btn-primary">Classify</button>
 					</div>
 				</div>
 			</div>
@@ -127,7 +359,7 @@
 	</template>
 	<template id="popular-hashtags">
 		<div>
-			<h5>popular</h5>
+			<h4><b>#popular</b></h4>
 			<div class="row p-3">
 				<span class="badge badge-primary small m-1 btn has-tooltip"
 					  v-for="(hashtag, key) in popularHashtags"
@@ -145,80 +377,123 @@
 		</div>
 	</template>
 	<template id="tweet-filter">
-		<div class="row">
-			<div class="col-sm-3">
-				<h5>Hashtags</h5>
-				<div class="row p-3">
-					<span
-						:class="{'badge-primary': (hashtag.popular == 1), 'badge-secondary': (hashtag.popular != 1)}" class="badge small m-1 btn"
-				    	@click="filterUpdated(); $delete(value.hashtags, key); if (hashtag.popular == 1) {hashtag.hidden = 0}"
-						v-for="(hashtag, key) in value.hashtags">
-						{{hashtag.value}}
-					</span>
+		<div class="container" style="position:relative;">
+			<div class="row tweetfilter-content">
+				<div class="col-sm-3">
+					<h4><b>hashtags</b></h4>
+					<div class="row p-3">
+						<span
+							:class="{'badge-primary': (hashtag.popular == 1), 'badge-secondary': (hashtag.popular != 1)}" class="badge small m-1 btn"
+							@click="$delete(value.hashtags, key); if (hashtag.popular == 1) {hashtag.hidden = 0}"
+							v-for="(hashtag, key) in value.hashtags">
+							{{hashtag.value}}
+						</span>
+					</div>
+					<div class="row p-3">
+						<div class="input-group">
+							<input class="form-control form-control-sm" type="text" @keydown.space.prevent id="newhashtag">
+							<button class="btn btn-sm btn-secondary input-group-btn" @click="addHashtag">Add Hashtag</button>
+						</div>
+					</div>
 				</div>
-				<div class="input-group">
-					<input class="form-control form-control-sm" type="text" @keydown.space.prevent id="newhashtag">
-					<button class="btn btn-sm btn-secondary input-group-btn" @click="addHashtag">Add Hashtag</button>
+				<div class="col-sm-3">
+					<popular-hashtags ref="popularhashtags" v-on:new-hashtag="addHashtag($event)"></popular-hashtags>
 				</div>
-			</div>
-
-			<div class="col-sm-3">
-				<popular-hashtags ref="popularhashtags" v-on:new-hashtag="addHashtag($event)"></popular-hashtags>
-			</div>
-			<div class="col-sm-3">
-				<div class="row p-3">
-					<v-date-picker
-							popover-align="center"
-							:max-date='new Date()'
-							mode='range'
-							value="value.selectedDate"
-							v-model="value.selectedDate"
-							v-on:change="filterUpdated"
-							:input-props='{ "class": "form-control", "id":"selectedDate" }'
-							day-format="YYYY-MM-DD">
-					</v-date-picker>
+				<div class="col-sm-4">
+					<h4><b>timeframe</b></h4>
+					<div class="row p-3">
+						<v-date-picker
+								popover-align="center"
+								:max-date='new Date()'
+								mode='range'
+								value="value.selectedDate"
+								v-model="value.selectedDate"
+								:input-props='{ "class": "form-control", "id":"selectedDate" }'
+								day-format="YYYY-MM-DD">
+						</v-date-picker>
+					</div>
+					<div class="row p-3">
+						<div class="btn-group btn-group-toggle">
+							<template v-for="time in times">
+								<label class="btn btn-secondary btn-sm" :class="{'active': time.start == value.selectedDate.start && time.end == value.selectedDate.end}" :for="'radio-' + time.value">
+									<input type="radio"
+										   :id="'radio-' + time.value"
+										   v-model="value.selectedDate"
+										   :value="{'start': time.start, 'end': time.end}"
+										   :checked="time.start == value.selectedDate.start && time.end == value.selectedDate.end"
+											/>
+									{{time.text}}
+								</label>
+							</template>
+						</div>
+					</div>
 				</div>
-
-					<div class="btn-group btn-group-toggle">
-						<template v-for="time in times">
-							<label class="btn btn-secondary green btn-sm" :class="{'active': time.start == value.selectedDate.start && time.end == value.selectedDate.end}" :for="'radio-' + time.value">
-								<input type="radio"
-									   :id="'radio-' + time.value"
-									   v-model="value.selectedDate"
-									   :value="{'start': time.start, 'end': time.end}"
-									   :checked="time.start == value.selectedDate.start && time.end == value.selectedDate.end"
-									    @change="filterUpdated"/>
-								{{time.text}}
-							</label>
+				<div class="col-sm-2">
+					<h4><b>languages</b></h4>
+					<div class="row p-3">
+						<template v-for="lang in availableLanguages">
+							<div class="checkbox m-1">
+								<label :for="'checkbox-' + lang.iso">
+									<input class="checkbox"
+										   type="checkbox"
+										   :id="'checkbox-' + lang.iso"
+										   v-model="selectedLanguages"
+										   :value="lang.iso"
+										   checked="checked"
+										   />
+									<span class="cr"><i class="cr-icon fas fa-check"></i></span>
+									{{lang.name}}
+								</label>
+							</div>
 						</template>
 					</div>
+				</div>
 			</div>
-			<div class="col-sm-3">
-				<div class="row p-3">
-					<template v-for="lang in availableLanguages">
-						<div class="checkbox m-1">
-							<label :for="'checkbox-' + lang.iso">
-								<input class="checkbox"
-									   type="checkbox"
-									   :id="'checkbox-' + lang.iso"
-									   v-model="selectedLanguages"
-									   :value="lang.iso"
-									   checked="checked"
-									   @change="filterUpdated"/>
-								<span class="cr"><i class="cr-icon fas fa-check"></i></span>
-								{{lang.name}}
-							</label>
-						</div>
-					</template>
+			<div class="row tweetfilter-content">
+				<div class="col-sm-12 mt-1">
+					<button class="btn btn-secondary" id="#apply-button" @click="filterUpdated" style="width: 100%">Apply Filter</button>
+				</div>
+			</div>
+			<div id="overlay">
+				<div class="row" style="width:60%;">
+					<p class="text-light align-content-center">Database-Queries may not be optimized. Slow performance can occur. We are working on optimizations and apologize for the inconveniance.</p>
+				</div>
+				<div class="row">
+					<div class="spinner-grow text-primary" style="width: 5rem; height: 5rem" role="status">
+						<span class="sr-only">Loading...</span>
+					</div>
 				</div>
 			</div>
 		</div>
 	</template>
+
+<!--	MAIN      -->
+		<nav class="navbar">
+			<a class="navbar-brand" href="#">#<span class="bold red">offensive</span>or<span class="bold green">not</span></a>
+			<div class="nav-items">
+				<a href="#about">About&nbsp;</a>
+			</div>
+		</nav>
+
+		<div id="about" class="modal-window">
+			<div>
+				<a href="#modal-close" title="Close" class="modal-close"><i class="material-icons md-24">close</i></a>
+				<h1><b>About</b></h1>
+				<br>
+				<div class="about-content">
+					<p>This project was created as part of the base.camp project at the University of Hamburg.</p>
+					<p>You query a database of collected twitter-data to visualize simple statistics of offensive vs. non-offensive tweets </p>
+					<p>Tweets are filterable by timeframe, hashtags and language.</p>
+					<p>Classification is done via a dl4j backend inside a spring Boot Application.</p>
+					<p><a class="btn btn-secondary" href="https://github.com/pawap/sentiment19">View it on Github</a></p>
+				</div>
+			</div>
+		</div>
 		<div class="container-fluid main" id="app">
 			<div class="row">
 				<div class="col-sm-12">
-					<h1>Sentiment Analysis</h1>
-					<h2>BA-Project base.camp</h2>
+					<h1 style="animation-name: sentiment; animation-duration: 16s; animation-iteration-count: infinite;"><b>Sentiment Analysis</b></h1>
+					<h4 style="animation-name: sentiment; animation-delay: 8s; animation-duration: 16s; animation-iteration-count: infinite;"><b>BA-Project base.camp</b></h4>
 					<div class="mx-auto">
 						<modal-classifier></modal-classifier>
 					</div>
@@ -228,9 +503,11 @@
 			<hr>
 			<div class=row>
 				<div class="col-sm-12">
-					<h3>Number of Tweets: {{offensive + nonOffensive}}</h3>
-					<h3 class="offensive">Number of offensive Tweets: {{offensive}}</h3>
-					<h3 class="nonOffensive">Number of non-offensive Tweets: {{nonOffensive}}</h3>
+					<h1 class="counter">
+						<i class="material-icons md-48">chat</i>&nbsp;{{offensive + nonOffensive}} &nbsp;=&nbsp;
+						<i class="material-icons md-48 red">chat</i>&nbsp;<span class="red">{{offensive}}</span> &nbsp;+&nbsp;
+						<i class="material-icons md-48 green">chat</i>&nbsp;<span class="green">{{nonOffensive}}</span>
+					</h1>
 				</div>
 			</div>
 			<tweet-filter ref="tweetfilter" v-model="tweetFilter"></tweet-filter>
@@ -267,17 +544,33 @@
 			<div class="row my-3">
 				<div class="col-sm-6">
 					<div class="content p-2">
-						<h4>Random Tweet classified as offensive:</h4>		
-						<div id=offTweet></div>
+						<div>
+							<img id="Off_gif" src="" alt="Gif symbolizing offensivity" class="img-fluid">
+						</div>
 					</div>
 				</div>
 				<div class="col-sm-6">
 					<div class="content p-2">
-						<h4>Random Tweet classified as non-offensive:</h4>
-						<div id=nonOffTweet></div>
+						<div>
+							<img id="Non_Off_gif" src="" alt="Gif symbolizing non-offensivity" class="img-fluid">
+						</div>
 					</div>
 				</div>
-			</div>			
+			</div>
+			<div class="row my-3">
+				<div class="col-sm-6">
+					<div >
+						<h5><span class="red">#random offensive</span></h5>
+						<div id="offTweet">
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<h5><span class="green">#random nonoffensive</span></h5>
+					<div id=nonOffTweet>
+					</div>
+				</div>
+			</div>
 		</div>	
 		<!--Bootstrap imports-->
 		<script

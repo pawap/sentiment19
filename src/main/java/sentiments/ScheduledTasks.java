@@ -183,7 +183,7 @@ public class ScheduledTasks {
 
             }
             log.info("Ending crawl (" + mycount + ")  at {}", dateFormat.format(new Date()));
-            taskService.log("Starting crawl (" + mycount + ") at " + dateFormat.format(new Date()));
+            taskService.log("Ending crawl (" + mycount + ") at " + dateFormat.format(new Date()));
 
             threadCount--;
         }

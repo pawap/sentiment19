@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 import java.time.Month;
 
 /**
+ * Used for documenting file crawls and accessing the documented information.
  * @author Paw
  */
 @Service
@@ -17,6 +18,10 @@ public class CrawlService {
     @Autowired
     private CrawlRepository crawlRepository;
 
+    /**
+     * When starting a new crawl, this method offers a starting point for the search.
+     * @return the {@link LocalDateTime} of the last crawled tweet file
+     */
     public LocalDateTime getLastStart() {
         Crawl crawl = crawlRepository.findTopByOrderByDateDesc();
 
@@ -27,6 +32,10 @@ public class CrawlService {
         return crawl.getDate();
     }
 
+    /**
+     * Register the start of a new crawl.
+     * @param date the {@link LocalDateTime} to be associated with the newly registered crawl
+     */
     public void newCrawl(LocalDateTime date) {
         Crawl crawl = new Crawl();
         crawl.setDate(date);
@@ -34,6 +43,10 @@ public class CrawlService {
         crawlRepository.save(crawl);
     }
 
+    /**
+     * Register the completion of a crawl.
+     * @param date the {@link LocalDateTime} to be associated with the finished crawl
+     */
     public void finishCrawl(LocalDateTime date) {
         Crawl crawl = crawlRepository.findByDate(date);
         crawl.setStatus(Crawl.FINISHED);

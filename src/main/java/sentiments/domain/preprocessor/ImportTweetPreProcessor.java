@@ -40,6 +40,6 @@ public class ImportTweetPreProcessor implements TweetPreProcessor {
 
     @Override
     public void destroy() {
-        detector = null;
+       // detector = null;
     }
 }

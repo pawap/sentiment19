@@ -7,7 +7,5 @@ import java.util.Collection;
 
 public interface DayStatsRepositoryCustom {
 
-
     Iterable<DayStats> findByDateBetweenAndLanguageInOrderBy(LocalDate start, LocalDate end, Collection<String> language);
-
 }
