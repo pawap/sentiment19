@@ -236,10 +236,21 @@ public class BackendController {
     }
 
     @RequestMapping("/backend/ml/trainnet")
-    public ResponseEntity<String> trainNet() {
-        classifierService.trainClassifier(languageService.getLanguage("en"));
+    public ResponseEntity<String> trainNet(@RequestParam( value = "lang", defaultValue = "en") String lang) {
         HttpHeaders responseHeaders = new HttpHeaders();
-        return new ResponseEntity<String>("training done", responseHeaders,HttpStatus.CREATED);
+        try {
+            Language language = languageService.getLanguage(lang);
+            if (language == null) {
+                return new ResponseEntity<>("language not supported", responseHeaders, HttpStatus.NOT_FOUND);
+            }
+            classifierService.trainClassifier(language);
+        } catch (Exception e) {
+            String eString = exceptionService.exceptionToString(e);
+            log.warn(eString);
+            return new ResponseEntity<String>("Request failed", responseHeaders,HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        return new ResponseEntity<>("training done", responseHeaders,HttpStatus.CREATED);
     }
 
     @PostMapping("/backend/upload")
