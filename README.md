@@ -18,14 +18,14 @@ written by Pawel Rasch
 You can run the app from your IDE (tested with intellij and eclipse), deploy it as a war under a tomcat-server or run it with maven. 
 Bear in mind that this app uses the dl4j-framework in a way which demands quite a lot of resources. The following system requirements are just a hint. Depending on the way you use the app, you might probabely need a lot more or maybe a little less.   
 ---
-####System requirements
+#### System requirements
 
-#####Hardware:
+##### Hardware:
 - modern multi-core cpu
 - at least 6GB of free Memory
 - at least 6GB of free discspace 
 
-#####Software:
+##### Software:
 - JAVA 11 
 - apache tomcat 9
 - apache maven
@@ -63,7 +63,7 @@ If you don't have a db just yet, don't worry! Spring Boot will create a db by th
 
    ```server.port=8080```
 
-#####Run it with intellij
+##### Run it with intellij
 
 1. Open the project as a maven-project.
    See the [official docs](https://www.jetbrains.com/help/idea/maven-support.html#maven_import_project_start) for help  
@@ -81,7 +81,7 @@ If you don't have a db just yet, don't worry! Spring Boot will create a db by th
    
    ![empty Frontend](images/Frontend-initial.PNG "Logo Title Text 1")
 
-#####Build a .war for deployment 
+##### Build a .war for deployment 
 
 1. Open with intellij. [See previous section.](#Run it with intellij)  
 
@@ -108,7 +108,7 @@ If you don't have a db just yet, don't worry! Spring Boot will create a db by th
    
 4. Build the .war file by selecting 'Build Artifacts' from the 'Build' menu. See [offical docs](https://www.jetbrains.com/help/idea/working-with-artifacts.html) for support.   
 
-#####Run with maven
+##### Run with maven
 
 [Install maven](https://maven.apache.org/install.html) first, if you don't have it yet. 
 
@@ -261,7 +261,7 @@ Insert a new Document of the following form into the language collection:
 
 ---
 ---
-###Train/acquire Models
+### Train/acquire Models
 
 You can now train models for all active languages. As mentioned before, the app uses 
 two different models per language.
@@ -270,49 +270,49 @@ available in order to vectorize the raw textinput.
 
 Pretrained models are only available for English, so far.
 
-####Wordvectors
+#### Wordvectors
 Wordvectors need a large amount of training data.
 Fortunately, it doesn't have to be labeled. 
 
-#####Storage
+##### Storage
 The models are typically quite big (~ 1.5GB) The path to the wordvectors for 
 a specific language is stored in the corresponding entry in the language collection, 
 under the key ```wordVectorsFilename```.
 You have to specify either the absolute path or a path relative to the working directory 
 of your app. 
 
-#####Training
+##### Training
 
-######Data needed:
+###### Data needed:
 
 You need a lot (>10m) of imported tweets in the tweet collection. Training data (trainigTweet collection) is NOT used. 
 
-######Initiate traning
+###### Initiate traning
 The model can be trained by calling the following GET endpoint:
 
 `/sentiment19/backend/ml/w2vtraining?lang=<iso>`
 
 where `<iso>` has to be substituted with the iso-Code of an active language.
 
-####Classifier
+#### Classifier
 The only available classifier in the newest release (apart from a dummy class) is the [W2VTweetClassifier](src/main/java/sentiments/ml/classifier/W2VTweetClassifier.java).
 
-#####Storage
+##### Storage
 The models are typically small (< 10MB) compared to the wordvectors. 
 The path to a classifier for a specific language is stored in the 
 corresponding entry in the language collection, under the key ```classifierFilename```.
 You have to specify either the absolute path or a path relative to the working directory 
 of your app. 
 
-#####Training
-######Data needed:
+##### Training
+###### Data needed:
 
 You need labeled data imported into the trainigTweet collection under the right language key. 
 The data has to have a ratio of offensive to nonoffensive tweets, which is very near to 1:2.
 Otherwise, training will be unbalanced, with detrimental effects to the accuracy of the
 classifier.
 
-######Initiate traning
+###### Initiate traning
 The model can be trained by calling the following GET endpoint:
 
 `/sentiment19/backend/ml/trainnet?lang=<iso>`
@@ -328,17 +328,17 @@ so you have to activate it via the web-backend:
 
 Enter 'classify' and check the enable-box. Click the send-Button.
 
-###Performance issues
+### Performance issues
 The data-layer will have to be completely reworked in a future release. Currently the 
 aggregation-queries extracting the data for the timeline and the popular hashtags 
 features in the frontend are painfully slow. They're taking at least 50-90 seconds for the 
 database operations alone on a database of ~50m Tweets (XXXGB). 
 
-###Logging
+### Logging
 Logs are written to the console by default. Logging target is configured in the [logback-spring.xml](src/main/resources/logback-spring.xml)
 you can uncomment all commented lines to enable file-logging. Logging-level and login-file can be adjusted in the ```application.properties```.
 
-###Mongo-Fake-Data
+### Mongo-Fake-Data
 You can tweak the imported data for testing purposes:
 Go to the [src/main/resources/mongoscripts](src/main/resources/mongoscripts) directory and run the following commands (replacing `<DBNAME>` with the name of your local DB):
 ````
@@ -361,7 +361,7 @@ Other scripts available:
    Extracts year, month, an day values from the crdate-timestamp into seperate fields. At the moment this script has to be run after every import, before tweets can be included in the satistics concerning the timeline, which go out to the frontend. 
    This was caused by a recent futile struggle to improve performane.
 
-###Coming Up
+### Coming Up
 
 - optimization of data-layer
 - better storage management
