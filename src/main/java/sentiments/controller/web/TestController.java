@@ -9,11 +9,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import sentiments.domain.repository.TweetRepository;
+import sentiments.domain.repository.tweet.TweetRepository;
 
 import java.sql.Timestamp;
 import java.util.Date;
 
+/**
+ * @author 5malfa , Paw
+ */
 @RestController
 public class TestController extends BasicWebController{
 

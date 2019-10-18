@@ -1,12 +1,16 @@
 package sentiments.data;
 
 import com.jcraft.jsch.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import sentiments.ScheduledTasks;
 import sentiments.domain.service.CrawlService;
+import sentiments.service.ExceptionService;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,6 +32,8 @@ import java.util.zip.GZIPInputStream;
 @Service
 public class ImportManager {
 
+    private static final Logger log = LoggerFactory.getLogger(ScheduledTasks.class);
+
     @Autowired
     BasicDataImporter basicDataImporter;
 
@@ -36,6 +42,9 @@ public class ImportManager {
 
     @Autowired
     CrawlService crawlService;
+
+    @Autowired
+    ExceptionService exceptionService;
 
     /**
      * Transfers tweets from the location specified in application.properties to the Database specified in application.properties
@@ -60,13 +69,12 @@ public class ImportManager {
 
         try {
             session = jsch.getSession(remoteUsername, remoteHost);
-
             session.setPassword(remotePassword);
 
-            session.connect(5000);
+            session.connect(40000);
 
             Channel channel = session.openChannel("sftp");
-            channel.connect(5000);
+            channel.connect(40000);
 
             ChannelSftp sftpChannel = (ChannelSftp) channel;
 
@@ -103,6 +111,8 @@ public class ImportManager {
             crawlService.finishCrawl(filenameToDateTime(filename));
 
         } catch (JSchException | SftpException | IOException e) {
+            String eString = exceptionService.exceptionToString(e);
+            log.warn(eString);
             e.printStackTrace();
         }
         completableFuture.complete(true);
@@ -128,7 +138,6 @@ public class ImportManager {
         }
         return null;
     }
-
 
     /*
      * Extracts a LocalDateTime from a filename that follows the pattern tweetyyyyMMDDmm:HH*

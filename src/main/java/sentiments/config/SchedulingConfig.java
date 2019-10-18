@@ -5,7 +5,9 @@ import org.springframework.scheduling.annotation.SchedulingConfigurer;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 
-
+/**
+ * @author Paw
+ */
 @Configuration
 public class SchedulingConfig implements SchedulingConfigurer {
     /**

@@ -4,14 +4,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import sentiments.domain.service.LanguageService;
 
+/**
+ * @author Paw
+ */
 @Configuration
 public class LanguageConfig {
 
     @Autowired
-    LanguageService languageService;
-
-    @Autowired
-    public void configureGlobal() {
+    public void configureGlobal(LanguageService languageService) {
         languageService.setupLanguages(new String[]{"en","de"});
     }
 
