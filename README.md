@@ -65,7 +65,7 @@ If you don't have a db just yet, don't worry! Spring Boot will create a db by th
    ```server.port=8080```
 
 ##### Run it with intellij
-
+<a name="Run-it-with-intellij"></a>
 1. Open the project as a maven-project.
    See the [official docs](https://www.jetbrains.com/help/idea/maven-support.html#maven_import_project_start) for help  
 
@@ -84,7 +84,7 @@ If you don't have a db just yet, don't worry! Spring Boot will create a db by th
 
 ##### Build a .war for deployment 
 
-1. Open with intellij. [See previous section.](#Run it with intellij)  
+1. Open with intellij. [See previous section.](Run-it-with-intellij)  
 
 2. Edit [Application.java](src/main/java/sentiments/Application.java) and make this class extend SpringBootServletInitializer:
 
