@@ -15,8 +15,6 @@ public class WordVectorsService {
 	
     private static HashMap<Language,WordVectors> INSTANCE;
 
-    private WordVectors wv;
-
     synchronized public static WordVectors getWordVectors(Language language) {
     	if (INSTANCE == null) {
     		INSTANCE = new HashMap<>();
