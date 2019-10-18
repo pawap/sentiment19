@@ -17,6 +17,7 @@ written by Pawel Rasch
 ### How to run the app
 You can run the app from your IDE (tested with intellij and eclipse), deploy it as a war under a tomcat-server or run it with maven. 
 Bear in mind that this app uses the dl4j-framework in a way which demands quite a lot of resources. The following system requirements are just a hint. Depending on the way you use the app, you might probabely need a lot more or maybe a little less.   
+
 ---
 #### System requirements
 
