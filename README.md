@@ -2,7 +2,7 @@
 
 This project contains a prototype for a web application based on the Spring Boot framework. Machine Learning has been implemented using the dl4j-framework.
 
-A vue.js-based frontend allows users to query a database of twitter data with respect to the offensive-/non-offensive chracter of tweets. The respective statistics are visualized by a variety of graphs.   
+A vue.js-based frontend allows users to query a database of twitter data with respect to the offensive-/non-offensive character of tweets. The respective statistics are visualized by a variety of graphs.   
 
 This spring-boot app offers two APIs:
 
