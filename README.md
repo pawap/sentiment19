@@ -148,7 +148,7 @@ Therefore, all Endpoints have the structure ```§baseUrl/sentiment19/...```, whe
 The base-url/path will be fully configurable in a future release.
 
 #### Storage
-Our storage-system is not fully developed. Some assets (like serialized neural-nets) are stored with an absolute path on the server, some others (like serialized wordvectors) are stored relativ to the classpath. A future release will contain a unified aproach to data storage in the filesystem. You will have to tweak path a little bit, depending on whether you are developing locally or running on a server.
+Our storage-system is not fully developed. Some assets (like serialized neural-nets) are stored with an absolute path on the server, some others (like serialized wordvectors) are stored relative to the classpath. A future release will contain a unified aproach to data storage in the filesystem. You will have to tweak path a little bit, depending on whether you are developing locally or running on a server.
 
 ---
 ---
@@ -320,7 +320,7 @@ The model can be trained by calling the following GET endpoint:
 
 where `<iso>` has to be substituted with the iso-Code of an active language.
 
-###Classifying the data
+### Classifying the data
 Once the trained models are available for a language, the corresponding data can be classified.
 There is a task available for classification. On every startup of the app all tasks are disabled,
 so you have to activate it via the web-backend:
