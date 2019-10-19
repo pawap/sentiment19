@@ -58,7 +58,7 @@ Bear in mind that this app uses the dl4j-framework in a way which demands quite 
    spring.data.mongodb.uri=mongodb://<host>:<port>/<db>
    ```
    The configuration data is redundant, you only need the first three lines, or the last one. 
-If you don't have a db just yet, don't worry! Spring Boot will create a db by the specified name, if does not exist.
+If you don't have a db just yet, don't worry! Spring Boot will create a db by the specified name, if one does not exist.
 
 5. Optionally configure a custom port for the web app to run (default is 8080):
 
@@ -72,9 +72,9 @@ If you don't have a db just yet, don't worry! Spring Boot will create a db by th
 2. Run [Application.java](src/main/java/sentiments/Application.java).
  
    Intellij should automatically import all necessary maven-sources and build the maven project after that.
-   You may need to change the classpath-settings in the run-cofigurations if your system does not support long commands from the command-line.
+   You may need to change the classpath-settings in the run-configurations if your system does not support long commands from the command-line.
      
-3. You're done! The App should be running now, eventhough there is no data in there just yet.
+3. You're done! The App should be running now, even though there is no data in there just yet.
 
    Verify that everything is fine - so far - by navigating your favorite browser to <http://localhost:8080/sentiment19> 
  
@@ -148,7 +148,7 @@ Therefore, all Endpoints have the structure ```§baseUrl/sentiment19/...```, whe
 The base-url/path will be fully configurable in a future release.
 
 #### Storage
-Our storage-system is not fully developed. Some assets (like serialized neural-nets) are stored with an absolute path on the server, some other (like serialized wordvectors) are stored relativ to the classpath. A future release will contain a unified aproach to data storage in the filesystem. You will have to tweak path a little bit, depending on whether you are developing locally or running on a server.
+Our storage-system is not fully developed. Some assets (like serialized neural-nets) are stored with an absolute path on the server, some others (like serialized wordvectors) are stored relativ to the classpath. A future release will contain a unified aproach to data storage in the filesystem. You will have to tweak path a little bit, depending on whether you are developing locally or running on a server.
 
 ---
 ---
@@ -163,7 +163,7 @@ Create a collection named 'user' in the mongodb and insert a document with the f
 ```
 (The document will have to have an '_id' field, of course.) The password <pass> needs to be encoded with bcrypt. Here's a useful [web-based bcrypt encoder](https://www.browserling.com/tools/bcrypt).
 
-No you can access the backend with your configured credentials.
+Now you can access the backend with your configured credentials.
 
 ---
 ---
@@ -194,7 +194,7 @@ The basic import features language-detection. If you wish to set the language ma
 
 4. Your local db (collection "tweet") should be filled with a bunch of tweets.
    You can test it by either running the server and sending a request to: "localhost:8080/sentiment19/count" or by 
-   opening the mongo shell and using the commands `use <dbname>` followed by `db.tweet.find().count()`
+   opening the mongo shell and using the commands `use <dbname>` followed by `db.tweet.count()`
 
 Please note, that the language detection takes quite a bit of time. Import rates of 300-900 Tweets per second are a realistic assumption, at the moment. 
 #### Import labeled test and training data
@@ -266,7 +266,7 @@ Insert a new Document of the following form into the language collection:
 
 You can now train models for all active languages. As mentioned before, the app uses 
 two different models per language.
-Before tweets can be classified as offensive or non-offensive, wordvectors have to
+Before tweets can be classified as offensive or non-offensive, wordvectors have to be
 available in order to vectorize the raw textinput.
 
 Pretrained models are only available for English, so far.
@@ -313,7 +313,7 @@ The data has to have a ratio of offensive to nonoffensive tweets, which is very 
 Otherwise, training will be unbalanced, with detrimental effects to the accuracy of the
 classifier.
 
-###### Initiate traning
+###### Initiate training
 The model can be trained by calling the following GET endpoint:
 
 `/sentiment19/backend/ml/trainnet?lang=<iso>`
@@ -367,7 +367,7 @@ Other scripts available:
 - optimization of data-layer
 - better storage management
 - configurable data import-Api
-- languages and tasks fully confgurable in the web-backend
+- languages and tasks fully configurable in the web-backend
 - improved web-backend interface
 - advanced model-managment
 - more
