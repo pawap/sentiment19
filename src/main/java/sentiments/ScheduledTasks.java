@@ -33,6 +33,7 @@ import static org.springframework.data.mongodb.core.query.Query.query;
 
 /**
  * Regularily queries {@link sentiments.service.TaskService}  for tasks and executes them if needed.
+ *
  * @author Paw , 6runge
  */
 @Component
@@ -66,46 +67,45 @@ public class ScheduledTasks {
 
     private static boolean classifying = false;
 
+    /**
+     * Queries {@link sentiments.service.TaskService} for the classify task and executes one if necessary
+     */
     @Scheduled(cron = "*/5 * * * * *")
     public void classifyNextBatch() {
         boolean execute = taskService.checkTaskExecution("classify");
         if (!execute || classifying) {
             return;
         }
-            classifying = true;
-            Iterable<Language> langs = languageService.getAvailableLanguages();
+        classifying = true;
+        Iterable<Language> langs = languageService.getAvailableLanguages();
 
         long time = System.currentTimeMillis();
         AtomicInteger tweetCount = new AtomicInteger();
 
         for (Language lang : langs) {
-                log.info("try classifying " + lang.getIso() + " tweets");
+            log.info("try classifying " + lang.getIso() + " tweets");
 
-                Classifier classifier = classifierService.getClassifier(lang);
-                if (classifier == null) {
+            Classifier classifier = classifierService.getClassifier(lang);
+            if (classifier == null) {
                 continue;
-                }
-                Date runDate = new Date();
+            }
+            Date runDate = new Date();
 
             while (true) {
-                    Stream<Tweet> tweets = tweetRepository.find100kByClassifiedAndLanguage(null, lang.getIso());
-                    AtomicInteger index = new AtomicInteger(0);
-                    int batchSize = 4096;
-                    int multiBatch = 1;
-                    Stream<List<Tweet>> stream = tweets.collect(Collectors.groupingBy(x -> index.getAndIncrement() / batchSize ))
-                            .entrySet().stream()
-                            .sorted(Map.Entry.comparingByKey()).map(Map.Entry::getValue);
-                    // remove .parallel() for serial
-                    AtomicInteger classified = new AtomicInteger(0);
-                    stream.forEach(tweetList -> {
-                        tweetCount.addAndGet(tweetList.size());
-                        classified.addAndGet(1);
-//                        classifier.classifyTweets(tweetList,runDate);
-//                        tweetRepository.saveAll(tweetList);
-
-                        // --- bulkOps  multiBatch just multiplies batchSize to get effective batchSize
+                Stream<Tweet> tweets = tweetRepository.find100kByClassifiedAndLanguage(null, lang.getIso());
+                AtomicInteger index = new AtomicInteger(0);
+                int batchSize = 4096;
+                int multiBatch = 1;
+                Stream<List<Tweet>> stream = tweets.collect(Collectors.groupingBy(x -> index.getAndIncrement() / batchSize))
+                        .entrySet().stream()
+                        .sorted(Map.Entry.comparingByKey()).map(Map.Entry::getValue);
+                AtomicInteger classified = new AtomicInteger(0);
+                stream.forEach(tweetList -> {
+                    tweetCount.addAndGet(tweetList.size());
+                    classified.addAndGet(1);
+                    // --- bulkOps  multiBatch just multiplies batchSize to get effective batchSize
                     BulkOperations ops = tweetRepository.getBulkOps();
-                    classifier.classifyTweets(tweetList,runDate);
+                    classifier.classifyTweets(tweetList, runDate);
                     for (Tweet tweet : tweetList) {
                         Update update = new Update();
                         update.set("offensive", tweet.isOffensive());
@@ -113,34 +113,7 @@ public class ScheduledTasks {
                         ops.updateOne(query(where("_id").is(tweet.get_id())), update);
                     }
                     ops.execute();
-
-                        // single batch multiBatch needs to be set to one
-//                    for(Tweet tweet: tweetList) {
-//                        Classification classification = classifier.classifyTweet(tweet.getText());
-//                        tweet.setOffensive(classification.isOffensive());
-//                        tweet.setClassified(runDate);
-//                        batch.add(tweet);
-//                        if (batch.size() % batchSize == 0) {
-//                            tweetRepository.saveAll(batch);
-//                            batch.clear();
-//                        }
-//                    }
-//                    tweetRepository.saveAll(tweetList);
-
-                        // multi batch need to set multiBatch > 1
-//                    List<Tweet> batch = new LinkedList<>();
-//                    for(Tweet tweet: tweetList) {
-//                        Classification classification = classifier.classifyTweet(tweet.getText());
-//                        tweet.setOffensive(classification.isOffensive());
-//                        tweet.setClassified(runDate);
-//                        batch.add(tweet);
-//                        if (batch.size() % batchSize == 0) {
-//                            tweetRepository.saveAll(batch);
-//                            batch.clear();
-//                        }
-//                    }
-
-                    });
+                });
                 long timeOverall = (System.currentTimeMillis() - time);
                 String report;
                 report = "##CLASSIFYING## Overall Time: " + timeOverall + "ms" + System.lineSeparator();
@@ -149,18 +122,18 @@ public class ScheduledTasks {
                 log.info(report);
                 taskService.log(report);
                 classifying = false;
-                    stream.close();
-                    //System.gc();
-                    if (classified.get() <= 1) break;
-                }
-
+                stream.close();
+                if (classified.get() <= 1) break;
             }
 
+        }
 
 
     }
 
-
+    /**
+     * Queries {@link sentiments.service.TaskService} for the import task and executes one if necessary
+     */
     @Async
     @Scheduled(cron = "*/5 * * * * *")
     public void crawlDataServer() throws InterruptedException {

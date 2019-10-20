@@ -17,7 +17,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Builds Wordvectors out of the Tweets in a given {@link TweetRepository}.
+ * Builds Wordvectors out of the Tweets in a given {@link Language} in a given {@link TweetRepository}.
  *
  * @author 6runge
  */
@@ -36,6 +36,7 @@ public class WordVectorBuilder {
 
     /**
      * Builds wordvectors and persists them at a location accessible via {@see sentiments.data.ml.WordVectorService#getWordVectorPath()}.
+     * @param language the desired language of the word vectors
      * @throws IOException
      */
     public  void train(Language language) throws IOException {
@@ -58,7 +59,6 @@ public class WordVectorBuilder {
         vec.setEventListeners(set);
         vec.fit();
         WordVectorsService.saveWordVectors(vec, language);
-
     }
 }
 
