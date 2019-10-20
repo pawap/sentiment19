@@ -28,7 +28,7 @@ import sentiments.ml.service.WordVectorsService;
 import sentiments.service.ExceptionService;
 import sentiments.service.StorageService;
 import sentiments.service.TaskService;
-import sentiments.service.TimelineService;
+import sentiments.domain.service.TimelineService;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -75,7 +75,10 @@ public class BackendController {
     @Autowired
     TimelineService timelineService;
 
-
+    /**
+     * The backend endpoint leads to a simple html page. It can be used to adjust some settings, upload data, and start
+     * or stop tasks.
+     */
     @RequestMapping("/backend")
     public ResponseEntity<String> backend(String message, HttpStatus status) {
         message = message == null ? "" : message;
@@ -104,6 +107,10 @@ public class BackendController {
         return new ResponseEntity<>(response, responseHeaders, status);
     }
 
+    /**
+     * Lets you set an existing directory as a target for file uploads via the backend.
+     * @param dir the target directory. It needs to exist and be writable by the app.
+     */
     @RequestMapping("/backend/setBaseDir")
     public ResponseEntity<String> setBaseDir(@RequestParam( value = "dir", defaultValue = "") String dir) {
 
@@ -112,6 +119,11 @@ public class BackendController {
         return backend("done.", HttpStatus.ACCEPTED); //new ResponseEntity<String>(response, responseHeaders,HttpStatus.CREATED);
     }
 
+    /**
+     * This endpoint can be used to enable or disable tasks (e.g. classify).
+     * @param task the task of which the status will be set
+     * @param enabled true to enable the task, false to disable it
+     */
     @RequestMapping("/backend/setTaskStatus")
     public ResponseEntity<String> setTaskStatus(@RequestParam( value = "task", defaultValue = "") String task,
                                                            @RequestParam( value = "enabled", defaultValue = "false") boolean enabled) {
@@ -124,6 +136,9 @@ public class BackendController {
         return backend(response, HttpStatus.ACCEPTED); //new ResponseEntity<String>(response, responseHeaders,HttpStatus.CREATED);
     }
 
+    /**
+     * Imports unlabelled tweets from the json-file specified in application.properties under the key localTweetJson.
+     */
     @RequestMapping("/backend/import")
     public ResponseEntity<String> tweetimport() {
 
@@ -135,6 +150,11 @@ public class BackendController {
         return new ResponseEntity<String>("finished", responseHeaders,HttpStatus.CREATED);
     }
 
+    /**
+     * This endpoint starts the import of test and training data for a given language. The data has to be located in the
+     * tsv-files specified in the application.properties under the keys localTweetTsv.test & localTweetTsv.train.
+     * @param lang the ISO-code of the language of the data to be imported
+     */
     @RequestMapping("/backend/import/testandtrain")
     public ResponseEntity<String> testAndTrainimport(@RequestParam( value = "lang", defaultValue = "en") String lang) {
         System.out.println("testAndTrainimport was called with " + lang);
@@ -145,6 +165,12 @@ public class BackendController {
         return new ResponseEntity<String>("finished", responseHeaders,HttpStatus.OK);
     }
 
+    /**
+     * This endpoint starts the import of test and training data for a given language. It ensures the correct ratio for
+     * balanced training. The data has to be located in the tsv-files specified in the application.properties under the
+     * keys localTweetTsv.test & localTweetTsv.train.
+     * @param lang the ISO-code of the language of the data to be imported
+     */
     @RequestMapping("/backend/import/traintwothirdsnonoff")
     public ResponseEntity<String> trainImportWithRatio(@RequestParam( value = "lang", defaultValue = "en") String lang) {
         System.out.println("testAndTrainimportWithRatio was called with " + lang);
@@ -155,6 +181,10 @@ public class BackendController {
         return new ResponseEntity<String>("finished", responseHeaders,HttpStatus.OK);
     }
 
+    /**
+     * This endpoint starts the training of word vectors for the specified language.
+     * @param lang the ISO-code of an active language
+     */
     @RequestMapping("/backend/ml/w2vtraining")
     public ResponseEntity<String> w2vtraining(@RequestParam( value = "lang", defaultValue = "en") String lang) {
         WordVectorBuilder w2vb = new WordVectorBuilder(tweetRepository);
@@ -176,6 +206,11 @@ public class BackendController {
         return new ResponseEntity<String>("finished training", responseHeaders,HttpStatus.CREATED);
     }
 
+    /**
+     * Tests the word vectors of a given language by printing a predefined set of words, each with its closest neighbors
+     * in the vector space.
+     * @param lang the ISO-code of an active language
+     */
     @RequestMapping("/backend/ml/w2vtest")
     public ResponseEntity<String> w2vtest(@RequestParam( value = "lang", defaultValue = "en") String lang) {
 
@@ -235,13 +270,32 @@ public class BackendController {
         return new ResponseEntity<String>(examples, responseHeaders,HttpStatus.OK);
     }
 
+    /**
+     * Starts the training of a classifier for the specified language.
+     * @return the ISO-code of an active language
+     */
     @RequestMapping("/backend/ml/trainnet")
-    public ResponseEntity<String> trainNet() {
-        classifierService.trainClassifier(languageService.getLanguage("en"));
+    public ResponseEntity<String> trainNet(@RequestParam( value = "lang", defaultValue = "en") String lang) {
         HttpHeaders responseHeaders = new HttpHeaders();
-        return new ResponseEntity<String>("training done", responseHeaders,HttpStatus.CREATED);
+        try {
+            Language language = languageService.getLanguage(lang);
+            if (language == null) {
+                return new ResponseEntity<>("language not supported", responseHeaders, HttpStatus.NOT_FOUND);
+            }
+            classifierService.trainClassifier(language);
+        } catch (Exception e) {
+            String eString = exceptionService.exceptionToString(e);
+            log.warn(eString);
+            return new ResponseEntity<String>("Request failed", responseHeaders,HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        return new ResponseEntity<>("training done", responseHeaders,HttpStatus.CREATED);
     }
 
+    /**
+     * Uploads a file to the working directory or, if one has been set, the directory specified with {@link BackendController#setBaseDir(String)}
+     * @param file the file to be uploaded
+     */
     @PostMapping("/backend/upload")
     public ResponseEntity<String> singleFileUpload(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
@@ -261,6 +315,13 @@ public class BackendController {
         return backend("You successfully uploaded '" + file.getOriginalFilename() + "'", HttpStatus.CREATED);
     }
 
+    /**
+     * This endpoint is used in our html-backend to import data for training and testing.
+     * The ratio has to be 1:2 (offensive:non-offensive)
+     * @param trainData a file with the training data
+     * @param testData a file with the test data
+     * @param lang the ISO-code of the language for which  data is to be imported
+     */
     @PostMapping("/backend/import/training")
     public ResponseEntity<String> testAndTrainImport(@RequestParam("traindata") MultipartFile trainData,
                                                      @RequestParam("testdata") MultipartFile testData,
@@ -295,6 +356,9 @@ public class BackendController {
         return backend("success", HttpStatus.OK);
     }
 
+    /**
+     * Generates the timeline for the whole available timeframe and persists it in the database ignoring hashtags
+     */
     @RequestMapping("/backend/createdaystats")
     public ResponseEntity<String> createDayStats() {
         for (Language language : languageService.getAvailableLanguages()) {
@@ -321,6 +385,10 @@ public class BackendController {
             return backend("done!", HttpStatus.CREATED);
     }
 
+    /**
+     * Changes the way the data for the timeline is generated.
+     * @param version either 0 or 1
+     */
     @RequestMapping("/backend/settimelineversion")
     public ResponseEntity<String> setTimelineVersion(@RequestParam("version") int version) {
         timelineService.setVersion(version);

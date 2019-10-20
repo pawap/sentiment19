@@ -70,6 +70,10 @@
 		.content{
 			border-left: 2px solid grey;
 		}
+
+		.divider {
+			border-right: 1px solid grey;
+		}
 		
 		.offensive{
 			color: rgb(255, 99, 132)
@@ -343,13 +347,13 @@
 				<div>
 					<a href="#modal-close" title="Close" class="modal-close"><i class="material-icons md-24">close</i></a>
 					<h1><b>Classify custom input</b></h1>
-					<div class="modal-body about-content">
+					<div class="modal-body">
 						<div class="form-group">
-							<textarea v-model="input" placeholder="Enter input here" class="form-control" id="classifierInput" rows="5"></textarea>
+							<textarea v-model="input" placeholder="Enter input here" class="form-control mx-auto" id="classifierInput" rows="5"></textarea>
 						</div>
 						Classification of your input: {{status}}
 					</div>
-					<div class="modal-footer about-content">
+					<div class="modal-footer">
 						<a type="button" class="btn btn-secondary"href="#modal-close">Cancel</a>
 						<button type="button" @click="classifyInput()" class="btn btn-primary">Classify</button>
 					</div>
@@ -358,7 +362,7 @@
 		</div> 
 	</template>
 	<template id="popular-hashtags">
-		<div>
+		<div class="divider">
 			<h4><b>#popular</b></h4>
 			<div class="row p-3">
 				<span class="badge badge-primary small m-1 btn has-tooltip"
@@ -379,7 +383,7 @@
 	<template id="tweet-filter">
 		<div class="container" style="position:relative;">
 			<div class="row tweetfilter-content">
-				<div class="col-sm-3">
+				<div class="col-sm-3 divider">
 					<h4><b>hashtags</b></h4>
 					<div class="row p-3">
 						<span
@@ -399,7 +403,7 @@
 				<div class="col-sm-3">
 					<popular-hashtags ref="popularhashtags" v-on:new-hashtag="addHashtag($event)"></popular-hashtags>
 				</div>
-				<div class="col-sm-4">
+				<div class="col-sm-4 divider">
 					<h4><b>timeframe</b></h4>
 					<div class="row p-3">
 						<v-date-picker
@@ -486,6 +490,9 @@
 					<p>Tweets are filterable by timeframe, hashtags and language.</p>
 					<p>Classification is done via a dl4j backend inside a spring Boot Application.</p>
 					<p><a class="btn btn-secondary" href="https://github.com/pawap/sentiment19">View it on Github</a></p>
+					<p>Here is a short animated clip by Tim Runge & Pawel Rasch highlighting the social & political implications of sentiment analysis.</p>
+					<p><a class="btn btn-secondary" href="http://mikropolis.org/project/sentiment-analysis/">View it on MikroPolis.org</a></p>
+
 				</div>
 			</div>
 		</div>
@@ -510,24 +517,19 @@
 					</h1>
 				</div>
 			</div>
+			<div class="row my-3">
+				<div class="col-sm-12">
+					<h3>Filter</h3>
+				</div>
+			</div>
 			<tweet-filter ref="tweetfilter" v-model="tweetFilter"></tweet-filter>
+			<hr>
 			<div class="row my-3">
 				<div class="col-sm-4">
 					<div class="content p-2">
 						<h4>Number of offensive vs. non-offensive Tweets</h4>
 						<div>
 							<canvas id="pieChart"></canvas>
-						</div>
-					</div>
-					<h4>Top Hashtags</h4>
-					<div class="content p-2">
-						<div>
-							<canvas id="barChartNonOff"></canvas>
-						</div>
-					</div>
-					<div class="content p-2">
-						<div>
-							<canvas id="barChartOff"></canvas>
 						</div>
 					</div>
 				</div>
@@ -542,32 +544,50 @@
 			</div>
 			<hr>
 			<div class="row my-3">
-				<div class="col-sm-6">
-					<div class="content p-2">
-						<div>
-							<img id="Off_gif" src="" alt="Gif symbolizing offensivity" class="img-fluid">
-						</div>
+				<div class="col-sm-12">
+					<h4>Top Hashtags</h4>
+				</div>
+			</div>
+			<div class="row">
+				<div class="content p-2 col-sm-6">
+					<div>
+						<canvas id="barChartNonOff"></canvas>
 					</div>
 				</div>
-				<div class="col-sm-6">
-					<div class="content p-2">
-						<div>
-							<img id="Non_Off_gif" src="" alt="Gif symbolizing non-offensivity" class="img-fluid">
-						</div>
+				<div class="content p-2 col-sm-6">
+					<div>
+						<canvas id="barChartOff"></canvas>
 					</div>
 				</div>
 			</div>
+			<hr>
 			<div class="row my-3">
-				<div class="col-sm-6">
+				<div class="content col-sm-6">
 					<div >
 						<h5><span class="red">#random offensive</span></h5>
 						<div id="offTweet">
 						</div>
 					</div>
 				</div>
-				<div class="col-sm-6">
+				<div class="content col-sm-6">
 					<h5><span class="green">#random nonoffensive</span></h5>
 					<div id=nonOffTweet>
+					</div>
+				</div>
+			</div>
+			<div class="row my-3">
+				<div class="col-sm-6">
+					<div class="p-2">
+						<div>
+							<img id="Off_gif" src="" alt="Gif symbolizing offensivity" class="img-fluid">
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<div class="p-2">
+						<div>
+							<img id="Non_Off_gif" src="" alt="Gif symbolizing non-offensivity" class="img-fluid">
+						</div>
 					</div>
 				</div>
 			</div>

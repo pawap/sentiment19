@@ -26,7 +26,7 @@ import sentiments.ml.classifier.Classification;
 import sentiments.ml.classifier.Classifier;
 import sentiments.ml.service.ClassifierService;
 import sentiments.service.ExceptionService;
-import sentiments.service.TimelineService;
+import sentiments.domain.service.TimelineService;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -38,6 +38,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Collectors;
 /**
+ * The controller for the frontend.
  * @author 6runge, Paw
  */
 @RestController
@@ -115,10 +116,6 @@ public class FrontendController extends BasicWebController {
 
                 //add request header
                 responseCode = con.getResponseCode();
-
-//                DEBUG
-//                System.out.println("\nSending 'GET' request to URL : " + url);
-//                System.out.println("Response Code : " + responseCode);
 
                 JsonReader reader = new JsonReader(new InputStreamReader(con.getInputStream()));
                 obj = new JsonParser().parse(reader).getAsJsonObject();

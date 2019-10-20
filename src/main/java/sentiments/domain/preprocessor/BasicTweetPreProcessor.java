@@ -3,6 +3,7 @@ package sentiments.domain.preprocessor;
 import sentiments.domain.model.tweet.AbstractTweet;
 
 /**
+ * Removes unwanted substrings (e.g. URLs) from the {@link AbstractTweet}'s text.
  * @author 6koch, Paw
  */
 public class BasicTweetPreProcessor implements TweetPreProcessor {

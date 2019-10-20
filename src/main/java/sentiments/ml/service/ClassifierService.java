@@ -20,24 +20,26 @@ public class ClassifierService {
 
     private HashMap<Language, Classifier> classifiers;
 
+    /**
+     * basic constructor
+     */
     public ClassifierService() {
         this.classifiers = new HashMap<>();
     }
-//TODO reutrn null if bad lang
+
+    /**
+     * Creates a language specific {@link Classifier}.
+     * @param language the language of the desired {@link Classifier}
+     * @return a {@link Classifier} for the given {@link Language}
+     */
     public Classifier getClassifier(Language language) {
         return new W2VTweetClassifier(language);
-//        if (!this.classifiers.containsKey(language)){
-//            Classifier classifier = new W2VTweetClassifier(language);
-//            if (!classifier.isTrained()) {
-//                System.out.println("Classifier for language " + language.getName() + " has no persitent model. Training.");
-//                classifier.train(tweetRepository);
-//            }
-//            this.classifiers.put(language, classifier);
-//        }
-//
-//        return this.classifiers.get(language);
     }
 
+    /**
+     * Trains a classifier for a given language.
+     * @param language the language a classifier should be trained for
+     */
     public void trainClassifier(Language language) {
         this.getClassifier(language).train(tweetRepository);
     }

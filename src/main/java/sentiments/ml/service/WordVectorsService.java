@@ -9,14 +9,18 @@ import java.io.File;
 import java.util.HashMap;
 
 /**
+ * Allows synchronized saving and loading of word vectors.
  * @author Paw
  */
 public class WordVectorsService {
 	
     private static HashMap<Language,WordVectors> INSTANCE;
 
-    private WordVectors wv;
-
+    /**
+     * Grants access to the desired {@link WordVectors}.
+     * @param language the the desired {@link Language} of the desired {@link WordVectors}
+     * @return the desired {@link WordVectors}
+     */
     synchronized public static WordVectors getWordVectors(Language language) {
     	if (INSTANCE == null) {
     		INSTANCE = new HashMap<>();
@@ -29,6 +33,11 @@ public class WordVectorsService {
         return INSTANCE.get(language);
     }
 
+    /**
+     * Persists a given the {@link Word2Vec} model
+     * @param vec the {@link WordVectors}
+     * @param language the the desired {@link Language} of the {@link WordVectors}
+     */
     synchronized public static void saveWordVectors(Word2Vec vec, Language language) {
         WordVectorSerializer.writeWord2VecModel(vec, new File(language.getWordVectorsFilename()));
         if (INSTANCE == null) {
