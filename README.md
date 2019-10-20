@@ -333,7 +333,7 @@ Enter 'classify' and check the enable-box. Click the send-Button.
 The data-layer will have to be completely reworked in a future release. Currently the 
 aggregation-queries extracting the data for the timeline and the popular hashtags 
 features in the frontend are painfully slow. They're taking at least 50-90 seconds for the 
-database operations alone on a database of ~50m Tweets (XXXGB). 
+database operations alone on a database of ~50m Tweets (17.9GB). 
 
 ### Logging
 Logs are written to the console by default. Logging target is configured in the [logback-spring.xml](src/main/resources/logback-spring.xml)
