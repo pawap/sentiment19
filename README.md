@@ -325,7 +325,7 @@ Once the trained models are available for a language, the corresponding data can
 There is a task available for classification. On every startup of the app all tasks are disabled,
 so you have to activate it via the web-backend:
 
-![XXX](XX)
+![backend upload](images/backend-task.PNG)
 
 Enter 'classify' and check the enable-box. Click the send-Button.
 
