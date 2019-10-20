@@ -359,8 +359,8 @@ Other scripts available:
   Labels all tweets in the tweet collection as currently classified.  
 - [MongoSetupDateFields.js](src/main/resources/mongoscripts/MongoSetupDateFields.js)
 
-   Extracts year, month, an day values from the crdate-timestamp into seperate fields. At the moment this script has to be run after every import, before tweets can be included in the satistics concerning the timeline, which go out to the frontend. 
-   This was caused by a recent futile struggle to improve performane.
+   Extracts year, month, an day values from the crdate-timestamp into separate fields. At the moment this script has to be run after every import, before tweets can be included in the statistics concerning the timeline, which go out to the frontend. 
+   This was caused by a recent futile struggle to improve performance.
 
 ### Coming Up
 
