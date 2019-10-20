@@ -44,8 +44,8 @@ import java.util.Date;
 import java.util.List;
 
 /**
+ * The standard classifier
  * @author Paw
- *
  */
 public class W2VTweetClassifier implements Classifier {
 

@@ -26,11 +26,6 @@ public class WordVectorBuilder {
     private TweetRepository tweetRepo;
 
     /**
-     * Returns the path where the word vectors are persisted.
-     * @return the file path of the model file
-     */
-
-    /**
      * Constructor
      * @param tweetRepository the repository where the tweets to be learned from are stored.
      */
