@@ -288,7 +288,7 @@ public class BasicDataImporter {
 	}
 
 	/**
-	 * imports test and training data for a given language from given file names.
+	 * Imports test and training data for a given language from given file names.
 	 * files should be tsv files with the text of a tweet in a column called "tweet"
 	 * and an additional column called "subtask_a" containing a String starting with
 	 * "OFF" if the tweet is offensive.

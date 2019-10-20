@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
+ * Detects the language of an {@link AbstractTweet} and collects its hashtags.
  * @author Paw
  */
 public class ImportTweetPreProcessor implements TweetPreProcessor {

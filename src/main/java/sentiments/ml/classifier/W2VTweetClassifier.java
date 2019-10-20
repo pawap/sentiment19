@@ -43,8 +43,8 @@ import java.util.Date;
 import java.util.List;
 
 /**
+ * The standard classifier
  * @author Paw
- *
  */
 public class W2VTweetClassifier implements Classifier {
 
@@ -179,9 +179,7 @@ public class W2VTweetClassifier implements Classifier {
 		if (tli.totalExamples() == 0) {
 			return;
 		}
-		//long time = System.currentTimeMillis();
 		INDArray networkOutput = net.output(tli);
-		//System.out.println("classifyTime: " + (System.currentTimeMillis() - time));
 
 		FirstAxisIterator faxi = new FirstAxisIterator(networkOutput);
 		for ( Tweet tweet: tli.getOutputTweets()) {

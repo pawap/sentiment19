@@ -42,7 +42,7 @@ public class TweetIterator implements DataSetIterator{
      * @param batchSize Size of each minibatch for training
      * @param truncateLength If reviews exceed
      * @param test If true: return the testing data. If false: return the training data.
-     * @param language
+     * @param language the relevant language
      */
     public TweetIterator(TrainingTweetRepository tweetRepository, WordVectors wordVectors, int batchSize, int truncateLength, boolean test, Language language) {
         this.language = language.getIso();
@@ -109,12 +109,6 @@ public class TweetIterator implements DataSetIterator{
 
         for( int i=0; i < allTokens.size(); i++ ){
             List<String> tokens = allTokens.get(i);
-//            System.out.println("Tweet: " + offensive[i]);
-//            for (String token: tokens) {
-//            	System.out.print(token + ", ");
-//            	
-//            }
-//            System.out.println();
             // Get the truncated sequence length of document (i)
             int seqLength = Math.min(tokens.size(), maxLength);
 

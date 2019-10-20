@@ -36,7 +36,7 @@ public class TweetListIterator implements DataSetIterator{
     private List<Tweet> outputTweets;
 
     /**
-     * @param language
+     * @param language the language of the {@link Tweet}s
      */
     public TweetListIterator(List<Tweet> tweets, Language language) {
         this.outputTweets = new LinkedList<>();
@@ -116,7 +116,9 @@ public class TweetListIterator implements DataSetIterator{
 		return tokensFiltered;
 	}
 
-
+    /**
+     * @return the total number of examples
+     */
 	public int totalExamples() {
         return totalExamples;
     }

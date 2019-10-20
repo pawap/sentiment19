@@ -2,7 +2,7 @@
 
 This project contains a prototype for a web application based on the Spring Boot framework. Machine Learning has been implemented using the dl4j-framework.
 
-A vue.js-based frontend allows users to query a database of twitter data with respect to the offensive-/non-offensive chracter of tweets. The respective statistics are visualized by a variety of graphs.   
+A vue.js-based frontend allows users to query a database of twitter data with respect to the offensive-/non-offensive character of tweets. The respective statistics are visualized by a variety of graphs.   
 
 This spring-boot app offers two APIs:
 
@@ -58,23 +58,23 @@ Bear in mind that this app uses the dl4j-framework in a way which demands quite 
    spring.data.mongodb.uri=mongodb://<host>:<port>/<db>
    ```
    The configuration data is redundant, you only need the first three lines, or the last one. 
-If you don't have a db just yet, don't worry! Spring Boot will create a db by the specified name, if does not exist.
+If you don't have a db just yet, don't worry! Spring Boot will create a db by the specified name, if one does not exist.
 
 5. Optionally configure a custom port for the web app to run (default is 8080):
 
    ```server.port=8080```
 
 ##### Run it with intellij
-
+<a name="Run-it-with-intellij"></a>
 1. Open the project as a maven-project.
    See the [official docs](https://www.jetbrains.com/help/idea/maven-support.html#maven_import_project_start) for help  
 
 2. Run [Application.java](src/main/java/sentiments/Application.java).
  
    Intellij should automatically import all necessary maven-sources and build the maven project after that.
-   You may need to change the classpath-settings in the run-cofigurations if your system does not support long commands from the command-line.
+   You may need to change the classpath-settings in the run-configurations if your system does not support long commands from the command-line.
      
-3. You're done! The App should be running now, eventhough there is no data in there just yet.
+3. You're done! The App should be running now, even though there is no data in there just yet.
 
    Verify that everything is fine - so far - by navigating your favorite browser to <http://localhost:8080/sentiment19> 
  
@@ -84,7 +84,7 @@ If you don't have a db just yet, don't worry! Spring Boot will create a db by th
 
 ##### Build a .war for deployment 
 
-1. Open with intellij. [See previous section.](#Run it with intellij)  
+1. Open with intellij. [See previous section.](Run-it-with-intellij)  
 
 2. Edit [Application.java](src/main/java/sentiments/Application.java) and make this class extend SpringBootServletInitializer:
 
@@ -148,7 +148,7 @@ Therefore, all Endpoints have the structure ```§baseUrl/sentiment19/...```, whe
 The base-url/path will be fully configurable in a future release.
 
 #### Storage
-Our storage-system is not fully developed. Some assets (like serialized neural-nets) are stored with an absolute path on the server, some other (like serialized wordvectors) are stored relativ to the classpath. A future release will contain a unified aproach to data storage in the filesystem. You will have to tweak path a little bit, depending on whether you are developing locally or running on a server.
+Our storage-system is not fully developed. Some assets (like serialized neural-nets) are stored with an absolute path on the server, some others (like serialized wordvectors) are stored relative to the classpath. A future release will contain a unified aproach to data storage in the filesystem. You will have to tweak path a little bit, depending on whether you are developing locally or running on a server.
 
 ---
 ---
@@ -163,7 +163,7 @@ Create a collection named 'user' in the mongodb and insert a document with the f
 ```
 (The document will have to have an '_id' field, of course.) The password <pass> needs to be encoded with bcrypt. Here's a useful [web-based bcrypt encoder](https://www.browserling.com/tools/bcrypt).
 
-No you can access the backend with your configured credentials.
+Now you can access the backend with your configured credentials.
 
 ---
 ---
@@ -194,7 +194,7 @@ The basic import features language-detection. If you wish to set the language ma
 
 4. Your local db (collection "tweet") should be filled with a bunch of tweets.
    You can test it by either running the server and sending a request to: "localhost:8080/sentiment19/count" or by 
-   opening the mongo shell and using the commands `use <dbname>` followed by `db.tweet.find().count()`
+   opening the mongo shell and using the commands `use <dbname>` followed by `db.tweet.count()`
 
 Please note, that the language detection takes quite a bit of time. Import rates of 300-900 Tweets per second are a realistic assumption, at the moment. 
 #### Import labeled test and training data
@@ -266,7 +266,7 @@ Insert a new Document of the following form into the language collection:
 
 You can now train models for all active languages. As mentioned before, the app uses 
 two different models per language.
-Before tweets can be classified as offensive or non-offensive, wordvectors have to
+Before tweets can be classified as offensive or non-offensive, wordvectors have to be
 available in order to vectorize the raw textinput.
 
 Pretrained models are only available for English, so far.
@@ -313,14 +313,14 @@ The data has to have a ratio of offensive to nonoffensive tweets, which is very 
 Otherwise, training will be unbalanced, with detrimental effects to the accuracy of the
 classifier.
 
-###### Initiate traning
+###### Initiate training
 The model can be trained by calling the following GET endpoint:
 
 `/sentiment19/backend/ml/trainnet?lang=<iso>`
 
 where `<iso>` has to be substituted with the iso-Code of an active language.
 
-###Classifying the data
+### Classifying the data
 Once the trained models are available for a language, the corresponding data can be classified.
 There is a task available for classification. On every startup of the app all tasks are disabled,
 so you have to activate it via the web-backend:
@@ -333,7 +333,7 @@ Enter 'classify' and check the enable-box. Click the send-Button.
 The data-layer will have to be completely reworked in a future release. Currently the 
 aggregation-queries extracting the data for the timeline and the popular hashtags 
 features in the frontend are painfully slow. They're taking at least 50-90 seconds for the 
-database operations alone on a database of ~50m Tweets (XXXGB). 
+database operations alone on a database of ~50m Tweets (17.9GB). 
 
 ### Logging
 Logs are written to the console by default. Logging target is configured in the [logback-spring.xml](src/main/resources/logback-spring.xml)
@@ -359,15 +359,15 @@ Other scripts available:
   Labels all tweets in the tweet collection as currently classified.  
 - [MongoSetupDateFields.js](src/main/resources/mongoscripts/MongoSetupDateFields.js)
 
-   Extracts year, month, an day values from the crdate-timestamp into seperate fields. At the moment this script has to be run after every import, before tweets can be included in the satistics concerning the timeline, which go out to the frontend. 
-   This was caused by a recent futile struggle to improve performane.
+   Extracts year, month, an day values from the crdate-timestamp into separate fields. At the moment this script has to be run after every import, before tweets can be included in the statistics concerning the timeline, which go out to the frontend. 
+   This was caused by a recent futile struggle to improve performance.
 
 ### Coming Up
 
 - optimization of data-layer
 - better storage management
 - configurable data import-Api
-- languages and tasks fully confgurable in the web-backend
+- languages and tasks fully configurable in the web-backend
 - improved web-backend interface
 - advanced model-managment
 - more

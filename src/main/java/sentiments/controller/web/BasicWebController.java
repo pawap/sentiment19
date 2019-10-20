@@ -10,6 +10,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
+ * A class for web controllers to extend.
  * @author Paw
  */
 @Configuration
