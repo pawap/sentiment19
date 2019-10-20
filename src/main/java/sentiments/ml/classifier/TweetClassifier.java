@@ -1,10 +1,15 @@
 package sentiments.ml.classifier;
 
+import sentiments.domain.model.tweet.Tweet;
+import sentiments.domain.repository.tweet.TrainingTweetRepository;
+
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * @author 6runge
@@ -12,7 +17,7 @@ import java.util.HashMap;
  * Dummy Classifier for determining the initial project architecture
  *
  */
-public class TweetClassifier {
+public class TweetClassifier implements Classifier{
 	HashMap<String, Integer> sentiWords;
 
 	public TweetClassifier() {
@@ -20,7 +25,7 @@ public class TweetClassifier {
 		readWordList();
 	}
 	
-	public String classifyTweet(String tweet) {
+	public Classification classifyTweet(String tweet) {
 		double classifiedWords = 0;
 		double	sentiment = 0;
 		String classification = "The Tweet is ";
@@ -34,18 +39,39 @@ public class TweetClassifier {
 //					System.out.println("Sentiment at " + sentiment);
 			}
 		}
-		
+		Classification cl = new Classification();
 		if (sentiment == 0) {
+			cl.setOffensive(false);
+			cl.setProbability(sentiment/classifiedWords);
 			classification += "neutral.";
 		}
 		else if (sentiment < 0) {
+			cl.setOffensive(true);
+			cl.setProbability(-sentiment/classifiedWords);
 		    classification += sentiment/classifiedWords*-100 + "% negative.";
 		}
 		else {
+			cl.setOffensive(false);
+			cl.setProbability(sentiment/classifiedWords);
 			classification += + sentiment/classifiedWords*100 + "% positive.";
 		}
-		
-		return classification;
+
+		return cl;
+	}
+
+	@Override
+	public void train(TrainingTweetRepository tweetRepository) {
+
+	}
+
+	@Override
+	public boolean isTrained() {
+		return true;
+	}
+
+	@Override
+	public void classifyTweets(List<Tweet> tweetList, Date runDate) {
+
 	}
 
 	private void readWordList() {

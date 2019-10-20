@@ -28,7 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.ResourceUtils;
-import sentiments.controller.web.BackendController;
 import sentiments.domain.model.Language;
 import sentiments.domain.model.tweet.Tweet;
 import sentiments.domain.repository.tweet.TrainingTweetRepository;
@@ -52,7 +51,7 @@ public class W2VTweetClassifier implements Classifier {
 	@Autowired
 	ExceptionService exceptionService;
 
-	private static final Logger log = LoggerFactory.getLogger(BackendController.class);
+	private static final Logger log = LoggerFactory.getLogger(W2VTweetClassifier.class);
 
 	private MultiLayerNetwork net;
 	private Language language;

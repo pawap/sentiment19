@@ -1,4 +1,4 @@
-package sentiments.service;
+package sentiments.domain.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

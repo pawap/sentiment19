@@ -5,7 +5,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 /**
+ *
+ * Former interface for design purposes. Partly implemented in the FrontendController class.
+ *
  * @author Paw
+ * @deprecated
  */
 public interface SentimentAnalysisWebInterface {
 

@@ -26,7 +26,7 @@ import sentiments.ml.classifier.Classification;
 import sentiments.ml.classifier.Classifier;
 import sentiments.ml.service.ClassifierService;
 import sentiments.service.ExceptionService;
-import sentiments.service.TimelineService;
+import sentiments.domain.service.TimelineService;
 
 import java.io.File;
 import java.io.FileNotFoundException;

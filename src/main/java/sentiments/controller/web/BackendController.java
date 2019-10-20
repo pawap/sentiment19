@@ -28,7 +28,7 @@ import sentiments.ml.service.WordVectorsService;
 import sentiments.service.ExceptionService;
 import sentiments.service.StorageService;
 import sentiments.service.TaskService;
-import sentiments.service.TimelineService;
+import sentiments.domain.service.TimelineService;
 
 import java.io.File;
 import java.io.FileNotFoundException;
